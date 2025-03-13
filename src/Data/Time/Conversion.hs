@@ -107,7 +107,10 @@ import Optics.Core ((^.))
 --
 -- @since 0.1
 readConvertTime ::
-  (HasCallStack, MonadCatch m, MonadTime m) =>
+  ( HasCallStack,
+    MonadCatch m,
+    MonadTime m
+  ) =>
   -- | Source time.
   Maybe TimeReader ->
   -- | Dest timezone.

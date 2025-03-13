@@ -1,4 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 -- | Internal library for testing.
 --
@@ -76,7 +77,8 @@ import TimeConv.Runner.Toml (Toml)
 --
 -- @since 0.1
 runTimeConv ::
-  ( MonadCatch m,
+  ( HasCallStack,
+    MonadCatch m,
     MonadFileReader m,
     MonadOptparse m,
     MonadPathReader m,
@@ -93,7 +95,8 @@ runTimeConv = do
 -- @since 0.1
 runWithArgs ::
   forall m.
-  ( MonadCatch m,
+  ( HasCallStack,
+    MonadCatch m,
     MonadFileReader m,
     MonadPathReader m,
     MonadTerminal m,
@@ -159,7 +162,12 @@ runWithArgs args = do
 
   readAndHandle mTimeReader destTZ formatOutStr
   where
-    readAndHandle :: Maybe TimeReader -> Maybe TZInput -> String -> m ()
+    readAndHandle ::
+      (HasCallStack) =>
+      Maybe TimeReader ->
+      Maybe TZInput ->
+      String ->
+      m ()
     readAndHandle tr d fmt = do
       time <- Conv.readConvertTime tr d
       let result = T.pack $ Format.formatTime locale fmt time
@@ -191,7 +199,8 @@ parseTZ mAliasMap (Just txt) = do
       Nothing -> throwM $ MkParseTZInputException t
 
 mGetToml ::
-  ( MonadFileReader m,
+  ( HasCallStack,
+    MonadFileReader m,
     MonadPathReader m,
     MonadThrow m
   ) =>
