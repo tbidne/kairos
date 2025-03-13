@@ -182,6 +182,9 @@ Wed, 31 Dec 1969 15:30:00 EST
 
 $ kairos -s america/new_york -d etc/utc 08:30
 Thu,  1 Jan 1970 13:30:00 UTC
+
+$ kairos -d +0200 08:30
+Wed, 31 Dec 1969 21:30:00 +0200
 ```
 
 ## Format In
@@ -234,27 +237,9 @@ Thu,  1 Jan 1970 08:30:00 NZST
 # using tz database name
 $ kairos -s america/new_york 08:30
 Fri,  2 Jan 1970 01:30:00 NZST
-```
 
-## Destination Timezone
-
-**Arg:** `-d,--dest-tz TZ_DB`
-
-**Description:** This option allows one to convert the read timezone. Must be a tz database label like America/New_York. If none is given then we use the local system timezone.
-
-**Examples:**
-
-```
-# use the local system timezone
-$ kairos 08:30
-Thu,  1 Jan 1970 08:30:00 NZST
-
-# using tz database name
-$ kairos -d america/new_york 08:30
-Wed, 31 Dec 1969 15:30:00 EST
-
-$ kairos -s america/new_york -d etc/utc 08:30
-Thu,  1 Jan 1970 13:30:00 UTC
+$ kairos -s -13 08:30
+Fri,  2 Jan 1970 10:30:00 NZDT
 ```
 
 ## Time String
@@ -281,16 +266,18 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 ### Prerequisites
 
+* [`cabal 2.4+`](https://www.haskell.org/cabal/download.html)
+* One of:
+  * [`ghc 9.2`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.4`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.6`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.8`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.10`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.12`](https://www.haskell.org/ghc/download.html)
+
 * [`ghcup`](https://www.haskell.org/ghcup/)
 
-Using `ghcup`, install `cabal 2.4+` and one of:
-
-- `ghc 9.2`
-- `ghc 9.4`
-- `ghc 9.6`
-- `ghc 9.8`
-- `ghc 9.10`
-- `ghc 9.12`
+The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
 ### Build Kairos
 
