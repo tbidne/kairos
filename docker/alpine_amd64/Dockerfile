@@ -1,0 +1,66 @@
+# build and test
+FROM amd64/alpine AS build-stage
+LABEL stage=build-stage
+
+ARG suffix
+
+RUN mkdir -p /opt/kairos
+ADD . /opt/kairos
+
+RUN <<EOF
+set -e
+
+# Taken from haskell/ghcup-hs's dockerfile
+apk add --no-cache \
+  curl \
+  g++ \
+  gcc \
+  git \
+  binutils \
+  binutils-gold \
+  coreutils \
+  bsd-compat-headers \
+  gmp \
+  gmp-dev \
+  libffi-dev \
+  ncurses-dev \
+  make \
+  perl \
+  tar \
+  xz \
+  zlib \
+  zlib-dev \
+  zlib-static
+
+echo "*** Installing ghcup ***"
+curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | BOOTSTRAP_HASKELL_NONINTERACTIVE=1 BOOTSTRAP_HASKELL_MINIMAL=1 sh
+
+echo 'PATH=$PATH:$HOME/.ghcup/bin' >> $HOME/.bashrc
+
+. $HOME/.bashrc
+
+echo "*** Installing ghc ***"
+ghcup install ghc 9.10.1 --set
+
+echo "*** Installing cabal ***"
+ghcup install cabal 3.12 --set
+
+echo "*** Building kairos ***"
+
+cd /opt/kairos
+
+cabal update
+cabal install --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping exe:kairos --project-file cabal.ghc9101.project --ghc-options -Werror
+
+echo "*** Copy binary ***"
+
+mkdir -p /opt/kairos/bin
+
+cd ../../
+
+EOF
+
+# export executable
+FROM scratch as export-stage
+LABEL stage=export-stage
+COPY --from=build-stage /opt/kairos/bin/* /
