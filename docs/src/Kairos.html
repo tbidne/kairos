@@ -1,0 +1,760 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_GHC -Wno-missing-import-lists #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# OPTIONS_GHC -Wno-redundant-constraints #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | This module provides functions for reading time strings. We also provide</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- functions for converting between timezones.</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Kairos.html"><span class="hs-identifier">Kairos</span></a></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * High-level parsing/conversion</span></span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Kairos.html#readConvertTime"><span class="hs-identifier">readConvertTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Kairos.html#readTime"><span class="hs-identifier">readTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Kairos.html#convertTime"><span class="hs-identifier">convertTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Low-level functions</span></span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Parsing time strings</span></span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Kairos.html#readInLocalTimeZone"><span class="hs-identifier">readInLocalTimeZone</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Kairos.html#readTimeFormatLocal"><span class="hs-identifier">readTimeFormatLocal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Kairos.html#readTimeFormatZoned"><span class="hs-identifier">readTimeFormatZoned</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Kairos.html#readTimeFormat"><span class="hs-identifier">readTimeFormat</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Converting ZonedTime</span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="Kairos.html#convertZoned"><span class="hs-identifier">convertZoned</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Types</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Kairos.Types.Date.html#Date"><span class="hs-identifier">Date</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier">TimeFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeReader.html#TimeReader"><span class="hs-identifier">TimeReader</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier">TZInput</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Re-exports</span></span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="file:///nix/store/dkaa8li51bczirz1mcdd0gjj9w2zm421-tzdata-0.2.20240201.0-doc/share/doc/tzdata-0.2.20240201.0/html/src/Data.Time.Zones.DB.html/Data.Time.Zones.DB.html#TZLabel"><span class="hs-identifier">TZLabel</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="hs-identifier">ZonedTime</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Exceptions</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTimeException"><span class="hs-identifier">ParseTimeException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTZInputException"><span class="hs-identifier">ParseTZInputException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTimeZoneException"><span class="hs-identifier">LocalTimeZoneException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalSystemTimeException"><span class="hs-identifier">LocalSystemTimeException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/exception-utils-0.1-dd1bb34f15c1415d1cffa4557ebfbab66fe2f3bce4109bbf32f07b1e02d800a1/share/doc/html/src/Control.Exception.Utils.html/Control.Exception.Utils.html"><span class="hs-identifier">Control.Exception.Utils</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/exception-utils-0.1-dd1bb34f15c1415d1cffa4557ebfbab66fe2f3bce4109bbf32f07b1e02d800a1/share/doc/html/src/Control.Exception.Utils.html/Control.Exception.Utils.html#catchSync"><span class="hs-identifier">catchSync</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Catch</span></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadCatch</span></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><span class="hs-identifier">MonadThrow</span></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><span class="hs-identifier">throwM</span></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.String</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.Clock</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">UTCTime</span></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.Format</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ParseTime</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">TimeLocale</span></span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.Format</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Format</span></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.LocalTime</span></span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">LocalTime</span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>    </span><span class="annot"><span class="hs-identifier">TimeZone</span></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="hs-identifier">ZonedTime</span></span><span>
+</span><span id="line-59"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">ZonedTime</span></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>        </span><span class="annot"><span class="hs-identifier">zonedTimeToLocalTime</span></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>        </span><span class="annot"><span class="hs-identifier">zonedTimeZone</span></span><span>
+</span><span id="line-62"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.LocalTime</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Local</span></span><span>
+</span><span id="line-65"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.html/Data.Time.Zones.html"><span class="hs-identifier">Data.Time.Zones</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.Types.html/Data.Time.Zones.Types.html#TZ"><span class="hs-identifier">TZ</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.html/Data.Time.Zones.html"><span class="hs-identifier">Data.Time.Zones</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Zones</span></span><span>
+</span><span id="line-67"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.All.html/Data.Time.Zones.All.html"><span class="hs-identifier">Data.Time.Zones.All</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/dkaa8li51bczirz1mcdd0gjj9w2zm421-tzdata-0.2.20240201.0-doc/share/doc/tzdata-0.2.20240201.0/html/src/Data.Time.Zones.DB.html/Data.Time.Zones.DB.html#TZLabel"><span class="hs-identifier">TZLabel</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.All.html/Data.Time.Zones.All.html"><span class="hs-identifier">Data.Time.Zones.All</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">All</span></span><span>
+</span><span id="line-69"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html"><span class="hs-identifier">Effects.Time</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier">MonadTime</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#getSystemZonedTime"><span class="hs-identifier">getSystemZonedTime</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Stack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">HasCallStack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Kairos.Types.Date.html"><span class="hs-identifier">Kairos.Types.Date</span></a></span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Kairos.Types.Date.html#Date"><span class="hs-identifier">Date</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Date.html#DateLiteral"><span class="hs-identifier">DateLiteral</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Kairos.Types.Date.html#DateToday"><span class="hs-identifier">DateToday</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>    </span><span class="annot"><a href="Kairos.Types.Date.Internal.html#unDateString"><span class="hs-identifier">unDateString</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html"><span class="hs-identifier">Kairos.Types.Exception</span></a></span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalSystemTimeException"><span class="hs-identifier">LocalSystemTimeException</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalSystemTimeException"><span class="hs-identifier">MkLocalSystemTimeException</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTimeZoneException"><span class="hs-identifier">LocalTimeZoneException</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalTimeZoneException"><span class="hs-identifier">MkLocalTimeZoneException</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTZInputException"><span class="hs-identifier">ParseTZInputException</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkParseTZInputException"><span class="hs-identifier">MkParseTZInputException</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-79"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTimeException"><span class="hs-identifier">ParseTimeException</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkParseTimeException"><span class="hs-identifier">MkParseTimeException</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-80"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html"><span class="hs-identifier">Kairos.Types.TZInput</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier">TZInput</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.TZInput.html#TZActual"><span class="hs-identifier">TZActual</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZDatabase"><span class="hs-identifier">TZDatabase</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html"><span class="hs-identifier">Kairos.Types.TimeFormat</span></a></span><span>
+</span><span id="line-83"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier">TimeFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.TimeFormat.html#MkTimeFormat"><span class="hs-identifier">MkTimeFormat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#unTimeFormat"><span class="hs-identifier">unTimeFormat</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Kairos.Types.TimeReader.html"><span class="hs-identifier">Kairos.Types.TimeReader</span></a></span><span>
+</span><span id="line-86"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Kairos.Types.TimeReader.html#TimeReader"><span class="hs-identifier">TimeReader</span></a></span><span>
+</span><span id="line-87"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Kairos.Types.TimeReader.html#MkTimeReader"><span class="hs-identifier">MkTimeReader</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-88"></span><span>        </span><span class="annot"><a href="Kairos.Types.TimeReader.html#date"><span class="hs-identifier">date</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-89"></span><span>        </span><span class="annot"><a href="Kairos.Types.TimeReader.html#format"><span class="hs-identifier">format</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-90"></span><span>        </span><span class="annot"><a href="Kairos.Types.TimeReader.html#srcTZ"><span class="hs-identifier">srcTZ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-91"></span><span>        </span><span class="annot"><a href="Kairos.Types.TimeReader.html#timeString"><span class="hs-identifier">timeString</span></a></span><span>
+</span><span id="line-92"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Core.html/Optics.Core.html"><span class="hs-identifier">Optics.Core</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html/Optics.Operators.html#%5E."><span class="hs-operator">(^.)</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- | Reads the given time string based on the source 'TimeReader' and</span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- converts to the destination timezone. This is the composition of</span><span>
+</span><span id="line-98"></span><span class="hs-comment">-- 'readTime' and 'convertTime'. If the source is 'Nothing' then we read</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- the local system time. Similarly, if the dest is 'Nothing', we convert</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- to the local system timezone.</span><span>
+</span><span id="line-101"></span><span class="hs-comment">--</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-103"></span><span class="hs-comment">--</span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- * 'ParseTimeException': Error parsing the time string.</span><span>
+</span><span id="line-105"></span><span class="hs-comment">-- * 'LocalTimeZoneException': Error retrieving local timezone.</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- * 'LocalSystemTimeException': Error retrieving local system time.</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--</span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-109"></span><span id="local-6989586621679096928"><span class="annot"><a href="Kairos.html#readConvertTime"><span class="hs-identifier hs-type">readConvertTime</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-111"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679096928"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-112"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679096928"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-113"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-114"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Source time.</span></span><span>
+</span><span id="line-115"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Kairos.Types.TimeReader.html#TimeReader"><span class="hs-identifier hs-type">TimeReader</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-116"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Dest timezone.</span></span><span>
+</span><span id="line-117"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier hs-type">TZInput</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-118"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Converted time.</span></span><span>
+</span><span id="line-119"></span><span>  </span><span class="annot"><a href="#local-6989586621679096928"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span></span><span>
+</span><span id="line-120"></span><span id="readConvertTime"><span class="annot"><span class="annottext">readConvertTime :: forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TimeReader -&gt; Maybe TZInput -&gt; m ZonedTime
+</span><a href="Kairos.html#readConvertTime"><span class="hs-identifier hs-var hs-var">readConvertTime</span></a></span></span><span> </span><span id="local-6989586621679097098"><span class="annot"><span class="annottext">Maybe TimeReader
+</span><a href="#local-6989586621679097098"><span class="hs-identifier hs-var">mtimeReader</span></a></span></span><span> </span><span id="local-6989586621679097099"><span class="annot"><span class="annottext">Maybe TZInput
+</span><a href="#local-6989586621679097099"><span class="hs-identifier hs-var">destTZ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-121"></span><span>  </span><span class="annot"><span class="annottext">Maybe TimeReader -&gt; m ZonedTime
+forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TimeReader -&gt; m ZonedTime
+</span><a href="Kairos.html#readTime"><span class="hs-identifier hs-var">readTime</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TimeReader
+</span><a href="#local-6989586621679097098"><span class="hs-identifier hs-var">mtimeReader</span></a></span><span> </span><span class="annot"><span class="annottext">m ZonedTime -&gt; (ZonedTime -&gt; m ZonedTime) -&gt; m ZonedTime
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ZonedTime -&gt; Maybe TZInput -&gt; m ZonedTime
+forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+ZonedTime -&gt; Maybe TZInput -&gt; m ZonedTime
+</span><a href="Kairos.html#convertTime"><span class="hs-operator hs-var">`convertTime`</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TZInput
+</span><a href="#local-6989586621679097099"><span class="hs-identifier hs-var">destTZ</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-122"></span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- | Reads a time based on the 'TimeReader'. If given 'Nothing' we read the</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- local system time instead.</span><span>
+</span><span id="line-125"></span><span class="hs-comment">--</span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-127"></span><span class="hs-comment">--</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- * 'ParseTimeException': Error parsing the time string.</span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- * 'LocalTimeZoneException': Error retrieving local timezone.</span><span>
+</span><span id="line-130"></span><span class="hs-comment">-- * 'LocalSystemTimeException': Error retrieving local system time.</span><span>
+</span><span id="line-131"></span><span class="hs-comment">--</span><span>
+</span><span id="line-132"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-133"></span><span id="local-6989586621679096935"><span class="annot"><a href="Kairos.html#readTime"><span class="hs-identifier hs-type">readTime</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-134"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-135"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679096935"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-136"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679096935"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-137"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-138"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Kairos.Types.TimeReader.html#TimeReader"><span class="hs-identifier hs-type">TimeReader</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-139"></span><span>  </span><span class="annot"><a href="#local-6989586621679096935"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span></span><span>
+</span><span id="line-140"></span><span id="readTime"><span class="annot"><span class="annottext">readTime :: forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TimeReader -&gt; m ZonedTime
+</span><a href="Kairos.html#readTime"><span class="hs-identifier hs-var hs-var">readTime</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679097122"><span class="annot"><span class="annottext">TimeReader
+</span><a href="#local-6989586621679097122"><span class="hs-identifier hs-var">timeReader</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeReader -&gt; m ZonedTime
+forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+TimeReader -&gt; m ZonedTime
+</span><a href="Kairos.html#readTimeString"><span class="hs-identifier hs-var">readTimeString</span></a></span><span> </span><span class="annot"><span class="annottext">TimeReader
+</span><a href="#local-6989586621679097122"><span class="hs-identifier hs-var">timeReader</span></a></span><span>
+</span><span id="line-141"></span><span class="annot"><a href="Kairos.html#readTime"><span class="hs-identifier hs-var">readTime</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TimeReader
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-142"></span><span>  </span><span class="annot"><span class="annottext">m ZonedTime
+forall (m :: * -&gt; *). (MonadTime m, HasCallStack) =&gt; m ZonedTime
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#getSystemZonedTime"><span class="hs-identifier hs-var">getSystemZonedTime</span></a></span><span> </span><span class="annot"><span class="annottext">m ZonedTime -&gt; (SomeException -&gt; m ZonedTime) -&gt; m ZonedTime
+forall (m :: * -&gt; *) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; (SomeException -&gt; m a) -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/exception-utils-0.1-dd1bb34f15c1415d1cffa4557ebfbab66fe2f3bce4109bbf32f07b1e02d800a1/share/doc/html/src/Control.Exception.Utils.html/Control.Exception.Utils.html#catchSync"><span class="hs-operator hs-var">`catchSync`</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LocalSystemTimeException -&gt; m ZonedTime
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; m a
+forall (m :: * -&gt; *) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; m a
+</span><span class="hs-identifier hs-var">throwM</span></span><span> </span><span class="annot"><span class="annottext">(LocalSystemTimeException -&gt; m ZonedTime)
+-&gt; (SomeException -&gt; LocalSystemTimeException)
+-&gt; SomeException
+-&gt; m ZonedTime
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; LocalSystemTimeException
+forall e. Exception e =&gt; e -&gt; LocalSystemTimeException
+</span><a href="Kairos.Types.Exception.html#MkLocalSystemTimeException"><span class="hs-identifier hs-var">MkLocalSystemTimeException</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-143"></span><span>
+</span><span id="line-144"></span><span class="hs-comment">-- | Converts the given time to the destination timezone. If no destination</span><span>
+</span><span id="line-145"></span><span class="hs-comment">-- timezone is given then we convert to the local system timezone.</span><span>
+</span><span id="line-146"></span><span class="hs-comment">--</span><span>
+</span><span id="line-147"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-148"></span><span class="hs-comment">--</span><span>
+</span><span id="line-149"></span><span class="hs-comment">-- * 'ParseTZDatabaseException': Error parsing the tz database name.</span><span>
+</span><span id="line-150"></span><span class="hs-comment">-- * 'LocalTimeZoneException': Error retrieving local timezone.</span><span>
+</span><span id="line-151"></span><span class="hs-comment">--</span><span>
+</span><span id="line-152"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-153"></span><span id="local-6989586621679096939"><span class="annot"><a href="Kairos.html#convertTime"><span class="hs-identifier hs-type">convertTime</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-154"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-155"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679096939"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-156"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679096939"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-157"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-158"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-159"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier hs-type">TZInput</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-160"></span><span>  </span><span class="annot"><a href="#local-6989586621679096939"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span></span><span>
+</span><span id="line-161"></span><span id="convertTime"><span class="annot"><span class="annottext">convertTime :: forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+ZonedTime -&gt; Maybe TZInput -&gt; m ZonedTime
+</span><a href="Kairos.html#convertTime"><span class="hs-identifier hs-var hs-var">convertTime</span></a></span></span><span> </span><span id="local-6989586621679097147"><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097147"><span class="hs-identifier hs-var">inTime</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe TZInput
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-162"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679097148"><span class="annot"><span class="annottext">inTimeUtc :: UTCTime
+</span><a href="#local-6989586621679097148"><span class="hs-identifier hs-var hs-var hs-var">inTimeUtc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; UTCTime
+</span><span class="hs-identifier hs-var">Local.zonedTimeToUTC</span></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097147"><span class="hs-identifier hs-var">inTime</span></a></span><span>
+</span><span id="line-163"></span><span>  </span><span id="local-6989586621679097150"><span class="annot"><a href="#local-6989586621679097150"><span class="hs-identifier hs-var">currTZ</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-164"></span><span>    </span><span class="annot"><span class="annottext">m TimeZone
+forall (m :: * -&gt; *). (HasCallStack, MonadTime m) =&gt; m TimeZone
+</span><a href="Kairos.html#getCurrentTimeZone"><span class="hs-identifier hs-var">getCurrentTimeZone</span></a></span><span>
+</span><span id="line-165"></span><span>      </span><span class="annot"><span class="annottext">m TimeZone -&gt; (SomeException -&gt; m TimeZone) -&gt; m TimeZone
+forall (m :: * -&gt; *) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; (SomeException -&gt; m a) -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/exception-utils-0.1-dd1bb34f15c1415d1cffa4557ebfbab66fe2f3bce4109bbf32f07b1e02d800a1/share/doc/html/src/Control.Exception.Utils.html/Control.Exception.Utils.html#catchSync"><span class="hs-operator hs-var">`catchSync`</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LocalTimeZoneException -&gt; m TimeZone
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; m a
+forall (m :: * -&gt; *) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; m a
+</span><span class="hs-identifier hs-var">throwM</span></span><span> </span><span class="annot"><span class="annottext">(LocalTimeZoneException -&gt; m TimeZone)
+-&gt; (SomeException -&gt; LocalTimeZoneException)
+-&gt; SomeException
+-&gt; m TimeZone
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; LocalTimeZoneException
+forall e. Exception e =&gt; e -&gt; LocalTimeZoneException
+</span><a href="Kairos.Types.Exception.html#MkLocalTimeZoneException"><span class="hs-identifier hs-var">MkLocalTimeZoneException</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Local.utcToZonedTime</span></span><span> </span><span class="annot"><a href="#local-6989586621679097150"><span class="hs-identifier hs-type">currTZ</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097148"><span class="hs-identifier hs-type">inTimeUtc</span></a></span><span>
+</span><span id="line-167"></span><span class="annot"><a href="Kairos.html#convertTime"><span class="hs-identifier hs-var">convertTime</span></a></span><span> </span><span id="local-6989586621679097153"><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097153"><span class="hs-identifier hs-var">inTime</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679097154"><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097154"><span class="hs-identifier hs-var">tzOut</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; m ZonedTime
+forall a. a -&gt; m a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ZonedTime -&gt; m ZonedTime) -&gt; ZonedTime -&gt; m ZonedTime
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; TZInput -&gt; ZonedTime
+</span><a href="Kairos.html#convertZoned"><span class="hs-identifier hs-var">convertZoned</span></a></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097153"><span class="hs-identifier hs-var">inTime</span></a></span><span> </span><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097154"><span class="hs-identifier hs-var">tzOut</span></a></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span id="local-6989586621679096946"><span class="annot"><a href="Kairos.html#readTimeString"><span class="hs-identifier hs-type">readTimeString</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-170"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-171"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679096946"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-172"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679096946"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-173"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-174"></span><span>  </span><span class="annot"><a href="Kairos.Types.TimeReader.html#TimeReader"><span class="hs-identifier hs-type">TimeReader</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-175"></span><span>  </span><span class="annot"><a href="#local-6989586621679096946"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span></span><span>
+</span><span id="line-176"></span><span id="readTimeString"><span class="annot"><span class="annottext">readTimeString :: forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+TimeReader -&gt; m ZonedTime
+</span><a href="Kairos.html#readTimeString"><span class="hs-identifier hs-var hs-var">readTimeString</span></a></span></span><span> </span><span id="local-6989586621679097207"><span class="annot"><span class="annottext">TimeReader
+</span><a href="#local-6989586621679097207"><span class="hs-identifier hs-var">timeReader</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-177"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">TimeReader
+</span><a href="#local-6989586621679097207"><span class="hs-identifier hs-var">timeReader</span></a></span><span> </span><span class="annot"><span class="annottext">TimeReader
+-&gt; Optic' A_Lens NoIx TimeReader (Maybe TZInput) -&gt; Maybe TZInput
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeReader (Maybe TZInput)
+</span><span class="">#srcTZ</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-178"></span><span>    </span><span class="hs-comment">-- read in local timezone</span><span>
+</span><span id="line-179"></span><span>    </span><span class="annot"><span class="annottext">Maybe TZInput
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-180"></span><span>      </span><span class="hs-comment">-- add system date if specified</span><span>
+</span><span id="line-181"></span><span>      </span><span class="hs-special">(</span><span id="local-6989586621679097208"><span class="annot"><a href="#local-6989586621679097208"><span class="hs-identifier hs-var">timeStrDate</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679097209"><span class="annot"><a href="#local-6989586621679097209"><span class="hs-identifier hs-var">formatDate</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Maybe TZInput -&gt; m (Text, TimeFormat)
+forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TZInput -&gt; m (Text, TimeFormat)
+</span><a href="#local-6989586621679097210"><span class="hs-identifier hs-var">maybeAddDate</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TZInput
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-182"></span><span>      </span><span class="annot"><a href="Kairos.html#readInLocalTimeZone"><span class="hs-identifier hs-type">readInLocalTimeZone</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097209"><span class="hs-identifier hs-type">formatDate</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097208"><span class="hs-identifier hs-type">timeStrDate</span></a></span><span>
+</span><span id="line-183"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679097211"><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097211"><span class="hs-identifier hs-var">tzInput</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-184"></span><span>      </span><span class="hs-comment">-- add src date if specified</span><span>
+</span><span id="line-185"></span><span>      </span><span class="hs-special">(</span><span id="local-6989586621679097212"><span class="annot"><a href="#local-6989586621679097212"><span class="hs-identifier hs-var">timeStrDate</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679097213"><span class="annot"><a href="#local-6989586621679097213"><span class="hs-identifier hs-var">formatDate</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Maybe TZInput -&gt; m (Text, TimeFormat)
+forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TZInput -&gt; m (Text, TimeFormat)
+</span><a href="#local-6989586621679097210"><span class="hs-identifier hs-var">maybeAddDate</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TZInput -&gt; Maybe TZInput
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097211"><span class="hs-identifier hs-var">tzInput</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-186"></span><span>
+</span><span id="line-187"></span><span>      </span><span class="hs-comment">-- Read string as a LocalTime, no TZ info. This allow us to correctly</span><span>
+</span><span id="line-188"></span><span>      </span><span class="hs-comment">-- get the source's timezone, taking the desired date into account.</span><span>
+</span><span id="line-189"></span><span>      </span><span id="local-6989586621679097214"><span class="annot"><a href="#local-6989586621679097214"><span class="hs-identifier hs-var">localTime</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-190"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">maybe</span></span><span>
+</span><span id="line-191"></span><span>          </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679097216"><span class="hs-identifier hs-type">throwParseEx</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097213"><span class="hs-identifier hs-type">formatDate</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097212"><span class="hs-identifier hs-type">timeStrDate</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-192"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span>
+</span><span id="line-193"></span><span>          </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.html#readTimeFormatLocal"><span class="hs-identifier hs-type">readTimeFormatLocal</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Format.defaultTimeLocale</span></span><span> </span><span class="annot"><a href="#local-6989586621679097213"><span class="hs-identifier hs-type">formatDate</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097212"><span class="hs-identifier hs-type">timeStrDate</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-194"></span><span>
+</span><span id="line-195"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><a href="Kairos.html#convertLocalToZoned"><span class="hs-identifier hs-type">convertLocalToZoned</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097214"><span class="hs-identifier hs-type">localTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097211"><span class="hs-identifier hs-type">tzInput</span></a></span><span>
+</span><span id="line-196"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-197"></span><span>    </span><span id="local-6989586621679097219"><span class="annot"><span class="annottext">format :: TimeFormat
+</span><a href="#local-6989586621679097219"><span class="hs-identifier hs-var hs-var">format</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeReader
+</span><a href="#local-6989586621679097207"><span class="hs-identifier hs-var">timeReader</span></a></span><span> </span><span class="annot"><span class="annottext">TimeReader
+-&gt; Optic' A_Lens NoIx TimeReader TimeFormat -&gt; TimeFormat
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeReader TimeFormat
+</span><span class="">#format</span></span><span>
+</span><span id="line-198"></span><span>    </span><span id="local-6989586621679097220"><span class="annot"><span class="annottext">timeStr :: Text
+</span><a href="#local-6989586621679097220"><span class="hs-identifier hs-var hs-var">timeStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeReader
+</span><a href="#local-6989586621679097207"><span class="hs-identifier hs-var">timeReader</span></a></span><span> </span><span class="annot"><span class="annottext">TimeReader -&gt; Optic' A_Lens NoIx TimeReader Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeReader Text
+</span><span class="">#timeString</span></span><span>
+</span><span id="line-199"></span><span>
+</span><span id="line-200"></span><span>    </span><span id="local-6989586621679097007"><span id="local-6989586621679097008"><span class="annot"><a href="#local-6989586621679097216"><span class="hs-identifier hs-type">throwParseEx</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadThrow</span></span><span> </span><span class="annot"><a href="#local-6989586621679097007"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097007"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097008"><span class="hs-identifier hs-type">void</span></a></span></span></span><span>
+</span><span id="line-201"></span><span>    </span><span id="local-6989586621679097216"><span class="annot"><span class="annottext">throwParseEx :: forall (m :: * -&gt; *) void.
+(HasCallStack, MonadThrow m) =&gt;
+TimeFormat -&gt; Text -&gt; m void
+</span><a href="#local-6989586621679097216"><span class="hs-identifier hs-var hs-var">throwParseEx</span></a></span></span><span> </span><span id="local-6989586621679097228"><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097228"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ParseTimeException -&gt; m void
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; m a
+forall (m :: * -&gt; *) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; m a
+</span><span class="hs-identifier hs-var">throwM</span></span><span> </span><span class="annot"><span class="annottext">(ParseTimeException -&gt; m void)
+-&gt; (Text -&gt; ParseTimeException) -&gt; Text -&gt; m void
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">TimeFormat -&gt; Text -&gt; ParseTimeException
+</span><a href="Kairos.Types.Exception.html#MkParseTimeException"><span class="hs-identifier hs-var">MkParseTimeException</span></a></span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097228"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-202"></span><span>
+</span><span id="line-203"></span><span>    </span><span id="local-6989586621679097003"><span class="annot"><a href="#local-6989586621679097210"><span class="hs-identifier hs-type">maybeAddDate</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-204"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-205"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679097003"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-206"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097003"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-207"></span><span>      </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-208"></span><span>      </span><span class="hs-comment">-- Maybe source timezone</span><span>
+</span><span id="line-209"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier hs-type">TZInput</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-210"></span><span>      </span><span class="annot"><a href="#local-6989586621679097003"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-211"></span><span>    </span><span id="local-6989586621679097210"><span class="annot"><span class="annottext">maybeAddDate :: forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TZInput -&gt; m (Text, TimeFormat)
+</span><a href="#local-6989586621679097210"><span class="hs-identifier hs-var hs-var">maybeAddDate</span></a></span></span><span> </span><span id="local-6989586621679097264"><span class="annot"><span class="annottext">Maybe TZInput
+</span><a href="#local-6989586621679097264"><span class="hs-identifier hs-var">mTZ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">TimeReader
+</span><a href="#local-6989586621679097207"><span class="hs-identifier hs-var">timeReader</span></a></span><span> </span><span class="annot"><span class="annottext">TimeReader
+-&gt; Optic' A_Lens NoIx TimeReader (Maybe Date) -&gt; Maybe Date
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeReader (Maybe Date)
+</span><span class="">#date</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-212"></span><span>      </span><span class="annot"><span class="annottext">Maybe Date
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Text, TimeFormat) -&gt; m (Text, TimeFormat)
+forall a. a -&gt; m a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097220"><span class="hs-identifier hs-var">timeStr</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097219"><span class="hs-identifier hs-var">format</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-213"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Date.html#DateLiteral"><span class="hs-identifier hs-type">DateLiteral</span></a></span><span> </span><span id="local-6989586621679097265"><span class="annot"><span class="annottext">DateString
+</span><a href="#local-6989586621679097265"><span class="hs-identifier hs-var">dateStr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-214"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679097266"><span class="annot"><span class="annottext">str :: Text
+</span><a href="#local-6989586621679097266"><span class="hs-identifier hs-var hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">DateString -&gt; Text
+</span><a href="Kairos.Types.Date.Internal.html#unDateString"><span class="hs-identifier hs-var">unDateString</span></a></span><span> </span><span class="annot"><span class="annottext">DateString
+</span><a href="#local-6989586621679097265"><span class="hs-identifier hs-var">dateStr</span></a></span><span>
+</span><span id="line-215"></span><span>        </span><span class="annot"><span class="annottext">(Text, TimeFormat) -&gt; m (Text, TimeFormat)
+forall a. a -&gt; m a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097266"><span class="hs-identifier hs-var">str</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. (Semigroup a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-var">+-+</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097220"><span class="hs-identifier hs-var">timeStr</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+forall s. IsString s =&gt; s
+</span><a href="Kairos.html#dateString"><span class="hs-identifier hs-var">dateString</span></a></span><span> </span><span class="annot"><span class="annottext">TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+forall a. (Semigroup a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-var">+-+</span></a></span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097219"><span class="hs-identifier hs-var">format</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-216"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">Date
+</span><a href="Kairos.Types.Date.html#DateToday"><span class="hs-identifier hs-var">DateToday</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-217"></span><span>        </span><span class="hs-comment">-- get the current date in the source timezone</span><span>
+</span><span id="line-218"></span><span>        </span><span id="local-6989586621679097269"><span class="annot"><a href="#local-6989586621679097269"><span class="hs-identifier hs-var">currDateStr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Maybe TZInput -&gt; m String
+forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TZInput -&gt; m String
+</span><a href="Kairos.html#currentDate"><span class="hs-identifier hs-var">currentDate</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TZInput
+</span><a href="#local-6989586621679097264"><span class="hs-identifier hs-var">mTZ</span></a></span><span>
+</span><span id="line-219"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">T.pack</span></span><span> </span><span class="annot"><a href="#local-6989586621679097269"><span class="hs-identifier hs-type">currDateStr</span></a></span><span> </span><span class="annot"><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-type">+-+</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097220"><span class="hs-identifier hs-type">timeStr</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Kairos.html#dateString"><span class="hs-identifier hs-type">dateString</span></a></span><span> </span><span class="annot"><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-type">+-+</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097219"><span class="hs-identifier hs-type">format</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-220"></span><span>
+</span><span id="line-221"></span><span id="local-6989586621679097021"><span class="annot"><a href="Kairos.html#currentDate"><span class="hs-identifier hs-type">currentDate</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-222"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-223"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679097021"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-224"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097021"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-225"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-226"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier hs-type">TZInput</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-227"></span><span>  </span><span class="annot"><a href="#local-6989586621679097021"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span></span><span>
+</span><span id="line-228"></span><span id="currentDate"><span class="annot"><span class="annottext">currentDate :: forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+Maybe TZInput -&gt; m String
+</span><a href="Kairos.html#currentDate"><span class="hs-identifier hs-var hs-var">currentDate</span></a></span></span><span> </span><span id="local-6989586621679097296"><span class="annot"><span class="annottext">Maybe TZInput
+</span><a href="#local-6989586621679097296"><span class="hs-identifier hs-var">mTZ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-229"></span><span>  </span><span id="local-6989586621679097297"><span class="annot"><a href="#local-6989586621679097297"><span class="hs-identifier hs-var">currTime</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-230"></span><span>    </span><span class="annot"><span class="annottext">m ZonedTime
+forall (m :: * -&gt; *). (MonadTime m, HasCallStack) =&gt; m ZonedTime
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#getSystemZonedTime"><span class="hs-identifier hs-var">getSystemZonedTime</span></a></span><span>
+</span><span id="line-231"></span><span>      </span><span class="annot"><span class="annottext">m ZonedTime -&gt; (SomeException -&gt; m ZonedTime) -&gt; m ZonedTime
+forall (m :: * -&gt; *) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; (SomeException -&gt; m a) -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/exception-utils-0.1-dd1bb34f15c1415d1cffa4557ebfbab66fe2f3bce4109bbf32f07b1e02d800a1/share/doc/html/src/Control.Exception.Utils.html/Control.Exception.Utils.html#catchSync"><span class="hs-operator hs-var">`catchSync`</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LocalSystemTimeException -&gt; m ZonedTime
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; m a
+forall (m :: * -&gt; *) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; m a
+</span><span class="hs-identifier hs-var">throwM</span></span><span> </span><span class="annot"><span class="annottext">(LocalSystemTimeException -&gt; m ZonedTime)
+-&gt; (SomeException -&gt; LocalSystemTimeException)
+-&gt; SomeException
+-&gt; m ZonedTime
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; LocalSystemTimeException
+forall e. Exception e =&gt; e -&gt; LocalSystemTimeException
+</span><a href="Kairos.Types.Exception.html#MkLocalSystemTimeException"><span class="hs-identifier hs-var">MkLocalSystemTimeException</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-232"></span><span>
+</span><span id="line-233"></span><span>  </span><span class="hs-comment">-- Convert into the given label if present. Otherwise keep in system</span><span>
+</span><span id="line-234"></span><span>  </span><span class="hs-comment">-- timezone.</span><span>
+</span><span id="line-235"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679097298"><span class="annot"><a href="#local-6989586621679097298"><span class="hs-identifier hs-var hs-var">currTime'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; (TZInput -&gt; ZonedTime) -&gt; Maybe TZInput -&gt; ZonedTime
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097297"><span class="hs-identifier hs-var">currTime</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ZonedTime -&gt; TZInput -&gt; ZonedTime
+</span><a href="Kairos.html#convertZoned"><span class="hs-identifier hs-var">convertZoned</span></a></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097297"><span class="hs-identifier hs-var">currTime</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Maybe TZInput
+</span><a href="#local-6989586621679097296"><span class="hs-identifier hs-var">mTZ</span></a></span><span>
+</span><span id="line-236"></span><span>
+</span><span id="line-237"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Format.formatTime</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Format.defaultTimeLocale</span></span><span> </span><span class="annot"><a href="Kairos.html#dateString"><span class="hs-identifier hs-type">dateString</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097298"><span class="hs-identifier hs-type">currTime'</span></a></span><span>
+</span><span id="line-238"></span><span>
+</span><span id="line-239"></span><span id="local-6989586621679097020"><span class="annot"><a href="Kairos.html#dateString"><span class="hs-identifier hs-type">dateString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679097020"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097020"><span class="hs-identifier hs-type">s</span></a></span></span><span>
+</span><span id="line-240"></span><span id="dateString"><span class="annot"><span class="annottext">dateString :: forall s. IsString s =&gt; s
+</span><a href="Kairos.html#dateString"><span class="hs-identifier hs-var hs-var">dateString</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">s
+</span><span class="hs-string">&quot;%Y-%m-%d&quot;</span></span><span>
+</span><span id="line-241"></span><span>
+</span><span id="line-242"></span><span id="local-6989586621679097302"><span class="annot"><a href="Kairos.html#tzString"><span class="hs-identifier hs-type">tzString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679097302"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097302"><span class="hs-identifier hs-type">s</span></a></span></span><span>
+</span><span id="line-243"></span><span id="tzString"><span class="annot"><span class="annottext">tzString :: forall s. IsString s =&gt; s
+</span><a href="Kairos.html#tzString"><span class="hs-identifier hs-var hs-var">tzString</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">s
+</span><span class="hs-string">&quot;%z&quot;</span></span><span>
+</span><span id="line-244"></span><span>
+</span><span id="line-245"></span><span class="hs-comment">-- | @readInLocalTimeZone locale format timeStr@ attempts to parse the</span><span>
+</span><span id="line-246"></span><span class="hs-comment">-- @timeStr@ given the expected @format@. We parse into the current</span><span>
+</span><span id="line-247"></span><span class="hs-comment">-- system timezone, so:</span><span>
+</span><span id="line-248"></span><span class="hs-comment">--</span><span>
+</span><span id="line-249"></span><span class="hs-comment">-- * @format@ should __not__ mention &quot;%Z&quot;</span><span>
+</span><span id="line-250"></span><span class="hs-comment">-- * @timeStr@ should __not__ contain timezone information.</span><span>
+</span><span id="line-251"></span><span class="hs-comment">--</span><span>
+</span><span id="line-252"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-253"></span><span class="hs-comment">-- &#955;. readInLocalTimeZone &quot;%H&quot; &quot;17&quot;</span><span>
+</span><span id="line-254"></span><span class="hs-comment">-- Just 1970-01-01 17:00:00 NZST</span><span>
+</span><span id="line-255"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-256"></span><span class="hs-comment">--</span><span>
+</span><span id="line-257"></span><span class="hs-comment">-- __Throws:__</span><span>
+</span><span id="line-258"></span><span class="hs-comment">--</span><span>
+</span><span id="line-259"></span><span class="hs-comment">-- * 'ParseTimeException': Error parsing the time string.</span><span>
+</span><span id="line-260"></span><span class="hs-comment">-- * 'LocalTimeZoneException': Error retrieving local timezone.</span><span>
+</span><span id="line-261"></span><span class="hs-comment">--</span><span>
+</span><span id="line-262"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-263"></span><span id="local-6989586621679097004"><span class="annot"><a href="Kairos.html#readInLocalTimeZone"><span class="hs-identifier hs-type">readInLocalTimeZone</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-264"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-265"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679097004"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-266"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097004"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-267"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-268"></span><span>  </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-269"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-270"></span><span>  </span><span class="annot"><a href="#local-6989586621679097004"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span></span><span>
+</span><span id="line-271"></span><span id="readInLocalTimeZone"><span class="annot"><span class="annottext">readInLocalTimeZone :: forall (m :: * -&gt; *).
+(HasCallStack, MonadCatch m, MonadTime m) =&gt;
+TimeFormat -&gt; Text -&gt; m ZonedTime
+</span><a href="Kairos.html#readInLocalTimeZone"><span class="hs-identifier hs-var hs-var">readInLocalTimeZone</span></a></span></span><span> </span><span id="local-6989586621679097334"><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097334"><span class="hs-identifier hs-var">format</span></a></span></span><span> </span><span id="local-6989586621679097335"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097335"><span class="hs-identifier hs-var">timeStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-272"></span><span>  </span><span id="local-6989586621679097336"><span class="annot"><a href="#local-6989586621679097336"><span class="hs-identifier hs-var">localTz</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-273"></span><span>    </span><span class="annot"><span class="annottext">m TimeZone
+forall (m :: * -&gt; *). (HasCallStack, MonadTime m) =&gt; m TimeZone
+</span><a href="Kairos.html#getCurrentTimeZone"><span class="hs-identifier hs-var">getCurrentTimeZone</span></a></span><span>
+</span><span id="line-274"></span><span>      </span><span class="annot"><span class="annottext">m TimeZone -&gt; (SomeException -&gt; m TimeZone) -&gt; m TimeZone
+forall (m :: * -&gt; *) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; (SomeException -&gt; m a) -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/exception-utils-0.1-dd1bb34f15c1415d1cffa4557ebfbab66fe2f3bce4109bbf32f07b1e02d800a1/share/doc/html/src/Control.Exception.Utils.html/Control.Exception.Utils.html#catchSync"><span class="hs-operator hs-var">`catchSync`</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LocalTimeZoneException -&gt; m TimeZone
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; m a
+forall (m :: * -&gt; *) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; m a
+</span><span class="hs-identifier hs-var">throwM</span></span><span> </span><span class="annot"><span class="annottext">(LocalTimeZoneException -&gt; m TimeZone)
+-&gt; (SomeException -&gt; LocalTimeZoneException)
+-&gt; SomeException
+-&gt; m TimeZone
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; LocalTimeZoneException
+forall e. Exception e =&gt; e -&gt; LocalTimeZoneException
+</span><a href="Kairos.Types.Exception.html#MkLocalTimeZoneException"><span class="hs-identifier hs-var">MkLocalTimeZoneException</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-275"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679097337"><span class="annot"><a href="#local-6989586621679097337"><span class="hs-identifier hs-var hs-var">tzStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Text) -&gt; String -&gt; Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TimeZone -&gt; String
+</span><span class="hs-identifier hs-var">Local.timeZoneOffsetString</span></span><span> </span><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097336"><span class="hs-identifier hs-var">localTz</span></a></span><span>
+</span><span id="line-276"></span><span>
+</span><span id="line-277"></span><span>      </span><span class="hs-comment">-- Add the local tz string to the time string, and the tz flag to the format</span><span>
+</span><span id="line-278"></span><span>      </span><span id="local-6989586621679097339"><span class="annot"><a href="#local-6989586621679097339"><span class="hs-identifier hs-var hs-var">timeStr'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097335"><span class="hs-identifier hs-var">timeStr</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. (Semigroup a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-var">+-+</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097337"><span class="hs-identifier hs-var">tzStr</span></a></span><span>
+</span><span id="line-279"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="Kairos.html#readTimeFormatZoned"><span class="hs-identifier hs-type">readTimeFormatZoned</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Format.defaultTimeLocale</span></span><span> </span><span class="annot"><a href="#local-6989586621679097340"><span class="hs-identifier hs-type">format'</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679097339"><span class="hs-identifier hs-type">timeStr'</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-280"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679097341"><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097341"><span class="hs-identifier hs-var">zt</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; m ZonedTime
+forall a. a -&gt; m a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097341"><span class="hs-identifier hs-var">zt</span></a></span><span>
+</span><span id="line-281"></span><span>    </span><span class="annot"><span class="annottext">Maybe ZonedTime
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ParseTimeException -&gt; m ZonedTime
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; m a
+forall (m :: * -&gt; *) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; m a
+</span><span class="hs-identifier hs-var">throwM</span></span><span> </span><span class="annot"><span class="annottext">(ParseTimeException -&gt; m ZonedTime)
+-&gt; ParseTimeException -&gt; m ZonedTime
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TimeFormat -&gt; Text -&gt; ParseTimeException
+</span><a href="Kairos.Types.Exception.html#MkParseTimeException"><span class="hs-identifier hs-var">MkParseTimeException</span></a></span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097340"><span class="hs-identifier hs-var">format'</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097339"><span class="hs-identifier hs-var">timeStr'</span></a></span><span>
+</span><span id="line-282"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-283"></span><span>    </span><span id="local-6989586621679097340"><span class="annot"><span class="annottext">format' :: TimeFormat
+</span><a href="#local-6989586621679097340"><span class="hs-identifier hs-var hs-var">format'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097334"><span class="hs-identifier hs-var">format</span></a></span><span> </span><span class="annot"><span class="annottext">TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+forall a. (Semigroup a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-var">+-+</span></a></span><span> </span><span class="annot"><span class="annottext">TimeFormat
+forall s. IsString s =&gt; s
+</span><a href="Kairos.html#tzString"><span class="hs-identifier hs-var">tzString</span></a></span><span>
+</span><span id="line-284"></span><span>
+</span><span id="line-285"></span><span class="hs-comment">-- | 'readTimeFormat' specialized to 'ZonedTime'.</span><span>
+</span><span id="line-286"></span><span class="hs-comment">--</span><span>
+</span><span id="line-287"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-288"></span><span class="annot"><a href="Kairos.html#readTimeFormatZoned"><span class="hs-identifier hs-type">readTimeFormatZoned</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeLocale</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span>
+</span><span id="line-289"></span><span id="readTimeFormatZoned"><span class="annot"><span class="annottext">readTimeFormatZoned :: TimeLocale -&gt; TimeFormat -&gt; Text -&gt; Maybe ZonedTime
+</span><a href="Kairos.html#readTimeFormatZoned"><span class="hs-identifier hs-var hs-var">readTimeFormatZoned</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeLocale -&gt; TimeFormat -&gt; Text -&gt; Maybe ZonedTime
+forall t.
+ParseTime t =&gt;
+TimeLocale -&gt; TimeFormat -&gt; Text -&gt; Maybe t
+</span><a href="Kairos.html#readTimeFormat"><span class="hs-identifier hs-var">readTimeFormat</span></a></span><span>
+</span><span id="line-290"></span><span>
+</span><span id="line-291"></span><span class="hs-comment">-- | 'readTimeFormat' specialized to 'LocalTime'.</span><span>
+</span><span id="line-292"></span><span class="hs-comment">--</span><span>
+</span><span id="line-293"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-294"></span><span class="annot"><a href="Kairos.html#readTimeFormatLocal"><span class="hs-identifier hs-type">readTimeFormatLocal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeLocale</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">LocalTime</span></span><span>
+</span><span id="line-295"></span><span id="readTimeFormatLocal"><span class="annot"><span class="annottext">readTimeFormatLocal :: TimeLocale -&gt; TimeFormat -&gt; Text -&gt; Maybe LocalTime
+</span><a href="Kairos.html#readTimeFormatLocal"><span class="hs-identifier hs-var hs-var">readTimeFormatLocal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeLocale -&gt; TimeFormat -&gt; Text -&gt; Maybe LocalTime
+forall t.
+ParseTime t =&gt;
+TimeLocale -&gt; TimeFormat -&gt; Text -&gt; Maybe t
+</span><a href="Kairos.html#readTimeFormat"><span class="hs-identifier hs-var">readTimeFormat</span></a></span><span>
+</span><span id="line-296"></span><span>
+</span><span id="line-297"></span><span class="hs-comment">-- | @readTimeFormat locale format timeStr@ attempts to parse the @timeStr@ given</span><span>
+</span><span id="line-298"></span><span class="hs-comment">-- the expected @format@. No timezone is assumed, so if it is left off then</span><span>
+</span><span id="line-299"></span><span class="hs-comment">-- the result is UTC.</span><span>
+</span><span id="line-300"></span><span class="hs-comment">--</span><span>
+</span><span id="line-301"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-302"></span><span id="local-6989586621679097030"><span class="annot"><a href="Kairos.html#readTimeFormat"><span class="hs-identifier hs-type">readTimeFormat</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ParseTime</span></span><span> </span><span class="annot"><a href="#local-6989586621679097030"><span class="hs-identifier hs-type">t</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeLocale</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679097030"><span class="hs-identifier hs-type">t</span></a></span></span><span>
+</span><span id="line-303"></span><span id="readTimeFormat"><span class="annot"><span class="annottext">readTimeFormat :: forall t.
+ParseTime t =&gt;
+TimeLocale -&gt; TimeFormat -&gt; Text -&gt; Maybe t
+</span><a href="Kairos.html#readTimeFormat"><span class="hs-identifier hs-var hs-var">readTimeFormat</span></a></span></span><span> </span><span id="local-6989586621679097355"><span class="annot"><span class="annottext">TimeLocale
+</span><a href="#local-6989586621679097355"><span class="hs-identifier hs-var">locale</span></a></span></span><span> </span><span id="local-6989586621679097356"><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097356"><span class="hs-identifier hs-var">format</span></a></span></span><span> </span><span id="local-6989586621679097357"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097357"><span class="hs-identifier hs-var">timeStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; TimeLocale -&gt; String -&gt; String -&gt; Maybe t
+forall (m :: * -&gt; *) t.
+(MonadFail m, ParseTime t) =&gt;
+Bool -&gt; TimeLocale -&gt; String -&gt; String -&gt; m t
+</span><span class="hs-identifier hs-var">Format.parseTimeM</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="annot"><span class="annottext">TimeLocale
+</span><a href="#local-6989586621679097355"><span class="hs-identifier hs-var">locale</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679097359"><span class="hs-identifier hs-var">format'</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679097360"><span class="hs-identifier hs-var">timeStr'</span></a></span><span>
+</span><span id="line-304"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-305"></span><span>    </span><span id="local-6989586621679097359"><span class="annot"><span class="annottext">format' :: String
+</span><a href="#local-6989586621679097359"><span class="hs-identifier hs-var hs-var">format'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; String) -&gt; Text -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="#local-6989586621679097356"><span class="hs-identifier hs-var">format</span></a></span><span> </span><span class="annot"><span class="annottext">TimeFormat -&gt; Optic' An_Iso NoIx TimeFormat Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' An_Iso NoIx TimeFormat Text
+</span><span class="">#unTimeFormat</span></span><span>
+</span><span id="line-306"></span><span>    </span><span id="local-6989586621679097360"><span class="annot"><span class="annottext">timeStr' :: String
+</span><a href="#local-6989586621679097360"><span class="hs-identifier hs-var hs-var">timeStr'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679097357"><span class="hs-identifier hs-var">timeStr</span></a></span><span>
+</span><span id="line-307"></span><span>
+</span><span id="line-308"></span><span class="hs-comment">-- | Converts a local time to the given timezone.</span><span>
+</span><span id="line-309"></span><span class="hs-comment">--</span><span>
+</span><span id="line-310"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-311"></span><span class="annot"><a href="Kairos.html#convertLocalToZoned"><span class="hs-identifier hs-type">convertLocalToZoned</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">LocalTime</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier hs-type">TZInput</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span>
+</span><span id="line-312"></span><span id="convertLocalToZoned"><span class="annot"><span class="annottext">convertLocalToZoned :: LocalTime -&gt; TZInput -&gt; ZonedTime
+</span><a href="Kairos.html#convertLocalToZoned"><span class="hs-identifier hs-var hs-var">convertLocalToZoned</span></a></span></span><span> </span><span id="local-6989586621679097362"><span class="annot"><span class="annottext">LocalTime
+</span><a href="#local-6989586621679097362"><span class="hs-identifier hs-var">localTime</span></a></span></span><span> </span><span id="local-6989586621679097363"><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097363"><span class="hs-identifier hs-var">tzInput</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-313"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097363"><span class="hs-identifier hs-var">tzInput</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-314"></span><span>    </span><span class="hs-comment">-- We have a TZLabel. We need to perform to/from UTC conversions to get</span><span>
+</span><span id="line-315"></span><span>    </span><span class="hs-comment">-- the correct time, because the Label -&gt; TimeZone function is not</span><span>
+</span><span id="line-316"></span><span>    </span><span class="hs-comment">-- constant (consider e.g. daylight savings).</span><span>
+</span><span id="line-317"></span><span>    </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZDatabase"><span class="hs-identifier hs-type">TZDatabase</span></a></span><span> </span><span id="local-6989586621679097364"><span class="annot"><span class="annottext">TZLabel
+</span><a href="#local-6989586621679097364"><span class="hs-keyword hs-var">label</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(TZ -&gt; LocalTime -&gt; UTCTime) -&gt; LocalTime -&gt; TZLabel -&gt; ZonedTime
+forall a. (TZ -&gt; a -&gt; UTCTime) -&gt; a -&gt; TZLabel -&gt; ZonedTime
+</span><a href="Kairos.html#convertFromLabel"><span class="hs-identifier hs-var">convertFromLabel</span></a></span><span> </span><span class="annot"><span class="annottext">TZ -&gt; LocalTime -&gt; UTCTime
+</span><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.html/Data.Time.Zones.html#localTimeToUTCTZ"><span class="hs-identifier hs-var">Zones.localTimeToUTCTZ</span></a></span><span> </span><span class="annot"><span class="annottext">LocalTime
+</span><a href="#local-6989586621679097362"><span class="hs-identifier hs-var">localTime</span></a></span><span> </span><span class="annot"><span class="annottext">TZLabel
+</span><a href="#local-6989586621679097364"><span class="hs-keyword hs-var">label</span></a></span><span>
+</span><span id="line-318"></span><span>    </span><span class="hs-comment">-- If we have a TimeZone then we can just create the ZonedTime directly.</span><span>
+</span><span id="line-319"></span><span>    </span><span class="hs-comment">-- No need for any conversions.</span><span>
+</span><span id="line-320"></span><span>    </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZActual"><span class="hs-identifier hs-type">TZActual</span></a></span><span> </span><span id="local-6989586621679097367"><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097367"><span class="hs-identifier hs-var">timeZone</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LocalTime -&gt; TimeZone -&gt; ZonedTime
+</span><span class="hs-identifier hs-var">ZonedTime</span></span><span> </span><span class="annot"><span class="annottext">LocalTime
+</span><a href="#local-6989586621679097362"><span class="hs-identifier hs-var">localTime</span></a></span><span> </span><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097367"><span class="hs-identifier hs-var">timeZone</span></a></span><span>
+</span><span id="line-321"></span><span>
+</span><span id="line-322"></span><span class="hs-comment">-- | Converts a zoned time to the given timezone.</span><span>
+</span><span id="line-323"></span><span class="hs-comment">--</span><span>
+</span><span id="line-324"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-325"></span><span class="annot"><a href="Kairos.html#convertZoned"><span class="hs-identifier hs-type">convertZoned</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZInput"><span class="hs-identifier hs-type">TZInput</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span>
+</span><span id="line-326"></span><span id="convertZoned"><span class="annot"><span class="annottext">convertZoned :: ZonedTime -&gt; TZInput -&gt; ZonedTime
+</span><a href="Kairos.html#convertZoned"><span class="hs-identifier hs-var hs-var">convertZoned</span></a></span></span><span> </span><span id="local-6989586621679097368"><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097368"><span class="hs-identifier hs-var">zonedTime</span></a></span></span><span> </span><span id="local-6989586621679097369"><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097369"><span class="hs-identifier hs-var">tzInput</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-327"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">TZInput
+</span><a href="#local-6989586621679097369"><span class="hs-identifier hs-var">tzInput</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-328"></span><span>    </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZDatabase"><span class="hs-identifier hs-type">TZDatabase</span></a></span><span> </span><span id="local-6989586621679097370"><span class="annot"><span class="annottext">TZLabel
+</span><a href="#local-6989586621679097370"><span class="hs-keyword hs-var">label</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(TZ -&gt; ZonedTime -&gt; UTCTime) -&gt; ZonedTime -&gt; TZLabel -&gt; ZonedTime
+forall a. (TZ -&gt; a -&gt; UTCTime) -&gt; a -&gt; TZLabel -&gt; ZonedTime
+</span><a href="Kairos.html#convertFromLabel"><span class="hs-identifier hs-var">convertFromLabel</span></a></span><span> </span><span class="annot"><span class="annottext">TZ -&gt; ZonedTime -&gt; UTCTime
+forall {b}. b -&gt; ZonedTime -&gt; UTCTime
+</span><a href="#local-6989586621679097371"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097368"><span class="hs-identifier hs-var">zonedTime</span></a></span><span> </span><span class="annot"><span class="annottext">TZLabel
+</span><a href="#local-6989586621679097370"><span class="hs-keyword hs-var">label</span></a></span><span>
+</span><span id="line-329"></span><span>    </span><span class="annot"><a href="Kairos.Types.TZInput.html#TZActual"><span class="hs-identifier hs-type">TZActual</span></a></span><span> </span><span id="local-6989586621679097372"><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097372"><span class="hs-identifier hs-var">timeZone</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; TimeZone -&gt; ZonedTime
+</span><a href="Kairos.html#convertFromActual"><span class="hs-identifier hs-var">convertFromActual</span></a></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097368"><span class="hs-identifier hs-var">zonedTime</span></a></span><span> </span><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097372"><span class="hs-identifier hs-var">timeZone</span></a></span><span>
+</span><span id="line-330"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-331"></span><span>    </span><span id="local-6989586621679097371"><span class="annot"><span class="annottext">f :: b -&gt; ZonedTime -&gt; UTCTime
+</span><a href="#local-6989586621679097371"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(ZonedTime -&gt; UTCTime) -&gt; b -&gt; ZonedTime -&gt; UTCTime
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; UTCTime
+</span><span class="hs-identifier hs-var">Local.zonedTimeToUTC</span></span><span>
+</span><span id="line-332"></span><span>
+</span><span id="line-333"></span><span class="hs-comment">-- | Converts the ZonedTime to UTCTime and finally the requested TimeZone.</span><span>
+</span><span id="line-334"></span><span class="hs-comment">--</span><span>
+</span><span id="line-335"></span><span class="hs-comment">-- The parameter 'TimeZone' is the destination.</span><span>
+</span><span id="line-336"></span><span class="annot"><a href="Kairos.html#convertFromActual"><span class="hs-identifier hs-type">convertFromActual</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeZone</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span>
+</span><span id="line-337"></span><span id="convertFromActual"><span class="annot"><span class="annottext">convertFromActual :: ZonedTime -&gt; TimeZone -&gt; ZonedTime
+</span><a href="Kairos.html#convertFromActual"><span class="hs-identifier hs-var hs-var">convertFromActual</span></a></span></span><span> </span><span id="local-6989586621679097375"><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097375"><span class="hs-identifier hs-var">zt</span></a></span></span><span> </span><span id="local-6989586621679097376"><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097376"><span class="hs-identifier hs-var">timeZone</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeZone -&gt; UTCTime -&gt; ZonedTime
+</span><span class="hs-identifier hs-var">Local.utcToZonedTime</span></span><span> </span><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097376"><span class="hs-identifier hs-var">timeZone</span></a></span><span> </span><span class="annot"><span class="annottext">UTCTime
+</span><a href="#local-6989586621679097377"><span class="hs-identifier hs-var">utcTime</span></a></span><span>
+</span><span id="line-338"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-339"></span><span>    </span><span class="hs-comment">-- Convert to UTC.</span><span>
+</span><span id="line-340"></span><span>    </span><span id="local-6989586621679097377"><span class="annot"><span class="annottext">utcTime :: UTCTime
+</span><a href="#local-6989586621679097377"><span class="hs-identifier hs-var hs-var">utcTime</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ZonedTime -&gt; UTCTime
+</span><span class="hs-identifier hs-var">Local.zonedTimeToUTC</span></span><span> </span><span class="annot"><span class="annottext">ZonedTime
+</span><a href="#local-6989586621679097375"><span class="hs-identifier hs-var">zt</span></a></span><span>
+</span><span id="line-341"></span><span>
+</span><span id="line-342"></span><span class="hs-comment">-- | Converts some time ('LocalTime' or 'ZonedTime') to 'UTCTime' then finally</span><span>
+</span><span id="line-343"></span><span class="hs-comment">-- a ZonedTime based on the given 'TZLabel'.</span><span>
+</span><span id="line-344"></span><span class="hs-comment">--</span><span>
+</span><span id="line-345"></span><span class="hs-comment">-- ZonedTime is expected to pass a toUtcTime function that ignored the</span><span>
+</span><span id="line-346"></span><span class="hs-comment">-- 'TZ' parameter, since it already has its own time zone info. the 'TZLabel'</span><span>
+</span><span id="line-347"></span><span class="hs-comment">-- is used purely to convert the destination.</span><span>
+</span><span id="line-348"></span><span class="hs-comment">--</span><span>
+</span><span id="line-349"></span><span class="hs-comment">-- LocalTime, on the other hand, is expected to use 'TZ' since it does not</span><span>
+</span><span id="line-350"></span><span class="hs-comment">-- have its own time zone info. This may seem silly, since we are using the</span><span>
+</span><span id="line-351"></span><span class="hs-comment">-- parameter to TZLabel to determine the (source) LocalTime's zone, converting</span><span>
+</span><span id="line-352"></span><span class="hs-comment">-- to UTC, then converting to (dest) ZonedTime based on the same zone. Why</span><span>
+</span><span id="line-353"></span><span class="hs-comment">-- are we &quot;converting&quot; to the same time zone?</span><span>
+</span><span id="line-354"></span><span class="hs-comment">--</span><span>
+</span><span id="line-355"></span><span class="hs-comment">-- There may well be a more direct method, but we have to do _something_</span><span>
+</span><span id="line-356"></span><span class="hs-comment">-- non-trivial here because the actual TimeZone will vary with the LocalTime</span><span>
+</span><span id="line-357"></span><span class="hs-comment">-- (e.g. daylight savings, leap seconds). Thus we first get a zoned time (UTC)</span><span>
+</span><span id="line-358"></span><span class="hs-comment">-- with the LocalTime and TZLabel. Then we convert that to the TimeZone of our</span><span>
+</span><span id="line-359"></span><span class="hs-comment">-- choice. The returned ZonedTime's LocalTime should be very similar, with the</span><span>
+</span><span id="line-360"></span><span class="hs-comment">-- only differences due to the aforementioned issues.</span><span>
+</span><span id="line-361"></span><span id="local-6989586621679097040"><span class="annot"><a href="Kairos.html#convertFromLabel"><span class="hs-identifier hs-type">convertFromLabel</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.Types.html/Data.Time.Zones.Types.html#TZ"><span class="hs-identifier hs-type">TZ</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097040"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">UTCTime</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097040"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/dkaa8li51bczirz1mcdd0gjj9w2zm421-tzdata-0.2.20240201.0-doc/share/doc/tzdata-0.2.20240201.0/html/src/Data.Time.Zones.DB.html/Data.Time.Zones.DB.html#TZLabel"><span class="hs-identifier hs-type">TZLabel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span></span><span>
+</span><span id="line-362"></span><span id="convertFromLabel"><span class="annot"><span class="annottext">convertFromLabel :: forall a. (TZ -&gt; a -&gt; UTCTime) -&gt; a -&gt; TZLabel -&gt; ZonedTime
+</span><a href="Kairos.html#convertFromLabel"><span class="hs-identifier hs-var hs-var">convertFromLabel</span></a></span></span><span> </span><span id="local-6989586621679097378"><span class="annot"><span class="annottext">TZ -&gt; a -&gt; UTCTime
+</span><a href="#local-6989586621679097378"><span class="hs-identifier hs-var">toUtcTime</span></a></span></span><span> </span><span id="local-6989586621679097379"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679097379"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679097380"><span class="annot"><span class="annottext">TZLabel
+</span><a href="#local-6989586621679097380"><span class="hs-identifier hs-var">tzLabel</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeZone -&gt; UTCTime -&gt; ZonedTime
+</span><span class="hs-identifier hs-var">Local.utcToZonedTime</span></span><span> </span><span class="annot"><span class="annottext">TimeZone
+</span><a href="#local-6989586621679097381"><span class="hs-identifier hs-var">timeZone</span></a></span><span> </span><span class="annot"><span class="annottext">UTCTime
+</span><a href="#local-6989586621679097382"><span class="hs-identifier hs-var">utcTime</span></a></span><span>
+</span><span id="line-363"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-364"></span><span>    </span><span class="hs-comment">-- This is a TZ i.e. the preliminary timezone corresponding to our</span><span>
+</span><span id="line-365"></span><span>    </span><span class="hs-comment">-- label e.g. America/New_York -&gt; TZ. This type is a stepping stone</span><span>
+</span><span id="line-366"></span><span>    </span><span class="hs-comment">-- to the actual ZonedTime we want.</span><span>
+</span><span id="line-367"></span><span>    </span><span id="local-6989586621679097383"><span class="annot"><span class="annottext">tz :: TZ
+</span><a href="#local-6989586621679097383"><span class="hs-identifier hs-var hs-var">tz</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TZLabel -&gt; TZ
+</span><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.All.html/Data.Time.Zones.All.html#tzByLabel"><span class="hs-identifier hs-var">All.tzByLabel</span></a></span><span> </span><span class="annot"><span class="annottext">TZLabel
+</span><a href="#local-6989586621679097380"><span class="hs-identifier hs-var">tzLabel</span></a></span><span>
+</span><span id="line-368"></span><span>    </span><span class="hs-comment">-- Convert to UTC. Localtime will use the tz param to derive TimeZone</span><span>
+</span><span id="line-369"></span><span>    </span><span class="hs-comment">-- information. ZonedTime will ignore it as it already carries TimeZone</span><span>
+</span><span id="line-370"></span><span>    </span><span class="hs-comment">-- info.</span><span>
+</span><span id="line-371"></span><span>    </span><span id="local-6989586621679097382"><span class="annot"><span class="annottext">utcTime :: UTCTime
+</span><a href="#local-6989586621679097382"><span class="hs-identifier hs-var hs-var">utcTime</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TZ -&gt; a -&gt; UTCTime
+</span><a href="#local-6989586621679097378"><span class="hs-identifier hs-var">toUtcTime</span></a></span><span> </span><span class="annot"><span class="annottext">TZ
+</span><a href="#local-6989586621679097383"><span class="hs-identifier hs-var">tz</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679097379"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-372"></span><span>    </span><span class="hs-comment">-- Get the final TimeZone from TZ and the UTC time. We need</span><span>
+</span><span id="line-373"></span><span>    </span><span class="hs-comment">-- the time as the TimeZone can vary with the actual time e.g.</span><span>
+</span><span id="line-374"></span><span>    </span><span class="hs-comment">-- America/New_York -&gt; EST / EDT.</span><span>
+</span><span id="line-375"></span><span>    </span><span id="local-6989586621679097381"><span class="annot"><span class="annottext">timeZone :: TimeZone
+</span><a href="#local-6989586621679097381"><span class="hs-identifier hs-var hs-var">timeZone</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TZ -&gt; UTCTime -&gt; TimeZone
+</span><a href="file:///nix/store/j45f812pqrqhw2zlrl1nslp6nq59x6hx-tz-0.1.3.6-doc/share/doc/tz-0.1.3.6/html/src/Data.Time.Zones.html/Data.Time.Zones.html#timeZoneForUTCTime"><span class="hs-identifier hs-var">Zones.timeZoneForUTCTime</span></a></span><span> </span><span class="annot"><span class="annottext">TZ
+</span><a href="#local-6989586621679097383"><span class="hs-identifier hs-var">tz</span></a></span><span> </span><span class="annot"><span class="annottext">UTCTime
+</span><a href="#local-6989586621679097382"><span class="hs-identifier hs-var">utcTime</span></a></span><span>
+</span><span id="line-376"></span><span>
+</span><span id="line-377"></span><span class="hs-comment">-- concat with a space</span><span>
+</span><span id="line-378"></span><span id="local-6989586621679097019"><span class="annot"><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-type">(+-+)</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="annot"><a href="#local-6989586621679097019"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679097019"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097019"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097019"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679097019"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-379"></span><span id="local-6989586621679097391"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679097391"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="%2B-%2B"><span class="annot"><span class="annottext">+-+ :: forall a. (Semigroup a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-var hs-var">+-+</span></a></span></span><span> </span><span id="local-6989586621679097392"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679097392"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679097391"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot; &quot;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679097392"><span class="hs-identifier hs-var">ys</span></a></span><span>
+</span><span id="line-380"></span><span>
+</span><span id="line-381"></span><span class="hs-keyword">infixr</span><span> </span><span class="hs-number">5</span><span> </span><span class="annot"><a href="Kairos.html#%2B-%2B"><span class="hs-operator hs-type">+-+</span></a></span><span>
+</span><span id="line-382"></span><span>
+</span><span id="line-383"></span><span id="local-6989586621679096960"><span class="annot"><a href="Kairos.html#getCurrentTimeZone"><span class="hs-identifier hs-type">getCurrentTimeZone</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679096960"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679096960"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeZone</span></span></span><span>
+</span><span id="line-384"></span><span id="getCurrentTimeZone"><span class="annot"><span class="annottext">getCurrentTimeZone :: forall (m :: * -&gt; *). (HasCallStack, MonadTime m) =&gt; m TimeZone
+</span><a href="Kairos.html#getCurrentTimeZone"><span class="hs-identifier hs-var hs-var">getCurrentTimeZone</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-385"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">ZonedTime</span></span><span> </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679097402"><span class="annot"><a href="#local-6989586621679097402"><span class="hs-identifier hs-var">tz</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m ZonedTime
+forall (m :: * -&gt; *). (MonadTime m, HasCallStack) =&gt; m ZonedTime
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.10.1-inplace/effects-time-0.1-a9e872c642cfc9c1ad3a8cf970852b5afff928e2471f75003194537f7a560d77/share/doc/html/src/Effects.Time.html/Effects.Time.html#getSystemZonedTime"><span class="hs-identifier hs-var">getSystemZonedTime</span></a></span><span>
+</span><span id="line-386"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="annot"><a href="#local-6989586621679097402"><span class="hs-identifier hs-type">tz</span></a></span><span>
+</span><span id="line-387"></span></pre></body></html>

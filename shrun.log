@@ -1,0 +1,147 @@
+[2025-03-13 16:17:55][Command][haddock_push] Starting...
+[2025-03-13 16:17:55][Command][haddock_push] Your branch is up to date with 'origin/main'.
+[2025-03-13 16:17:55][Command][haddock_push] Already on 'main'
+[2025-03-13 16:17:55][Command][haddock_push] Switched to a new branch 'gh-pages'
+[2025-03-13 16:17:55][Command][haddock_push] Downloading the latest package list from hackage.haskell.org
+[2025-03-13 16:19:06][Command][haddock_push] Package list of hackage.haskell.org has been updated.
+[2025-03-13 16:19:07][Command][haddock_push] The index-state is set to 2025-03-13T00:45:00Z.
+[2025-03-13 16:19:07][Command][haddock_push] To revert to previous state run:
+[2025-03-13 16:19:07][Command][haddock_push]     cabal v2-update 'hackage.haskell.org,2025-02-25T23:44:29Z'
+[2025-03-13 16:19:15][Command][haddock_push] Resolving dependencies...
+[2025-03-13 16:19:17][Command][haddock_push] Build profile: -w ghc-9.10.1 -O2
+[2025-03-13 16:19:17][Command][haddock_push] In order, the following will be built (use -v for more details):
+[2025-03-13 16:19:17][Command][haddock_push]  - algebra-simple-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - effects-ioref-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - effects-terminal-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - exception-utils-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - fs-utils-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - effects-time-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - effects-optparse-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - effects-fs-0.1 (lib) (requires build)
+[2025-03-13 16:19:17][Command][haddock_push]  - kairos-0.1 (lib) (configuration changed)
+[2025-03-13 16:19:17][Command][haddock_push]  - kairos-0.1 (lib:kairos-runner) (configuration changed)
+[2025-03-13 16:19:17][Command][haddock_push] Starting     effects-terminal-0.1 (lib)
+[2025-03-13 16:19:18][Command][haddock_push] Starting     effects-ioref-0.1 (lib)
+[2025-03-13 16:19:18][Command][haddock_push] Starting     fs-utils-0.1 (lib)
+[2025-03-13 16:19:18][Command][haddock_push] Starting     exception-utils-0.1 (lib)
+[2025-03-13 16:19:18][Command][haddock_push] Starting     algebra-simple-0.1 (lib)
+[2025-03-13 16:20:51][Command][haddock_push] Building     effects-terminal-0.1 (lib)
+[2025-03-13 16:20:53][Command][haddock_push] Building     algebra-simple-0.1 (lib)
+[2025-03-13 16:20:56][Command][haddock_push] Building     fs-utils-0.1 (lib)
+[2025-03-13 16:20:58][Command][haddock_push] Building     effects-ioref-0.1 (lib)
+[2025-03-13 16:21:01][Command][haddock_push] Building     exception-utils-0.1 (lib)
+[2025-03-13 16:21:09][Command][haddock_push] Haddock      effects-terminal-0.1 (lib)
+[2025-03-13 16:21:10][Command][haddock_push] Haddock      effects-ioref-0.1 (lib)
+[2025-03-13 16:21:16][Command][haddock_push] Haddock      exception-utils-0.1 (lib)
+[2025-03-13 16:21:19][Command][haddock_push] Haddock      fs-utils-0.1 (lib)
+[2025-03-13 16:21:25][Command][haddock_push] Haddock      algebra-simple-0.1 (lib)
+[2025-03-13 16:21:56][Command][haddock_push] Installing   effects-ioref-0.1 (lib)
+[2025-03-13 16:22:11][Command][haddock_push] Installing   effects-terminal-0.1 (lib)
+[2025-03-13 16:22:16][Command][haddock_push] Installing   exception-utils-0.1 (lib)
+[2025-03-13 16:22:18][Command][haddock_push] Installing   algebra-simple-0.1 (lib)
+[2025-03-13 16:22:41][Command][haddock_push] Installing   fs-utils-0.1 (lib)
+[2025-03-13 16:23:06][Command][haddock_push] Completed    effects-ioref-0.1 (lib)
+[2025-03-13 16:23:35][Command][haddock_push] Completed    effects-terminal-0.1 (lib)
+[2025-03-13 16:24:02][Command][haddock_push] Completed    exception-utils-0.1 (lib)
+[2025-03-13 16:24:30][Command][haddock_push] Completed    algebra-simple-0.1 (lib)
+[2025-03-13 16:24:30][Command][haddock_push] Starting     effects-time-0.1 (lib)
+[2025-03-13 16:24:59][Command][haddock_push] Completed    fs-utils-0.1 (lib)
+[2025-03-13 16:24:59][Command][haddock_push] Starting     effects-optparse-0.1 (lib)
+[2025-03-13 16:24:59][Command][haddock_push] Starting     effects-fs-0.1 (lib)
+[2025-03-13 16:25:51][Command][haddock_push] Building     effects-time-0.1 (lib)
+[2025-03-13 16:25:54][Command][haddock_push] Building     effects-optparse-0.1 (lib)
+[2025-03-13 16:25:56][Command][haddock_push] Building     effects-fs-0.1 (lib)
+[2025-03-13 16:26:00][Command][haddock_push] Haddock      effects-time-0.1 (lib)
+[2025-03-13 16:26:03][Command][haddock_push] Haddock      effects-optparse-0.1 (lib)
+[2025-03-13 16:26:20][Command][haddock_push] Haddock      effects-fs-0.1 (lib)
+[2025-03-13 16:26:44][Command][haddock_push] Installing   effects-time-0.1 (lib)
+[2025-03-13 16:27:09][Command][haddock_push] Installing   effects-optparse-0.1 (lib)
+[2025-03-13 16:27:30][Command][haddock_push] Completed    effects-time-0.1 (lib)
+[2025-03-13 16:27:30][Command][haddock_push] Configuring library for kairos-0.1...
+[2025-03-13 16:27:37][Command][haddock_push] Installing   effects-fs-0.1 (lib)
+[2025-03-13 16:28:08][Command][haddock_push] Completed    effects-optparse-0.1 (lib)
+[2025-03-13 16:28:51][Command][haddock_push] Completed    effects-fs-0.1 (lib)
+[2025-03-13 16:29:08][Command][haddock_push] Preprocessing library for kairos-0.1...
+[2025-03-13 16:29:08][Command][haddock_push] Building library for kairos-0.1...
+[2025-03-13 16:29:12][Command][haddock_push] [8 of 8] Compiling Kairos           ( src/Kairos.hs, /home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/opt/build/Kairos.o, /home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/opt/build/Kairos.dyn_o ) [Effects.Time package changed]
+[2025-03-13 16:29:19][Command][haddock_push] Preprocessing library for kairos-0.1...
+[2025-03-13 16:29:19][Command][haddock_push] Running Haddock on library for kairos-0.1...
+[2025-03-13 16:29:24][Command][haddock_push] [1 of 8] Compiling Kairos.Internal  ( src/Kairos/Internal.hs, nothing )
+[2025-03-13 16:29:24][Command][haddock_push] [2 of 8] Compiling Kairos.Types.Date.Internal ( src/Kairos/Types/Date/Internal.hs, nothing )
+[2025-03-13 16:29:26][Command][haddock_push] [3 of 8] Compiling Kairos.Types.Date ( src/Kairos/Types/Date.hs, nothing )
+[2025-03-13 16:29:26][Command][haddock_push] [4 of 8] Compiling Kairos.Types.TZInput ( src/Kairos/Types/TZInput.hs, nothing )
+[2025-03-13 16:29:26][Command][haddock_push] [5 of 8] Compiling Kairos.Types.TimeFormat ( src/Kairos/Types/TimeFormat.hs, nothing )
+[2025-03-13 16:29:26][Command][haddock_push] [6 of 8] Compiling Kairos.Types.Exception ( src/Kairos/Types/Exception.hs, nothing )
+[2025-03-13 16:29:27][Command][haddock_push] [7 of 8] Compiling Kairos.Types.TimeReader ( src/Kairos/Types/TimeReader.hs, nothing )
+[2025-03-13 16:29:27][Command][haddock_push] [8 of 8] Compiling Kairos           ( src/Kairos.hs, nothing )
+[2025-03-13 16:30:06][Command][haddock_push] Haddock coverage:
+[2025-03-13 16:30:06][Command][haddock_push]  100% (  5 /  5) in 'Kairos.Internal'
+[2025-03-13 16:30:06][Command][haddock_push]  100% ( 10 / 10) in 'Kairos.Types.Date.Internal'
+[2025-03-13 16:30:06][Command][haddock_push]  100% ( 15 / 15) in 'Kairos.Types.Date'
+[2025-03-13 16:30:06][Command][haddock_push]  100% (  5 /  5) in 'Kairos.Types.TZInput'
+[2025-03-13 16:30:06][Command][haddock_push] Warning: 'TimeReader' is out of scope.
+[2025-03-13 16:30:06][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2025-03-13 16:30:06][Command][haddock_push] Warning: 'format' is out of scope.
+[2025-03-13 16:30:06][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2025-03-13 16:30:06][Command][haddock_push]  100% (  8 /  8) in 'Kairos.Types.TimeFormat'
+[2025-03-13 16:30:06][Command][haddock_push]  100% (  7 /  7) in 'Kairos.Types.Exception'
+[2025-03-13 16:30:06][Command][haddock_push]  100% (  3 /  3) in 'Kairos.Types.TimeReader'
+[2025-03-13 16:30:06][Command][haddock_push] Warning: 'ParseTZDatabaseException' is out of scope.
+[2025-03-13 16:30:06][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2025-03-13 16:30:06][Command][haddock_push] Warning: 'ZonedTime' is ambiguous. It is defined
+[2025-03-13 16:30:06][Command][haddock_push]     * in ‘Data.Time.LocalTime.Internal.ZonedTime’
+[2025-03-13 16:30:06][Command][haddock_push]     * in ‘Data.Time.LocalTime.Internal.ZonedTime’
+[2025-03-13 16:30:06][Command][haddock_push]     You may be able to disambiguate the identifier by qualifying it or
+[2025-03-13 16:30:06][Command][haddock_push]     by specifying the type/value namespace explicitly.
+[2025-03-13 16:30:06][Command][haddock_push]     Defaulting to the one defined in ‘Data.Time.LocalTime.Internal.ZonedTime’
+[2025-03-13 16:30:06][Command][haddock_push]  100% ( 26 / 26) in 'Kairos'
+[2025-03-13 16:30:06][Command][haddock_push] Warning: Kairos.Types.Date.Internal: could not find link destinations for: 
+[2025-03-13 16:30:06][Command][haddock_push] - Kairos.Types.Date.Internal.Rep_DateString
+[2025-03-13 16:30:06][Command][haddock_push] Warning: Kairos.Types.Date: could not find link destinations for: 
+[2025-03-13 16:30:06][Command][haddock_push] - Kairos.Types.Date.Internal.Rep_DateString
+[2025-03-13 16:30:06][Command][haddock_push] - Kairos.Types.Date.Rep_Date
+[2025-03-13 16:30:06][Command][haddock_push] Warning: Kairos.Types.TZInput: could not find link destinations for: 
+[2025-03-13 16:30:06][Command][haddock_push] - Kairos.Types.TZInput.Rep_TZInput
+[2025-03-13 16:30:06][Command][haddock_push] Warning: Kairos.Types.TimeFormat: could not find link destinations for: 
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.TimeFormat.Rep_TimeFormat
+[2025-03-13 16:30:07][Command][haddock_push] Warning: Kairos.Types.Exception: could not find link destinations for: 
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTZInputException
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTimeException
+[2025-03-13 16:30:07][Command][haddock_push] Warning: Kairos.Types.TimeReader: could not find link destinations for: 
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.TimeReader.Rep_TimeReader
+[2025-03-13 16:30:07][Command][haddock_push] Warning: Kairos: could not find link destinations for: 
+[2025-03-13 16:30:07][Command][haddock_push] - Data.Time.Zones.DB.Rep_TZLabel
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.Date.Rep_Date
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.TZInput.Rep_TZInput
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.TimeFormat.Rep_TimeFormat
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTZInputException
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTimeException
+[2025-03-13 16:30:07][Command][haddock_push] - Kairos.Types.TimeReader.Rep_TimeReader
+[2025-03-13 16:30:07][Command][haddock_push] Documentation created:
+[2025-03-13 16:30:07][Command][haddock_push] /home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/opt/doc/html/kairos/
+[2025-03-13 16:30:13][Command][haddock_push] Configuring library 'kairos-runner' for kairos-0.1...
+[2025-03-13 16:31:05][Command][haddock_push] Preprocessing library 'kairos-runner' for kairos-0.1...
+[2025-03-13 16:31:05][Command][haddock_push] Running Haddock on library 'kairos-runner' for kairos-0.1...
+[2025-03-13 16:31:05][Command][haddock_push] Warning: The documentation for the following packages are not installed. No
+[2025-03-13 16:31:05][Command][haddock_push] links will be generated to these packages: path-0.9.6, path-0.9.6
+[2025-03-13 16:31:11][Command][haddock_push] [1 of 4] Compiling Kairos.Runner.Toml ( runner/Kairos/Runner/Toml.hs, /tmp/nix-shell.1ywf5N/ghc2039170_0/ghc_6.o, /tmp/nix-shell.1ywf5N/ghc2039170_0/ghc_6.dyn_o )
+[2025-03-13 16:31:13][Command][haddock_push] [2 of 4] Compiling Paths_kairos     ( /home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs, /tmp/nix-shell.1ywf5N/ghc2039170_0/ghc_8.o, /tmp/nix-shell.1ywf5N/ghc2039170_0/ghc_8.dyn_o )
+[2025-03-13 16:31:13][Command][haddock_push] [3 of 4] Compiling Kairos.Runner.Args ( runner/Kairos/Runner/Args.hs, /tmp/nix-shell.1ywf5N/ghc2039170_0/ghc_4.o, /tmp/nix-shell.1ywf5N/ghc2039170_0/ghc_4.dyn_o )
+[2025-03-13 16:31:15][Command][haddock_push] [4 of 4] Compiling Kairos.Runner    ( runner/Kairos/Runner.hs, nothing )
+[2025-03-13 16:32:08][Command][haddock_push] Haddock coverage:
+[2025-03-13 16:32:08][Command][haddock_push]  100% (  2 /  2) in 'Kairos.Runner.Toml'
+[2025-03-13 16:32:08][Command][haddock_push]    0% (  0 /  9) in 'Paths_kairos'
+[2025-03-13 16:32:08][Command][haddock_push]   Missing documentation for:
+[2025-03-13 16:32:08][Command][haddock_push]     Module header
+[2025-03-13 16:32:08][Command][haddock_push]     version (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:36)
+[2025-03-13 16:32:08][Command][haddock_push]     getBinDir (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:56)
+[2025-03-13 16:32:08][Command][haddock_push]     getLibDir (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:57)
+[2025-03-13 16:32:08][Command][haddock_push]     getDynLibDir (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:58)
+[2025-03-13 16:32:08][Command][haddock_push]     getDataDir (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:59)
+[2025-03-13 16:32:08][Command][haddock_push]     getLibexecDir (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:60)
+[2025-03-13 16:32:08][Command][haddock_push]     getDataFileName (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:39)
+[2025-03-13 16:32:08][Command][haddock_push]     getSysconfDir (/home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/build/kairos-runner/autogen/Paths_kairos.hs:61)
+[2025-03-13 16:32:08][Command][haddock_push]  100% (  3 /  3) in 'Kairos.Runner.Args'
+[2025-03-13 16:32:08][Command][haddock_push]  100% (  2 /  2) in 'Kairos.Runner'
+[2025-03-13 16:32:09][Command][haddock_push] Documentation created:
+[2025-03-13 16:32:09][Command][haddock_push] /home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-0.1/l/kairos-runner/opt/doc/html/kairos/
