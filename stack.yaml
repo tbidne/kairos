@@ -1,0 +1,42 @@
+---
+resolver: nightly-2025-03-11
+packages:
+  - .
+ghc-options:
+  "$locals":
+    -Wall -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-deriving-strategies
+    -Wmissing-export-lists
+    -Wmissing-exported-signatures
+    -Wmissing-home-modules
+    -Wmissing-import-lists
+    -Wpartial-fields
+    -Wprepositive-qualified-module
+    -Wredundant-constraints
+    -Wunused-binds
+    -Wunused-packages
+    -Wunused-type-patterns
+    -Wno-unticked-promoted-constructors
+extra-deps:
+  - git: https://github.com/tbidne/algebra-simple.git
+    commit: 37ec7127fbd0f591d4539e4bf72a0badd7569181
+  - git: https://github.com/tbidne/bounds.git
+    commit: b7ca541cfdd8564bcebe5d38456fe7abf77885b8
+  - git: https://github.com/tbidne/exception-utils.git
+    commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
+  - git: https://github.com/tbidne/fs-utils.git
+    commit: 83472bc22a938db0d3b4c02a24a52bfca0484637
+  - git: https://github.com/tbidne/monad-effects.git
+    commit: 80cc48f2ebba62e526ca623da75053cd943473f7
+    subdirs:
+      - lib/effects-env
+      - lib/effects-fs
+      - lib/effects-ioref
+      - lib/effects-optparse
+      - lib/effects-terminal
+      - lib/effects-time
+  - git: https://github.com/tbidne/smart-math.git
+    commit: a39c02ec6a5a9c4b551baffafd75f26be74dd457

@@ -3,7 +3,7 @@
 # kairos
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/kairos?include_prereleases&sort=semver)](https://github.com/tbidne/kairos/releases/)
-[![ci](http://img.shields.io/github/actions/workflow/status/tbidne/hs-template/ci.yaml?branch=main)](https://github.com/tbidne/hs-template/actions/workflows/ci.yaml)
+[![ci](http://img.shields.io/github/actions/workflow/status/tbidne/kairos/ci.yaml?branch=main)](https://github.com/tbidne/kairos/actions/workflows/ci.yaml)
 [![MIT](https://img.shields.io/github/license/tbidne/kairos?color=blue)](https://opensource.org/licenses/MIT)
 
 ![linux](https://img.shields.io/static/v1?label=&message=linux&logo=linux&logoColor=white&labelColor=2f353e&color=blue)
@@ -28,6 +28,7 @@
   * [Time String](#time-string)
 * [Building](#building)
   * [Cabal](#cabal)
+  * [Stack](#stack)
   * [Nix](#nix)
 
 # Introduction
@@ -268,12 +269,12 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 * [`cabal 2.4+`](https://www.haskell.org/cabal/download.html)
 * One of:
-  * [`ghc 9.2`](https://www.haskell.org/ghc/download.html)
-  * [`ghc 9.4`](https://www.haskell.org/ghc/download.html)
-  * [`ghc 9.6`](https://www.haskell.org/ghc/download.html)
-  * [`ghc 9.8`](https://www.haskell.org/ghc/download.html)
-  * [`ghc 9.10`](https://www.haskell.org/ghc/download.html)
-  * [`ghc 9.12`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.2`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
+  * [`ghc 9.4`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
+  * [`ghc 9.6`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
+  * [`ghc 9.8`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
+  * [`ghc 9.10`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
+  * [`ghc 9.12`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
 
 * [`ghcup`](https://www.haskell.org/ghcup/)
 
@@ -281,7 +282,29 @@ The easiest way to install these is generally [`ghcup`](https://www.haskell.org/
 
 ### Build Kairos
 
-Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
+Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build` or installed globally (i.e. `~/.local/bin/kairos`) with `cabal install`.
+
+For further reproducibility, optional freeze files can be used e.g.
+
+```sh
+cabal build --project-file cabal.ghc9101.project
+```
+
+> [!NOTE]
+>
+> Freeze files are provided for only select compilers.
+
+## Stack
+
+### Prerequisites
+
+* [`stack`](https://docs.haskellstack.org/en/stable/)
+
+Like `cabal` and `ghc`, `stack` can be installed with [`ghcup`](https://www.haskell.org/ghcup/).
+
+### Build Kairos
+
+Once you have `stack`, `kairos` can be built with `stack build` or installed globally (i.e. `~/.local/bin/kairos`) with `stack install`.
 
 ## Nix
 
