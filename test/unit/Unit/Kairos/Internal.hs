@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 
-module Unit.Data.Time.Conversion.Internal (tests) where
+module Unit.Kairos.Internal (tests) where
 
 import Control.DeepSeq (force)
 import Control.Exception
@@ -8,7 +8,6 @@ import Control.Exception
   )
 import Control.Monad (void)
 import Data.Text.Encoding.Error qualified as TError
-import Data.Time.Conversion.Internal qualified as Internal
 import Hedgehog
   ( Property,
     PropertyName,
@@ -16,6 +15,7 @@ import Hedgehog
     forAll,
     property,
   )
+import Kairos.Internal qualified as Internal
 import Props.Generators qualified as G
 import Test.Tasty (TestName, TestTree, testGroup)
 #if MIN_VERSION_tasty_hedgehog(1, 2, 0)
@@ -28,7 +28,7 @@ import Test.Tasty.HUnit (testCase)
 tests :: TestTree
 tests =
   testGroup
-    "Data.Time.Conversion.Internal"
+    "Kairos.Internal"
     [ tzTests
     ]
 

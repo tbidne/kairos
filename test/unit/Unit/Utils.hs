@@ -10,8 +10,8 @@ module Unit.Utils
 where
 
 import Data.Text (Text)
-import Data.Time.Conversion.Types.Date (Date, DateString)
-import Data.Time.Conversion.Types.Date qualified as Date
+import Kairos.Types.Date (Date, DateString)
+import Kairos.Types.Date qualified as Date
 
 -- | Pure 'Date.parseDate' that returns a string error via 'EString'.
 runParseDate :: Text -> Either String Date

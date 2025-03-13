@@ -1,9 +1,9 @@
 module Main (main) where
 
 import Test.Tasty (defaultMain, testGroup)
-import Unit.Data.Time.Conversion qualified as C
-import Unit.Data.Time.Conversion.Internal qualified as CInternal
-import Unit.Data.Time.Conversion.Types.Date qualified as CTypes.Date
+import Unit.Kairos qualified as C
+import Unit.Kairos.Internal qualified as CInternal
+import Unit.Kairos.Types.Date qualified as CTypes.Date
 
 main :: IO ()
 main =

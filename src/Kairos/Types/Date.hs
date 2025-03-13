@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | @since 0.1
-module Data.Time.Conversion.Types.Date
+module Kairos.Types.Date
   ( -- * Date
     Date (..),
     parseDate,
@@ -24,9 +24,9 @@ where
 
 import Control.DeepSeq (NFData)
 import Data.Text (Text)
-import Data.Time.Conversion.Types.Date.Internal (DateString)
-import Data.Time.Conversion.Types.Date.Internal qualified as Internal
 import GHC.Generics (Generic)
+import Kairos.Types.Date.Internal (DateString)
+import Kairos.Types.Date.Internal qualified as Internal
 import Optics.Core (Prism', prism)
 
 -- | Date to use when reading a time string.

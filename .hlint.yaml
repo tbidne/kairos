@@ -2,15 +2,15 @@
 - ignore:
     name: "Redundant bracket"
     within:
-      - "Data.Time.Conversion.convertTime"
-      - "Data.Time.Conversion.currentDate"
-      - "Data.Time.Conversion.dateString"
-      - "Data.Time.Conversion.readConvertTime"
-      - "Data.Time.Conversion.readInLocalTimeZone"
-      - "Data.Time.Conversion.readTime"
-      - "Data.Time.Conversion.readTimeString"
-      - "Data.Time.Conversion.tzDatabaseToTZLabel"
-      - "Data.Time.Conversion.tzString"
+      - "Kairos.convertTime"
+      - "Kairos.currentDate"
+      - "Kairos.dateString"
+      - "Kairos.readConvertTime"
+      - "Kairos.readInLocalTimeZone"
+      - "Kairos.readTime"
+      - "Kairos.readTimeString"
+      - "Kairos.tzDatabaseToTZLabel"
+      - "Kairos.tzString"
 
 - ignore:
     name: "Avoid lambda"

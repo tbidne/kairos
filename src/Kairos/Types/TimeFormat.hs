@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | @since 0.1
-module Data.Time.Conversion.Types.TimeFormat
+module Kairos.Types.TimeFormat
   ( TimeFormat (..),
     defaultTimeFormat,
     hm,

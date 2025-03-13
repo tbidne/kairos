@@ -1,10 +1,9 @@
-{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | CLI args for TimeConv.
+-- | CLI args for Kairos.
 --
 -- @since 0.1
-module TimeConv.Runner.Args
+module Kairos.Runner.Args
   ( Args (..),
     parserInfo,
   )
@@ -15,12 +14,12 @@ import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Time.Conversion.Types.Date (Date)
-import Data.Time.Conversion.Types.Date qualified as Date
-import Data.Time.Conversion.Types.TimeFormat (TimeFormat)
-import Data.Time.Conversion.Types.TimeFormat qualified as TimeFmt
 import Data.Version (Version (versionBranch))
 import Effects.Optparse (OsPath, osPath)
+import Kairos.Types.Date (Date)
+import Kairos.Types.Date qualified as Date
+import Kairos.Types.TimeFormat (TimeFormat)
+import Kairos.Types.TimeFormat qualified as TimeFmt
 import Optics.Core ((^.))
 import Options.Applicative
   ( Parser,
@@ -41,7 +40,7 @@ import Options.Applicative.Help (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse), ReadM)
-import Paths_time_conv qualified as Paths
+import Paths_kairos qualified as Paths
 
 -- | CLI args.
 --
@@ -74,11 +73,11 @@ parserInfo =
       infoPolicy = Intersperse
     }
   where
-    header = Just "time-conv: A tool for timezone conversions."
+    header = Just "kairos: A tool for timezone conversions."
     footer = Just $ fromString versNum
     desc =
       Chunk.paragraph $
-        "time-conv reads time strings and converts between timezones. "
+        "kairos reads time strings and converts between timezones. "
           <> "For the src and dest options, TZ refers to labels like "
           <> "'America/New_York' or offsets like '+1300'. See "
           <> "https://en.wikipedia.org/wiki/Tz_database."
@@ -113,7 +112,7 @@ parseConfig =
     helpTxt =
       mconcat
         [ "Path to TOML config file. It not given we automatically look in ",
-          "the XDG config e.g. ~/.config/time-conv/config.toml."
+          "the XDG config e.g. ~/.config/kairos/config.toml."
         ]
 
 parseNoConfig :: Parser Bool

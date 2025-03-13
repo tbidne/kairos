@@ -2,7 +2,7 @@
 # Will be ovewritten by CLI --date, if given.
 today = true
 
-# Aliases for convenience e.g. time-conv -s ny 08:30
+# Aliases for convenience e.g. kairos -s ny 08:30
 [aliases]
 la = "america/los_angeles"
 ny = "america/new_york"

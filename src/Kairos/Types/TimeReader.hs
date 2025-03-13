@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | @since 0.1
-module Data.Time.Conversion.Types.TimeReader
+module Kairos.Types.TimeReader
   ( TimeReader (..),
     defaultTimeReader,
   )
@@ -9,10 +9,10 @@ where
 
 import Control.DeepSeq (NFData (rnf), deepseq)
 import Data.Text (Text)
-import Data.Time.Conversion.Types.Date (Date)
-import Data.Time.Conversion.Types.TZInput (TZInput)
-import Data.Time.Conversion.Types.TimeFormat (TimeFormat, defaultTimeFormat)
 import GHC.Generics (Generic)
+import Kairos.Types.Date (Date)
+import Kairos.Types.TZInput (TZInput)
+import Kairos.Types.TimeFormat (TimeFormat, defaultTimeFormat)
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)
 
 -- | Determines how to read a time string.

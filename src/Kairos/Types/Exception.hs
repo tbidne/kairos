@@ -1,5 +1,5 @@
 -- | @since 0.1
-module Data.Time.Conversion.Types.Exception
+module Kairos.Types.Exception
   ( ParseTimeException (..),
     ParseTZInputException (..),
     LocalTimeZoneException (..),
@@ -13,8 +13,8 @@ import Control.DeepSeq (NFData)
 import Control.Exception (Exception (displayException))
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Time.Conversion.Types.TimeFormat (TimeFormat)
 import GHC.Generics (Generic)
+import Kairos.Types.TimeFormat (TimeFormat)
 import Optics.Core ((^.))
 
 -- | Exception parsing time string.

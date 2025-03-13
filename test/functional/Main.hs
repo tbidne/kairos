@@ -12,13 +12,6 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader, ReaderT (runReaderT), ask)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Time.Conversion.Types.Date qualified as Date
-import Data.Time.Conversion.Types.Exception
-  ( DateNoTimeStringException,
-    ParseTZInputException,
-    ParseTimeException,
-    SrcTZNoTimeStringException,
-  )
 import Data.Time.Format qualified as Format
 import Effects.FileSystem.FileReader (MonadFileReader)
 import Effects.FileSystem.PathReader (MonadPathReader)
@@ -29,13 +22,20 @@ import Effects.System.Environment qualified as SysEnv
 import Effects.System.Terminal (MonadTerminal (putStrLn))
 import Effects.Time (MonadTime (getMonotonicTime, getSystemZonedTime))
 import FileSystem.OsPath (combineFilePaths)
+import Kairos.Runner (runKairos)
+import Kairos.Types.Date qualified as Date
+import Kairos.Types.Exception
+  ( DateNoTimeStringException,
+    ParseTZInputException,
+    ParseTimeException,
+    SrcTZNoTimeStringException,
+  )
 import Optics.Core (set', (^.))
 import Params (TestParams (MkTestParams, args, configEnabled, mCurrentTime))
 import Params qualified
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit (Assertion, assertBool, assertFailure, testCase, (@=?))
-import TimeConv.Runner (runTimeConv)
 
 -- | Runs functional tests.
 --
@@ -71,13 +71,13 @@ formatTests =
 
 testFormatDefault :: TestTree
 testFormatDefault = testCase "Uses default parsing" $ do
-  result <- captureTimeConvIO ["08:30", "-o", "%H:%M"]
+  result <- captureKairosIO ["08:30", "-o", "%H:%M"]
   "08:30" @=? result
 
 testFormatCustom :: TestTree
 testFormatCustom = testCase "Uses custom parsing" $ do
   result <-
-    captureTimeConvIO
+    captureKairosIO
       ["-f", "%Y-%m-%d %H:%M", "-o", "%Y-%m-%d %H:%M", "2022-06-15 08:30"]
   "2022-06-15 08:30" @=? result
 
@@ -85,7 +85,7 @@ testFormatFails :: TestTree
 testFormatFails =
   testCase "Bad format fails" $
     assertException @ParseTimeException expected $
-      captureTimeConvIO args
+      captureKairosIO args
   where
     args = pureTZ <> ["-f", "%Y %H:%M", "08:30"]
     expected = "Could not parse time string '08:30' with format '%Y %H:%M'"
@@ -101,19 +101,19 @@ formatOutputTests =
 
 testFormatOutputCustom :: TestTree
 testFormatOutputCustom = testCase "Overrides input formatting" $ do
-  result <- captureTimeConvIO $ pureTZ ++ ["-o", "%H:%M %Z", "08:30"]
+  result <- captureKairosIO $ pureTZ ++ ["-o", "%H:%M %Z", "08:30"]
   "08:30 UTC" @=? result
 
 testFormatOutputCustomTZOffset :: TestTree
 testFormatOutputCustomTZOffset = testCase desc $ do
-  result <- captureTimeConvIO $ pureTZ ++ ["-o", "%H:%M %Z", "08:30"]
+  result <- captureKairosIO $ pureTZ ++ ["-o", "%H:%M %Z", "08:30"]
   "08:30 UTC" @=? result
   where
     desc = "Overrides input formatting tz offset"
 
 testFormatOutputRfc822 :: TestTree
 testFormatOutputRfc822 = testCase "Uses rfc822 output" $ do
-  result <- captureTimeConvIO $ pureTZ ++ ["-o", "rfc822", "08:30"]
+  result <- captureKairosIO $ pureTZ ++ ["-o", "rfc822", "08:30"]
   "Thu,  1 Jan 1970 08:30:00 UTC" @=? result
 
 srcTzTests :: TestTree
@@ -130,19 +130,19 @@ srcTzTests =
 testSrcTzDatabase :: TestTree
 testSrcTzDatabase = testCase "Uses source timezone from tz database" $ do
   result <-
-    captureTimeConvIO $
+    captureKairosIO $
       pureDestTZ ++ ["-f", "%H:%M", "-s", "Europe/Paris", "08:30"]
   "Thu,  1 Jan 1970 07:30:00 UTC" @=? result
 
 testSrcTzDatabaseCase :: TestTree
 testSrcTzDatabaseCase = testCase desc $ do
   result <-
-    captureTimeConvIO $
+    captureKairosIO $
       pureDestTZ ++ ["-f", "%H:%M", "-s", "aMeRiCa/new_yoRk", "08:30"]
   "Thu,  1 Jan 1970 13:30:00 UTC" @=? result
 
   result2 <-
-    captureTimeConvIO $
+    captureKairosIO $
       pureDestTZ ++ ["-f", "%H:%M", "-s", "etc/utc", "08:30"]
   "Thu,  1 Jan 1970 08:30:00 UTC" @=? result2
   where
@@ -150,7 +150,7 @@ testSrcTzDatabaseCase = testCase desc $ do
 
 testSrcTzFails :: TestTree
 testSrcTzFails = testCase "Bad source timezone fails" $ do
-  assertException @ParseTZInputException expected $ captureTimeConvIO args
+  assertException @ParseTZInputException expected $ captureKairosIO args
   where
     args = pureDestTZ <> ["-s", "Europe/Pariss", "08:30"]
     expected =
@@ -161,10 +161,10 @@ testSrcTzFails = testCase "Bad source timezone fails" $ do
 
 testSrcTzDST :: TestTree
 testSrcTzDST = testCase "Correctly converts src w/ DST" $ do
-  result <- captureTimeConvIO $ pureDestTZ ++ argsDST
+  result <- captureKairosIO $ pureDestTZ ++ argsDST
   "Mon, 10 Apr 2023 12:30:00 UTC" @=? result
 
-  result2 <- captureTimeConvIO $ pureDestTZ ++ argsNoDST
+  result2 <- captureKairosIO $ pureDestTZ ++ argsNoDST
   "Tue, 10 Jan 2023 13:30:00 UTC" @=? result2
   where
     argsDST = withDate ["--date", "2023-04-10"]
@@ -180,19 +180,19 @@ testSrcTzDST = testCase "Correctly converts src w/ DST" $ do
 
 testSrcTzToday :: TestTree
 testSrcTzToday = testCase "Correctly converts src w/ --date today" $ do
-  resultUtcSrcDst <- captureTimeConvParamsIO $ mkSrcParams pureDestTZ
+  resultUtcSrcDst <- captureKairosParamsIO $ mkSrcParams pureDestTZ
   "Tue, 18 Apr 2023 23:30:00 UTC" @=? resultUtcSrcDst
 
   resultNzstSrcDst <-
-    captureTimeConvParamsIO $
+    captureKairosParamsIO $
       mkSrcParams ["-d", "Pacific/Auckland"]
   "Wed, 19 Apr 2023 11:30:00 NZST" @=? resultNzstSrcDst
 
-  resultUtcDestDst <- captureTimeConvParamsIO $ mkDestParams pureDestTZ
+  resultUtcDestDst <- captureKairosParamsIO $ mkDestParams pureDestTZ
   "Sun, 19 Feb 2023 00:30:00 UTC" @=? resultUtcDestDst
 
   resultNzstDestDst <-
-    captureTimeConvParamsIO $
+    captureKairosParamsIO $
       mkDestParams ["-d", "Pacific/Auckland"]
   "Sun, 19 Feb 2023 13:30:00 NZDT" @=? resultNzstDestDst
   where
@@ -231,20 +231,20 @@ destTzTests =
 testDestTzDatabase :: TestTree
 testDestTzDatabase = testCase "Uses dest timezone from tz database" $ do
   result <-
-    captureTimeConvIO $
+    captureKairosIO $
       pureSrcTZ ++ ["-f", "%H:%M", "-d", "Europe/Paris", "08:30"]
   "Thu,  1 Jan 1970 09:30:00 CET" @=? result
 
 testSrcDestTzDatabase :: TestTree
 testSrcDestTzDatabase = testCase "Uses src to dest" $ do
   result <-
-    captureTimeConvIO
+    captureKairosIO
       ["-s", "America/New_York", "-d", "Europe/Paris", "08:30"]
   "Thu,  1 Jan 1970 14:30:00 CET" @=? result
 
 testDestTzFails :: TestTree
 testDestTzFails = testCase "Bad dest timezone fails" $ do
-  assertException @ParseTZInputException expected $ captureTimeConvIO args
+  assertException @ParseTZInputException expected $ captureKairosIO args
   where
     args = pureSrcTZ <> ["-d", "Europe/Pariss", "08:30"]
     expected =
@@ -266,45 +266,45 @@ tzOffsetTests =
 testTzOffsetColon :: TestTree
 testTzOffsetColon = testCase "Uses tz offsets with colon" $ do
   result <-
-    captureTimeConvIO $
+    captureKairosIO $
       ["-f", "%H:%M", "-s", "+13:00", "08:30", "-d", "-08:00"]
   "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
 
 testTzOffsetNoColon :: TestTree
 testTzOffsetNoColon = testCase "Uses tz offsets without colon" $ do
   result <-
-    captureTimeConvIO $
+    captureKairosIO $
       ["-f", "%H:%M", "-s", "+1300", "08:30", "-d", "-0800"]
   "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
 
 testTzOffsetHours :: TestTree
 testTzOffsetHours = testCase "Uses tz offsets with hours only" $ do
   result <-
-    captureTimeConvIO $
+    captureKairosIO $
       ["-f", "%H:%M", "-s", "+13", "08:30", "-d", "-08"]
   "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
 
 testTzOffsetUtc :: TestTree
 testTzOffsetUtc = testCase "Uses tz offsets without colon" $ do
   result <-
-    captureTimeConvIO $
+    captureKairosIO $
       ["-f", "%H:%M", "-s", "Z", "08:30", "-d", "-0800"]
   "Thu,  1 Jan 1970 00:30:00 -0800" @=? result
 
 testNoArgs :: TestTree
 testNoArgs = testCase "No args succeeds" $ do
-  result <- captureTimeConvIO []
+  result <- captureKairosIO []
   assertBool ("Should be non-empty: " <> T.unpack result) $ (not . T.null) result
 
 testNoTimeString :: TestTree
 testNoTimeString = testCase "No time string gets current time" $ do
-  resultsLocal <- captureTimeConvParamsIO $ mkParams []
+  resultsLocal <- captureKairosParamsIO $ mkParams []
   "Tue, 18 Apr 2023 19:30:00 -0400" @=? resultsLocal
 
-  resultsUtc <- captureTimeConvParamsIO $ mkParams ["-d", "etc/utc"]
+  resultsUtc <- captureKairosParamsIO $ mkParams ["-d", "etc/utc"]
   "Tue, 18 Apr 2023 23:30:00 UTC" @=? resultsUtc
 
-  resultsParis <- captureTimeConvParamsIO $ mkParams ["-d", "europe/paris"]
+  resultsParis <- captureKairosParamsIO $ mkParams ["-d", "europe/paris"]
   "Wed, 19 Apr 2023 01:30:00 CEST" @=? resultsParis
   where
     mkParams args = set' #mCurrentTime (Just currTime) (Params.fromArgs args)
@@ -313,12 +313,12 @@ testNoTimeString = testCase "No time string gets current time" $ do
 
 testToday :: TestTree
 testToday = testCase "Today arg succeeds" $ do
-  result <- captureTimeConvIO ["--date", "today", "16:30"]
+  result <- captureKairosIO ["--date", "today", "16:30"]
   assertBool ("Should be non-empty: " <> T.unpack result) $ (not . T.null) result
 
 testNoDateLiteral :: TestTree
 testNoDateLiteral = testCase "Disables --date literal" $ do
-  results <- captureTimeConvIO args
+  results <- captureKairosIO args
   "Thu,  1 Jan 1970 03:30:00 EST" @=? results
   where
     args =
@@ -334,7 +334,7 @@ testNoDateLiteral = testCase "Disables --date literal" $ do
 
 testNoDateToday :: TestTree
 testNoDateToday = testCase "Disables --date today" $ do
-  results <- captureTimeConvIO args
+  results <- captureKairosIO args
   "Thu,  1 Jan 1970 03:30:00 EST" @=? results
   where
     args =
@@ -360,7 +360,7 @@ tomlTests =
 
 testTomlToday :: TestTree
 testTomlToday = testCase "Uses toml 'today'" $ do
-  results <- captureTimeConvParamsIO params
+  results <- captureKairosParamsIO params
   dt <- Date.parseDateString results
   2021 @=? dt ^. #year
   where
@@ -381,7 +381,7 @@ testTomlToday = testCase "Uses toml 'today'" $ do
 
 testArgsOverridesTomlToday :: TestTree
 testArgsOverridesTomlToday = testCase "Args overrides toml's 'today'" $ do
-  results <- captureTimeConvParamsIO params
+  results <- captureKairosParamsIO params
   "Fri, 12 Jun 2020 09:30:00 -0400" @=? results
   where
     params =
@@ -401,13 +401,13 @@ testArgsOverridesTomlToday = testCase "Args overrides toml's 'today'" $ do
 
 testTomlAliases :: TestTree
 testTomlAliases = testCase "Config aliases succeed" $ do
-  resultsLA <- captureTimeConvParamsIO (withDest "la")
+  resultsLA <- captureKairosParamsIO (withDest "la")
   "Tue, 12 Jul 2022 01:30:00 PDT" @=? resultsLA
 
-  resultZagreb <- captureTimeConvParamsIO (withDest "zagreb")
+  resultZagreb <- captureKairosParamsIO (withDest "zagreb")
   "Tue, 12 Jul 2022 10:30:00 CEST" @=? resultZagreb
 
-  resultOffset <- captureTimeConvParamsIO (withDest "some_offset")
+  resultOffset <- captureKairosParamsIO (withDest "some_offset")
   "Tue, 12 Jul 2022 15:30:00 +0700" @=? resultOffset
   where
     withDest d =
@@ -429,7 +429,7 @@ testTomlAliases = testCase "Config aliases succeed" $ do
 
 testTomlNoDate :: TestTree
 testTomlNoDate = testCase "Disables toml 'today'" $ do
-  results <- captureTimeConvParamsIO params
+  results <- captureKairosParamsIO params
   "Thu,  1 Jan 1970 03:30:00 EST" @=? results
   where
     params =
@@ -450,7 +450,7 @@ testTomlNoDate = testCase "Disables toml 'today'" $ do
 
 testSrcTzNoTimeStr :: TestTree
 testSrcTzNoTimeStr = testCase "Src w/o time string fails" $ do
-  assertException @SrcTZNoTimeStringException expected $ captureTimeConvIO args
+  assertException @SrcTZNoTimeStringException expected $ captureKairosIO args
   where
     expected = "The --src-tz option was specified without required time string"
     args =
@@ -460,7 +460,7 @@ testSrcTzNoTimeStr = testCase "Src w/o time string fails" $ do
 
 testDateNoTimeStr :: TestTree
 testDateNoTimeStr = testCase "Date w/o time string fails" $ do
-  assertException @DateNoTimeStringException expected $ captureTimeConvIO args
+  assertException @DateNoTimeStringException expected $ captureKairosIO args
   where
     expected = "The --date option was specified without required time string"
     args =
@@ -478,26 +478,26 @@ assertException expected io = do
         ("Encountered exception: " <> expected <> "\nReceived: " <> result')
         (startsWith expected result')
 
--- | Runs time-conv with default TestParams i.e.
+-- | Runs kairos with default TestParams i.e.
 --
 -- - The given CLI args.
 -- - Toml config disabled.
 -- - No mocked time string.
-captureTimeConvIO :: [String] -> IO Text
-captureTimeConvIO = captureTimeConvParamsIO . Params.fromArgs
+captureKairosIO :: [String] -> IO Text
+captureKairosIO = captureKairosParamsIO . Params.fromArgs
 
--- | General function for capturing time-conv output given TestParams.
-captureTimeConvParamsIO :: TestParams -> IO Text
-captureTimeConvParamsIO params = case params.mCurrentTime of
-  Nothing -> captureTimeConvConfigM args'
-  Just timeString -> usingMockTimeIO timeString (captureTimeConvConfigM args')
+-- | General function for capturing kairos output given TestParams.
+captureKairosParamsIO :: TestParams -> IO Text
+captureKairosParamsIO params = case params.mCurrentTime of
+  Nothing -> captureKairosConfigM args'
+  Just timeString -> usingMockTimeIO timeString (captureKairosConfigM args')
   where
     args' =
       if params.configEnabled
         then params.args
         else "--no-config" : params.args
 
-    -- Runs time-conv with the args, capturing terminal output.
+    -- Runs kairos with the args, capturing terminal output.
     -- Toml configuration is not disabled, so take care that one of the following
     -- situations applies:
     --
@@ -511,9 +511,9 @@ captureTimeConvParamsIO params = case params.mCurrentTime of
     -- The function is polymorphic so that we can run it both without mocked
     -- time (IO) and with mocked time (MockTimeIO).
     --
-    -- This function is intended to be used by captureTimeConvParamsIO only,
+    -- This function is intended to be used by captureKairosParamsIO only,
     -- hence the @where@ declaration.
-    captureTimeConvConfigM ::
+    captureKairosConfigM ::
       ( MonadEnv m,
         MonadCatch m,
         MonadFileReader m,
@@ -525,7 +525,7 @@ captureTimeConvParamsIO params = case params.mCurrentTime of
       -- Args.
       [String] ->
       m Text
-    captureTimeConvConfigM argList = SysEnv.withArgs argList $ runTermT runTimeConv
+    captureKairosConfigM argList = SysEnv.withArgs argList $ runTermT runKairos
 
 newtype MockTimeIO a = MkMockTimeM (ReaderT String IO a)
   deriving
@@ -579,7 +579,7 @@ startsWith (x : xs) (y : ys)
   | otherwise = False
 
 -- Adds a MonadTerminal instance that reads putStrLn into an IORef. Intended
--- to be added "on top" of some Monad that implements the rest of TimeConv's
+-- to be added "on top" of some Monad that implements the rest of Kairos's
 -- dependencies e.g. IO or MockTimeIO.
 newtype TermT m a = MkTermT (ReaderT (IORef Text) m a)
   deriving

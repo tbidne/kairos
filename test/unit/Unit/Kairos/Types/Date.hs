@@ -1,11 +1,11 @@
 {-# LANGUAGE CPP #-}
 
-module Unit.Data.Time.Conversion.Types.Date (tests) where
+module Unit.Kairos.Types.Date (tests) where
 
 import Control.Monad ((>=>))
 import Data.Bifunctor (bimap)
-import Data.Time.Conversion.Types.Date (Date (DateToday), _DateLiteral)
-import Data.Time.Conversion.Types.Date.Internal qualified as Date
+import Kairos.Types.Date (Date (DateToday), _DateLiteral)
+import Kairos.Types.Date.Internal qualified as Date
 import Optics.Core (matching)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@=?))
@@ -14,7 +14,7 @@ import Unit.Utils qualified as Utils
 tests :: TestTree
 tests =
   testGroup
-    "Data.Time.Conversion.Types.Date"
+    "Kairos.Types.Date"
     [ testParseDateTodaySuccess,
       testParseDateLiteralSuccess,
       testParseDateLiteralBadYear,

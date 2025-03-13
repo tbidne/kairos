@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | @since 0.1
-module Data.Time.Conversion.Types.Date.Internal
+module Kairos.Types.Date.Internal
   ( -- * Type
     DateString (..),
 

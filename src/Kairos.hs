@@ -5,7 +5,7 @@
 -- functions for converting between timezones.
 --
 -- @since 0.1
-module Data.Time.Conversion
+module Kairos
   ( -- * High-level parsing/conversion
     readConvertTime,
     readTime,
@@ -50,29 +50,6 @@ import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Clock (UTCTime)
-import Data.Time.Conversion.Types.Date
-  ( Date (DateLiteral, DateToday),
-    unDateString,
-  )
-import Data.Time.Conversion.Types.Exception
-  ( LocalSystemTimeException (MkLocalSystemTimeException),
-    LocalTimeZoneException (MkLocalTimeZoneException),
-    ParseTZInputException (MkParseTZInputException),
-    ParseTimeException (MkParseTimeException),
-  )
-import Data.Time.Conversion.Types.TZInput (TZInput (TZActual, TZDatabase))
-import Data.Time.Conversion.Types.TimeFormat
-  ( TimeFormat (MkTimeFormat, unTimeFormat),
-  )
-import Data.Time.Conversion.Types.TimeReader
-  ( TimeReader
-      ( MkTimeReader,
-        date,
-        format,
-        srcTZ,
-        timeString
-      ),
-  )
 import Data.Time.Format (ParseTime, TimeLocale)
 import Data.Time.Format qualified as Format
 import Data.Time.LocalTime
@@ -91,6 +68,29 @@ import Data.Time.Zones.All (TZLabel (..))
 import Data.Time.Zones.All qualified as All
 import Effects.Time (MonadTime (getSystemZonedTime))
 import GHC.Stack (HasCallStack)
+import Kairos.Types.Date
+  ( Date (DateLiteral, DateToday),
+    unDateString,
+  )
+import Kairos.Types.Exception
+  ( LocalSystemTimeException (MkLocalSystemTimeException),
+    LocalTimeZoneException (MkLocalTimeZoneException),
+    ParseTZInputException (MkParseTZInputException),
+    ParseTimeException (MkParseTimeException),
+  )
+import Kairos.Types.TZInput (TZInput (TZActual, TZDatabase))
+import Kairos.Types.TimeFormat
+  ( TimeFormat (MkTimeFormat, unTimeFormat),
+  )
+import Kairos.Types.TimeReader
+  ( TimeReader
+      ( MkTimeReader,
+        date,
+        format,
+        srcTZ,
+        timeString
+      ),
+  )
 import Optics.Core ((^.))
 
 -- | Reads the given time string based on the source 'TimeReader' and

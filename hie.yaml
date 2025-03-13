@@ -1,16 +1,16 @@
 cradle:
   cabal:
     - path: "./src"
-      component: "lib:time-conv"
+      component: "lib:kairos"
 
     - path: "./runner"
-      component: "time-conv:lib:time-conv-runner"
+      component: "kairos:lib:kairos-runner"
 
     - path: "./app/Main.hs"
-      component: "time-conv:exe:time-conv"
+      component: "kairos:exe:kairos"
 
     - path: "./test/unit"
-      component: "time-conv:test:unit"
+      component: "kairos:test:unit"
 
     - path: "./test/functional"
-      component: "time-conv:test:functional"
+      component: "kairos:test:functional"

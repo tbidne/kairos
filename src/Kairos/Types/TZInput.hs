@@ -1,5 +1,5 @@
 -- | @since 0.1
-module Data.Time.Conversion.Types.TZInput
+module Kairos.Types.TZInput
   ( TZInput (..),
     parseTZInput,
     _TZDatabase,
@@ -12,12 +12,12 @@ import Control.DeepSeq (NFData)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time (TimeZone, parseTimeM)
-import Data.Time.Conversion.Internal qualified as Internal
 import Data.Time.Format (TimeLocale)
 import Data.Time.Format qualified as Format
 import Data.Time.LocalTime qualified as LT
 import Data.Time.Zones.All (TZLabel)
 import GHC.Generics (Generic)
+import Kairos.Internal qualified as Internal
 import Optics.Core (Prism', prism)
 
 -- | Timezone input.

@@ -1,7 +1,7 @@
 -- | Internal module.
 --
 -- @since 0.1
-module Data.Time.Conversion.Internal
+module Kairos.Internal
   ( -- * TZ Database Labels
     tzNameToTZLabel,
     tzLowerNameLabelMap,

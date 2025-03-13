@@ -5,7 +5,8 @@ module Main (main) where
 
 import Control.Exception.Annotation.Utils (ExceptionProxy (MkExceptionProxy))
 import Control.Exception.Annotation.Utils qualified as AnnUtils
-import Data.Time.Conversion.Types.Exception
+import Kairos.Runner (runKairos)
+import Kairos.Types.Exception
   ( DateNoTimeStringException,
     LocalSystemTimeException,
     LocalTimeZoneException,
@@ -13,7 +14,6 @@ import Data.Time.Conversion.Types.Exception
     ParseTimeException,
     SrcTZNoTimeStringException,
   )
-import TimeConv.Runner (runTimeConv)
 
 -- | Executable entry-point.
 --
@@ -22,7 +22,7 @@ main :: IO ()
 main = do
   AnnUtils.setIgnoreKnownCallStackHandler proxies
 
-  runTimeConv
+  runKairos
   where
     proxies =
       [ MkExceptionProxy @DateNoTimeStringException,

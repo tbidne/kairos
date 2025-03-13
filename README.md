@@ -1,10 +1,10 @@
 <div align="center">
 
-# time-conv
+# kairos
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/time-conv?include_prereleases&sort=semver)](https://github.com/tbidne/time-conv/releases/)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/kairos?include_prereleases&sort=semver)](https://github.com/tbidne/kairos/releases/)
 [![ci](http://img.shields.io/github/actions/workflow/status/tbidne/hs-template/ci.yaml?branch=main)](https://github.com/tbidne/hs-template/actions/workflows/ci.yaml)
-[![MIT](https://img.shields.io/github/license/tbidne/time-conv?color=blue)](https://opensource.org/licenses/MIT)
+[![MIT](https://img.shields.io/github/license/tbidne/kairos?color=blue)](https://opensource.org/licenses/MIT)
 
 ![linux](https://img.shields.io/static/v1?label=&message=linux&logo=linux&logoColor=white&labelColor=2f353e&color=blue)
 ![osx](https://img.shields.io/static/v1?label=&message=osx&logo=apple&labelColor=2f353e&color=blue)
@@ -32,12 +32,12 @@
 
 # Introduction
 
-`time-conv` is a tool for converting between timezones. There are two primary use-cases.
+`kairos` is a tool for converting between timezones. There are two primary use-cases.
 
 1. Converting local system time into a different timezone:
 
     ```
-    $ time-conv -d europe/paris
+    $ kairos -d europe/paris
     Sat, 18 Jun 2022 03:19:58 CEST
 
     # -d sets the "destination" timezone
@@ -47,7 +47,7 @@
 2. Converting a "time string" from one timezone to another:
 
     ````
-    $ time-conv --date today -s america/new_york 18:30
+    $ kairos --date today -s america/new_york 18:30
     Sat, 18 Jun 2022 11:30:00 NZST
 
     # --date today means "today's date" as determined by the source
@@ -59,7 +59,7 @@
     We can also convert between two non-local timezones:
 
     ```
-    $ time-conv -s america/new_york -d europe/paris 18:30
+    $ kairos -s america/new_york -d europe/paris 18:30
     Fri,  2 Jan 1970 00:30:00 CET
 
     # no --date information means we assume the initial unix date, 1 Jan 1970.
@@ -70,21 +70,21 @@ The timezone names are based on the tz_database. See https://en.wikipedia.org/wi
 ## Usage
 
 ```
-time-conv: A tool for timezone conversions.
+kairos: A tool for timezone conversions.
 
-Usage: time-conv [-c|--config PATH] [--date (today | YYYY-mm-dd)]
+Usage: kairos [-c|--config PATH] [--date (today | YYYY-mm-dd)]
                  [-d|--dest-tz TZ] [-f|--format-in FMT_STR]
                  [-o|--format-out (rfc822 | FMT_STR)] [-s|--src-tz TZ]
                  [TIME_STR] [-v|--version]
 
-  time-conv reads time strings and converts between timezones. For the src and
+  kairos reads time strings and converts between timezones. For the src and
   dest options, TZ refers to labels like 'America/New_York' or offsets like
   '+1300'. See https://en.wikipedia.org/wiki/Tz_database.
 
 Available options:
   -c,--config PATH         Path to TOML config file. It not given we
                            automatically look in the XDG config e.g.
-                           ~/.config/time-conv/config.toml.
+                           ~/.config/kairos/config.toml.
 
   --no-config              Disables --config.
 
@@ -136,7 +136,7 @@ Version: 0.1
 **Examples:**
 
 ```
-$ time-conv -c ./examples/config.toml -d la
+$ kairos -c ./examples/config.toml -d la
 Thu, 20 Apr 2023 22:25:37 PDT
 ```
 
@@ -149,17 +149,17 @@ Thu, 20 Apr 2023 22:25:37 PDT
 **Examples:**
 
 ```
-$ time-conv 08:30
+$ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZST
 
 # use today's date instead of initial unix time
-$ time-conv --date today 08:30
+$ kairos --date today 08:30
 Thu, 20 Apr 2023 08:30:00 NZST
 
-$ time-conv --date today -s america/new_york 08:30
+$ kairos --date today -s america/new_york 08:30
 Thu, 20 Apr 2023 00:30:00 NZST
 
-$ time-conv --date 2022-04-10 -s america/new_york 08:30
+$ kairos --date 2022-04-10 -s america/new_york 08:30
 Mon, 11 Apr 2022 00:30:00 NZST
 ```
 
@@ -173,14 +173,14 @@ Mon, 11 Apr 2022 00:30:00 NZST
 
 ```
 # use the local system timezone
-$ time-conv 08:30
+$ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZST
 
 # using tz database name
-$ time-conv -d america/new_york 08:30
+$ kairos -d america/new_york 08:30
 Wed, 31 Dec 1969 15:30:00 EST
 
-$ time-conv -s america/new_york -d etc/utc 08:30
+$ kairos -s america/new_york -d etc/utc 08:30
 Thu,  1 Jan 1970 13:30:00 UTC
 ```
 
@@ -193,10 +193,10 @@ Thu,  1 Jan 1970 13:30:00 UTC
 **Examples:**
 
 ```
-$ time-conv 08:30
+$ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZDT
 
-$ time-conv -f "%I:%M %p" "08:00 pm"
+$ kairos -f "%I:%M %p" "08:00 pm"
 Thu,  1 Jan 1970 20:00:00 NZST
 ```
 
@@ -210,11 +210,11 @@ Thu,  1 Jan 1970 20:00:00 NZST
 
 ```
 # using implicit rc822 format for output
-$ time-conv 08:30
+$ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZST
 
 # overriding output format
-$ time-conv -o %H:%M:%S 08:30
+$ kairos -o %H:%M:%S 08:30
 08:30:00
 ```
 
@@ -228,11 +228,11 @@ $ time-conv -o %H:%M:%S 08:30
 
 ```
 # use the local system timezone
-$ time-conv 08:30
+$ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZST
 
 # using tz database name
-$ time-conv -s america/new_york 08:30
+$ kairos -s america/new_york 08:30
 Fri,  2 Jan 1970 01:30:00 NZST
 ```
 
@@ -246,14 +246,14 @@ Fri,  2 Jan 1970 01:30:00 NZST
 
 ```
 # use the local system timezone
-$ time-conv 08:30
+$ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZST
 
 # using tz database name
-$ time-conv -d america/new_york 08:30
+$ kairos -d america/new_york 08:30
 Wed, 31 Dec 1969 15:30:00 EST
 
-$ time-conv -s america/new_york -d etc/utc 08:30
+$ kairos -s america/new_york -d etc/utc 08:30
 Thu,  1 Jan 1970 13:30:00 UTC
 ```
 
@@ -266,10 +266,10 @@ Thu,  1 Jan 1970 13:30:00 UTC
 **Examples:**
 
 ```
-$ time-conv
+$ kairos
 Thu, 16 Jun 2022 21:30:00 NZST
 
-$ time-conv -d europe/paris
+$ kairos -d europe/paris
 Thu, 16 Jun 2022 12:30:00 CEST
 ```
 
@@ -292,9 +292,9 @@ Using `ghcup`, install `cabal 2.4+` and one of:
 - `ghc 9.10`
 - `ghc 9.12`
 
-### Build Time-Conv
+### Build Kairos
 
-Once you have `cabal` and `ghc`, `time-conv` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
+Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
 ## Nix
 
@@ -304,16 +304,16 @@ Once you have `cabal` and `ghc`, `time-conv` can be built with `cabal build` or 
 
 ### Manually
 
-Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `time-conv` can be built with `nix build`, which will compile and run the tests.
+Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `kairos` can be built with `nix build`, which will compile and run the tests.
 
 ### Nix expression
 
-Because `time-conv` is a flake, it be built as part of a nix expression. For instance, if you want to add `time-conv` to `NixOS`, your `flake.nix` should have:
+Because `kairos` is a flake, it be built as part of a nix expression. For instance, if you want to add `kairos` to `NixOS`, your `flake.nix` should have:
 
 ```nix
 # flake.nix
 {
-  inputs.time-conv.url = "github:tbidne/time-conv/main";
+  inputs.kairos.url = "github:tbidne/kairos/main";
 }
 ```
 
@@ -323,7 +323,7 @@ Then include this in the `systemPackages`:
 # wherever your global packages are defined
 {
   environment.systemPackages = [
-    time-conv.packages."${system}".default
+    kairos.packages."${system}".default
   ];
 }
 ```

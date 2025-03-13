@@ -92,7 +92,7 @@
             returnShellEnv:
             nix-hs-utils.mkHaskellPkg {
               inherit compiler pkgs returnShellEnv;
-              name = "time-conv";
+              name = "kairos";
               root = ./.;
 
               # TODO: Once hlint is back to working with our GHC we can

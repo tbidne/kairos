@@ -4,8 +4,8 @@
 -- | Internal library for testing.
 --
 -- @since 0.1
-module TimeConv.Runner
-  ( runTimeConv,
+module Kairos.Runner
+  ( runKairos,
   )
 where
 
@@ -15,25 +15,6 @@ import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Time.Conversion qualified as Conv
-import Data.Time.Conversion.Types.Date (Date (DateToday))
-import Data.Time.Conversion.Types.Exception
-  ( DateNoTimeStringException (MkDateNoTimeStringException),
-    ParseTZInputException (MkParseTZInputException),
-    SrcTZNoTimeStringException (MkSrcTZNoTimeStringException),
-  )
-import Data.Time.Conversion.Types.TZInput (TZInput)
-import Data.Time.Conversion.Types.TZInput qualified as TZInput
-import Data.Time.Conversion.Types.TimeFormat qualified as TimeFmt
-import Data.Time.Conversion.Types.TimeReader
-  ( TimeReader
-      ( MkTimeReader,
-        date,
-        format,
-        srcTZ,
-        timeString
-      ),
-  )
 import Data.Time.Format qualified as Format
 import Effects.FileSystem.FileReader (MonadFileReader, readFileUtf8ThrowM)
 import Effects.FileSystem.PathReader
@@ -47,17 +28,8 @@ import Effects.System.Terminal qualified as T
 import Effects.Time (MonadTime)
 import FileSystem.OsPath (osp, (</>))
 import GHC.Stack.Types (HasCallStack)
-import Optics.Core
-  ( Prism',
-    preview,
-    prism,
-    (%),
-    (^.),
-    _Just,
-  )
-import Optics.Core.Extras (is)
-import TOML qualified
-import TimeConv.Runner.Args
+import Kairos qualified
+import Kairos.Runner.Args
   ( Args
       ( config,
         date,
@@ -71,12 +43,40 @@ import TimeConv.Runner.Args
       ),
     parserInfo,
   )
-import TimeConv.Runner.Toml (Toml)
+import Kairos.Runner.Toml (Toml)
+import Kairos.Types.Date (Date (DateToday))
+import Kairos.Types.Exception
+  ( DateNoTimeStringException (MkDateNoTimeStringException),
+    ParseTZInputException (MkParseTZInputException),
+    SrcTZNoTimeStringException (MkSrcTZNoTimeStringException),
+  )
+import Kairos.Types.TZInput (TZInput)
+import Kairos.Types.TZInput qualified as TZInput
+import Kairos.Types.TimeFormat qualified as TimeFmt
+import Kairos.Types.TimeReader
+  ( TimeReader
+      ( MkTimeReader,
+        date,
+        format,
+        srcTZ,
+        timeString
+      ),
+  )
+import Optics.Core
+  ( Prism',
+    preview,
+    prism,
+    (%),
+    (^.),
+    _Just,
+  )
+import Optics.Core.Extras (is)
+import TOML qualified
 
--- | Runs time-conv with CLI args.
+-- | Runs kairos with CLI args.
 --
 -- @since 0.1
-runTimeConv ::
+runKairos ::
   ( HasCallStack,
     MonadCatch m,
     MonadFileReader m,
@@ -86,11 +86,11 @@ runTimeConv ::
     MonadTime m
   ) =>
   m ()
-runTimeConv = do
+runKairos = do
   args <- execParser parserInfo
   runWithArgs args
 
--- | Runs time-conv with given args.
+-- | Runs kairos with given args.
 --
 -- @since 0.1
 runWithArgs ::
@@ -169,7 +169,7 @@ runWithArgs args = do
       String ->
       m ()
     readAndHandle tr d fmt = do
-      time <- Conv.readConvertTime tr d
+      time <- Kairos.readConvertTime tr d
       let result = T.pack $ Format.formatTime locale fmt time
       T.putTextLn result
     -- NOTE: It seems that the locale's timezone info is not used when
@@ -211,7 +211,7 @@ mGetToml ::
 mGetToml mconfigPath = do
   case mconfigPath of
     Nothing -> do
-      configDir <- getXdgConfig [osp|time-conv|]
+      configDir <- getXdgConfig [osp|kairos|]
       let configPath = configDir </> [osp|config.toml|]
       exists <- doesFileExist configPath
       if exists

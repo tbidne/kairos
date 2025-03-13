@@ -1,6 +1,6 @@
 packages: .
 
-package time-conv
+package kairos
   ghc-options:
     -Wall -Wcompat
     -Widentities

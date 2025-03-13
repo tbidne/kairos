@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | @since 0.1
-module TimeConv.Runner.Toml
+module Kairos.Runner.Toml
   ( Toml (..),
   )
 where

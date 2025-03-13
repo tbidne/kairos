@@ -1,17 +1,23 @@
 {-# LANGUAGE CPP #-}
 
-module Unit.Data.Time.Conversion (tests) where
+module Unit.Kairos (tests) where
 
 import Control.Exception.Utils (catchSync)
 import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Text qualified as T
 import Data.Time.Clock (NominalDiffTime)
-import Data.Time.Conversion qualified as Conversion
-import Data.Time.Conversion.Types.Date (Date (DateLiteral, DateToday))
-import Data.Time.Conversion.Types.TZInput (TZInput (TZDatabase))
-import Data.Time.Conversion.Types.TimeFormat qualified as TimeFmt
-import Data.Time.Conversion.Types.TimeReader
+import Data.Time.Format qualified as Format
+import Data.Time.LocalTime (ZonedTime (ZonedTime))
+import Data.Time.LocalTime qualified as Time
+import Hedgehog (Property, PropertyName)
+import Hedgehog qualified as H
+import Hedgehog.Internal.Property ((===))
+import Kairos qualified
+import Kairos.Types.Date (Date (DateLiteral, DateToday))
+import Kairos.Types.TZInput (TZInput (TZDatabase))
+import Kairos.Types.TimeFormat qualified as TimeFmt
+import Kairos.Types.TimeReader
   ( TimeReader
       ( MkTimeReader,
         date,
@@ -20,12 +26,6 @@ import Data.Time.Conversion.Types.TimeReader
         timeString
       ),
   )
-import Data.Time.Format qualified as Format
-import Data.Time.LocalTime (ZonedTime (ZonedTime))
-import Data.Time.LocalTime qualified as Time
-import Hedgehog (Property, PropertyName)
-import Hedgehog qualified as H
-import Hedgehog.Internal.Property ((===))
 import Props.Generators qualified as G
 import Test.Tasty (TestName, TestTree, testGroup)
 #if MIN_VERSION_tasty_hedgehog(1, 2, 0)
@@ -38,7 +38,7 @@ import Unit.Utils qualified as Utils
 tests :: TestTree
 tests =
   testGroup
-    "Data.Time.Conversion"
+    "Kairos"
     [ testDestSrcRoundtrips,
       testDestSrcDateRoundtrips
     ]
@@ -49,9 +49,9 @@ testDestSrcRoundtrips =
     H.property $ do
       tzdb <- TZDatabase <$> H.forAll G.tzLabel
 
-      currTime <- liftIO $ Conversion.readConvertTime Nothing Nothing
+      currTime <- liftIO $ Kairos.readConvertTime Nothing Nothing
       H.annotateShow currTime
-      currTimeDest <- liftIO $ Conversion.readConvertTime Nothing (Just tzdb)
+      currTimeDest <- liftIO $ Kairos.readConvertTime Nothing (Just tzdb)
       H.annotateShow currTimeDest
       let currTimeDestStr = fmt currTimeDest
           timeReader =
@@ -63,7 +63,7 @@ testDestSrcRoundtrips =
               }
 
       currTime' <-
-        liftIO (Conversion.readConvertTime (Just timeReader) Nothing)
+        liftIO (Kairos.readConvertTime (Just timeReader) Nothing)
           `catchSync` \ex -> do
             H.annotateShow ex
             H.failure
@@ -81,9 +81,9 @@ testDestSrcDateRoundtrips =
     H.property $ do
       tzdb <- TZDatabase <$> H.forAll G.tzLabel
 
-      currTime <- liftIO $ Conversion.readConvertTime Nothing Nothing
+      currTime <- liftIO $ Kairos.readConvertTime Nothing Nothing
       H.annotateShow currTime
-      currTimeDest <- liftIO $ Conversion.readConvertTime Nothing (Just tzdb)
+      currTimeDest <- liftIO $ Kairos.readConvertTime Nothing (Just tzdb)
       H.annotateShow currTime
       (currDateDestStr, currTimeDestStr) <-
         case T.split (== ' ') (T.pack $ fmt currTimeDest) of
@@ -91,7 +91,7 @@ testDestSrcDateRoundtrips =
           _ -> do
             let err =
                   mconcat
-                    [ "Unit.Data.Time.Conversion: date should have format ",
+                    [ "Unit.Kairos: date should have format ",
                       "YYYY-MM-DD HH:MM, received: '",
                       fmt currTimeDest,
                       "'"
@@ -116,7 +116,7 @@ testDestSrcDateRoundtrips =
               }
 
       currTime' <-
-        liftIO (Conversion.readConvertTime (Just timeReader) Nothing)
+        liftIO (Kairos.readConvertTime (Just timeReader) Nothing)
           `catchSync` \ex -> do
             H.annotateShow ex
             H.failure

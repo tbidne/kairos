@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               time-conv
+name:               kairos
 version:            0.1
 license:            MIT
 license-file:       LICENSE
@@ -14,12 +14,12 @@ tested-with:
 copyright:          2022-2025 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
-homepage:           https://github.com/tbidne/time-conv/
-bug-reports:        https://github.com/tbidne/time-conv/issues
+homepage:           https://github.com/tbidne/kairos/
+bug-reports:        https://github.com/tbidne/kairos/issues
 synopsis:           A utility program for converting between timezones.
 description:
   A utility program for converting between timezones.
-  Please see the README at https://github.com/tbidne/time-conv/#readme
+  Please see the README at https://github.com/tbidne/kairos/#readme
 
 category:           Time, Shell scripting
 extra-source-files:
@@ -30,7 +30,7 @@ extra-doc-files:    CHANGELOG.md
 
 source-repository head
   type:     git
-  location: https://github.com/tbidne/time-conv
+  location: https://github.com/tbidne/kairos
 
 common common-lang
   default-extensions:
@@ -75,14 +75,14 @@ common common-lang
 library
   import:          common-lang
   exposed-modules:
-    Data.Time.Conversion
-    Data.Time.Conversion.Internal
-    Data.Time.Conversion.Types.Date
-    Data.Time.Conversion.Types.Date.Internal
-    Data.Time.Conversion.Types.Exception
-    Data.Time.Conversion.Types.TimeFormat
-    Data.Time.Conversion.Types.TimeReader
-    Data.Time.Conversion.Types.TZInput
+    Kairos
+    Kairos.Internal
+    Kairos.Types.Date
+    Kairos.Types.Date.Internal
+    Kairos.Types.Exception
+    Kairos.Types.TimeFormat
+    Kairos.Types.TimeReader
+    Kairos.Types.TZInput
 
   build-depends:
     , base             >=4.14.0.0 && <4.22
@@ -98,14 +98,14 @@ library
 
   hs-source-dirs:  src
 
-library time-conv-runner
+library kairos-runner
   import:          common-lang
-  other-modules:   Paths_time_conv
-  autogen-modules: Paths_time_conv
+  other-modules:   Paths_kairos
+  autogen-modules: Paths_kairos
   exposed-modules:
-    TimeConv.Runner
-    TimeConv.Runner.Args
-    TimeConv.Runner.Toml
+    Kairos.Runner
+    Kairos.Runner.Args
+    Kairos.Runner.Toml
 
   build-depends:
     , base
@@ -115,23 +115,23 @@ library time-conv-runner
     , effects-terminal      ^>=0.1
     , effects-time
     , exceptions
+    , kairos
     , optics-core
     , optparse-applicative  >=0.16.1.0 && <0.19
     , text
     , time
-    , time-conv
     , toml-reader           >=0.2.0.0  && <0.3
 
   hs-source-dirs:  runner
 
-executable time-conv
+executable kairos
   import:         common-lang
   main-is:        Main.hs
   build-depends:
     , base
     , exception-utils
-    , time-conv
-    , time-conv-runner
+    , kairos
+    , kairos-runner
 
   hs-source-dirs: app
   ghc-options:    -threaded -with-rtsopts=-N
@@ -142,9 +142,9 @@ test-suite unit
   main-is:        Main.hs
   other-modules:
     Props.Generators
-    Unit.Data.Time.Conversion
-    Unit.Data.Time.Conversion.Internal
-    Unit.Data.Time.Conversion.Types.Date
+    Unit.Kairos
+    Unit.Kairos.Internal
+    Unit.Kairos.Types.Date
     Unit.Utils
 
   build-depends:
@@ -152,13 +152,13 @@ test-suite unit
     , deepseq
     , exception-utils
     , hedgehog         >=1.0.2   && <1.6
+    , kairos
     , optics-core
     , tasty            >=1.1.0.3 && <1.6
     , tasty-hedgehog   >=1.0.1.0 && <1.5
     , tasty-hunit      >=0.9     && <0.11
     , text
     , time
-    , time-conv
     , tz
 
   hs-source-dirs: test/unit
@@ -178,13 +178,13 @@ test-suite functional
     , effects-terminal
     , effects-time
     , exceptions
+    , kairos
+    , kairos-runner
     , mtl               >=2.2.2 && <2.4
     , optics-core
     , tasty
     , tasty-hunit
     , text
     , time
-    , time-conv
-    , time-conv-runner
 
   hs-source-dirs: test/functional

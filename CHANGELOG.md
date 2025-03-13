@@ -1,4 +1,4 @@
-# Revision history for time-conv
+# Revision history for kairos
 
 ## 0.1 -- YYYY-mm-dd
 
