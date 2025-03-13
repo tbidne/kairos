@@ -93,11 +93,6 @@ instance
 
 -- | Given a time string, returns a default time reader.
 --
--- ==== __Examples__
---
--- >>> defaultTimeReader "08:30"
--- MkTimeReader {format = MkTimeFormat {unTimeFormat = "%H:%M"}, srcTZ = Nothing, date = Nothing, timeString = "08:30"}
---
 -- @since 0.1
 defaultTimeReader :: Text -> TimeReader
 defaultTimeReader = MkTimeReader defaultTimeFormat Nothing Nothing

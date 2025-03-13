@@ -93,15 +93,6 @@ import Effects.Time (MonadTime (getSystemZonedTime))
 import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))
 
--- $setup
--- >>> import Control.Exception (SomeException)
--- >>> import Data.Functor (void)
--- >>> import Data.Time.Conversion.Types.TimeFormat qualified as TimeFmt
--- >>> import Data.Time.Conversion.Types.TimeReader (defaultTimeReader)
--- >>> import Effects.Exception (catchCS)
--- >>> let parseTimeEx = \(e :: ParseTimeException) -> putStrLn "parse time exception"
--- >>> let parseTzDbEx = \(e :: ParseTZDatabaseException) -> putStrLn "parse tzdb exception"
-
 -- | Reads the given time string based on the source 'TimeReader' and
 -- converts to the destination timezone. This is the composition of
 -- 'readTime' and 'convertTime'. If the source is 'Nothing' then we read
@@ -111,27 +102,8 @@ import Optics.Core ((^.))
 -- __Throws:__
 --
 -- * 'ParseTimeException': Error parsing the time string.
--- * 'ParseTZDatabaseException': Error parsing the tz database name.
 -- * 'LocalTimeZoneException': Error retrieving local timezone.
 -- * 'LocalSystemTimeException': Error retrieving local system time.
---
--- ==== __Examples__
---
--- >>> let toUtc = Just $ TZDatabaseLabel Etc__UTC
--- >>> let reader = defaultTimeReader "17:24"
---
--- >>> -- convert from est
--- >>> let nyReader = reader { srcTZ = Just (TZDatabaseLabel America__New_York) }
--- >>> readConvertTime (Just (nyReader { timeString = "08:15" })) toUtc
--- 1970-01-01 13:15:00 UTC
---
--- >>> let badTimeString = reader { timeString = "bad" }
--- >>> (void $ readConvertTime (Just badTimeString) toUtc) `catchCS` parseTimeEx
--- parse time exception
---
--- >>> let badTZDatabase = reader { srcTZ = Just (TZDatabaseText "America/NewYork")}
--- >>> (void $ readConvertTime (Just badTZDatabase) toUtc) `catchCS` parseTzDbEx
--- parse tzdb exception
 --
 -- @since 0.1
 readConvertTime ::
@@ -151,28 +123,8 @@ readConvertTime mtimeReader destTZ =
 -- __Throws:__
 --
 -- * 'ParseTimeException': Error parsing the time string.
--- * 'ParseTZDatabaseException': Error parsing the tz database name.
 -- * 'LocalTimeZoneException': Error retrieving local timezone.
 -- * 'LocalSystemTimeException': Error retrieving local system time.
---
--- ==== __Examples__
--- >>> let reader = defaultTimeReader "17:24"
---
--- >>> -- convert from est
--- >>> readTime (Just (reader { srcTZ = Just (TZDatabaseLabel America__New_York) }))
--- 1970-01-01 17:24:00 EST
---
--- >>> let nyReader = reader { srcTZ = Just (TZDatabaseLabel America__New_York) }
--- >>> readTime (Just (nyReader { timeString = "08:15" }))
--- 1970-01-01 08:15:00 EST
---
--- >>> let badTimeString = reader { timeString = "bad" }
--- >>> (void $ readTime (Just badTimeString)) `catchCS` parseTimeEx
--- parse time exception
---
--- >>> let badTZDatabase = reader { srcTZ = Just (TZDatabaseText "America/NewYork")}
--- >>> (void $ readTime (Just badTZDatabase)) `catchCS` parseTzDbEx
--- parse tzdb exception
 --
 -- @since 0.1
 readTime ::
@@ -193,21 +145,6 @@ readTime Nothing =
 --
 -- * 'ParseTZDatabaseException': Error parsing the tz database name.
 -- * 'LocalTimeZoneException': Error retrieving local timezone.
---
--- ==== __Examples__
---
--- >>> import Data.Time.Clock (UTCTime (..))
--- >>> import Data.Time.LocalTime (utc, utcToZonedTime)
--- >>> let zoned = utcToZonedTime utc (UTCTime (toEnum 50_000) 0)
--- >>> zoned
--- 1995-10-10 00:00:00 UTC
---
--- >>> let toNy = Just $ TZDatabaseText "America/New_York"
--- >>> convertTime zoned toNy
--- 1995-10-09 20:00:00 EDT
---
--- >>> (void $ convertTime zoned (Just $ TZDatabaseText "America/NewYork")) `catchCS` parseTzDbEx
--- parse tzdb exception
 --
 -- @since 0.1
 convertTime ::
@@ -344,19 +281,6 @@ readInLocalTimeZone format timeStr = do
 
 -- | 'readTimeFormat' specialized to 'ZonedTime'.
 --
--- ==== __Examples__
--- >>> readTimeFormatZoned Format.defaultTimeLocale TimeFmt.hm "17:24"
--- Just 1970-01-01 17:24:00 +0000
---
--- >>> readTimeFormatZoned Format.defaultTimeLocale TimeFmt.hm12h "07:24 pm"
--- Just 1970-01-01 19:24:00 +0000
---
--- >>> readTimeFormatZoned Format.defaultTimeLocale TimeFmt.hmTZ "07:24 +5000"
--- Just 1970-01-01 07:24:00 +5000
---
--- >>> readTimeFormatZoned Format.defaultTimeLocale TimeFmt.hmTZ12h "07:24 pm -5000"
--- Just 1970-01-01 19:24:00 -5000
---
 -- @since 0.1
 readTimeFormatZoned :: TimeLocale -> TimeFormat -> Text -> Maybe ZonedTime
 readTimeFormatZoned = readTimeFormat
@@ -380,11 +304,6 @@ readTimeFormat locale format timeStr = Format.parseTimeM True locale format' tim
 
 -- | Converts a local time to the given timezone.
 --
--- ==== __Examples__
--- >>> let (Just sixPmUtc) = readTimeFormat Format.defaultTimeLocale TimeFmt.hm "18:00"
--- >>> convertLocalLabel sixPmUtc America__New_York
--- 1970-01-01 18:00:00 EST
---
 -- @since 0.1
 convertLocalToZoned :: LocalTime -> TZInput -> ZonedTime
 convertLocalToZoned localTime tzInput =
@@ -398,11 +317,6 @@ convertLocalToZoned localTime tzInput =
     TZActual timeZone -> ZonedTime localTime timeZone
 
 -- | Converts a zoned time to the given timezone.
---
--- ==== __Examples__
--- >>> let (Just sixPmUtc) = readTimeFormat Format.defaultTimeLocale TimeFmt.hm "18:00"
--- >>> convertZonedLabel sixPmUtc America__New_York
--- 1970-01-01 13:00:00 EST
 --
 -- @since 0.1
 convertZoned :: ZonedTime -> TZInput -> ZonedTime

@@ -20,16 +20,6 @@ import Optics.Core (An_Iso, LabelOptic (labelOptic), iso)
 
 -- | Time formatting string. The 'Monoid' instance behaves like 'Text'.
 --
--- ==== __Examples__
--- >>> defaultTimeFormat
--- MkTimeFormat {unTimeFormat = "%H:%M"}
---
--- >>> mempty :: TimeFormat
--- MkTimeFormat {unTimeFormat = ""}
---
--- >>> "%Y " <> hm
--- MkTimeFormat {unTimeFormat = "%Y %H:%M"}
---
 -- @since 0.1
 newtype TimeFormat = MkTimeFormat
   {unTimeFormat :: Text}
@@ -69,18 +59,12 @@ defaultTimeFormat = hm
 
 -- | Format for 24-hour @hours:minutes@.
 --
--- >>> hm
--- MkTimeFormat {unTimeFormat = "%H:%M"}
---
 -- @since 0.1
 hm :: TimeFormat
 hm = "%H:%M"
 {-# INLINE hm #-}
 
 -- | Format for 12-hour @hours:minutes am/pm@.
---
--- >>> hm12h
--- MkTimeFormat {unTimeFormat = "%I:%M %P"}
 --
 -- @since 0.1
 hm12h :: TimeFormat
@@ -91,9 +75,6 @@ hm12h = "%I:%M %P"
 -- flag, it should be used for formatting output only. In particular, it should
 -- __not__ be used with 'TimeReader'\'s 'format'.
 --
--- >>> hmTZ
--- MkTimeFormat {unTimeFormat = "%H:%M %Z"}
---
 -- @since 0.1
 hmTZ :: TimeFormat
 hmTZ = "%H:%M %Z"
@@ -103,9 +84,6 @@ hmTZ = "%H:%M %Z"
 -- flag, it should be used for formatting output only. In particular, it should
 -- __not__ be used with 'TimeReader'\'s 'format'.
 --
--- >>> hmTZ12h
--- MkTimeFormat {unTimeFormat = "%I:%M %P %Z"}
---
 -- @since 0.1
 hmTZ12h :: TimeFormat
 hmTZ12h = "%I:%M %P %Z"
@@ -114,9 +92,6 @@ hmTZ12h = "%I:%M %P %Z"
 -- | Format for RFC822: @%a, %_d %b %Y %H:%M:%S %Z@. As this contains a timezone
 -- flag, it should be used for formatting output only. In particular, it should
 -- __not__ be used with 'TimeReader'\'s 'format'.
---
--- >>> rfc822
--- MkTimeFormat {unTimeFormat = "%a, %_d %b %Y %H:%M:%S %Z"}
 --
 -- @since 0.1
 rfc822 :: TimeFormat
