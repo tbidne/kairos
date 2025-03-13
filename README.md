@@ -73,13 +73,13 @@ The timezone names are based on the tz_database. See https://en.wikipedia.org/wi
 time-conv: A tool for timezone conversions.
 
 Usage: time-conv [-c|--config PATH] [--date (today | YYYY-mm-dd)]
-                 [-d|--dest-tz TZ_DB] [-f|--format-in FMT_STR]
-                 [-o|--format-out (rfc822 | FMT_STR)] [-s|--src-tz TZ_DB]
+                 [-d|--dest-tz TZ] [-f|--format-in FMT_STR]
+                 [-o|--format-out (rfc822 | FMT_STR)] [-s|--src-tz TZ]
                  [TIME_STR] [-v|--version]
 
   time-conv reads time strings and converts between timezones. For the src and
-  dest options, TZ_DB refers to labels like America/New_York. See
-  https://en.wikipedia.org/wiki/Tz_database.
+  dest options, TZ refers to labels like 'America/New_York' or offsets like
+  '+1300'. See https://en.wikipedia.org/wiki/Tz_database.
 
 Available options:
   -c,--config PATH         Path to TOML config file. It not given we
@@ -96,9 +96,10 @@ Available options:
   --no-date                Disables --date. Useful for disabling the toml field
                            'today'.
 
-  -d,--dest-tz TZ_DB       Timezone in which to convert the read string. Must be
-                           a tz database label like America/New_York. If none is
-                           given then we use the local system timezone.
+  -d,--dest-tz TZ          Timezone in which to convert the read string. Must be
+                           a tz database label or offset e.g.
+                           'America/New_York', '+1300'. If none is given then we
+                           use the local system timezone.
 
   -f,--format-in FMT_STR   Glibc-style format string for parsing the time
                            string. Should not contain a timezone flag like %Z
@@ -110,10 +111,10 @@ Available options:
                            Like --format-in, but used for the output. If this is
                            not present we default to rfc822 i.e. RFC822.
 
-  -s,--src-tz TZ_DB        Timezone in which to read the string. Must be a tz
-                           database label like America/New_York. If none is
-                           given then we use the local system timezone. This
-                           option requires TIME_STR.
+  -s,--src-tz TZ           Timezone in which to read the string. Must be a tz
+                           database label or offset e.g. 'America/New_York',
+                           '+1300'. If none is given then we use the local
+                           system timezone. This option requires TIME_STR.
 
   TIME_STR                 Time string to parse. If none is given then we parse
                            the local system time. To format the output, use
@@ -164,9 +165,9 @@ Mon, 11 Apr 2022 00:30:00 NZST
 
 ## Destination Timezone
 
-**Arg:** `-d,--dest-tz TZ_DB`
+**Arg:** `-d,--dest-tz TZ`
 
-**Description:** This option allows one to convert the read timezone. Must be a tz database label like America/New_York. If none is given then we use the local system timezone.
+**Description:** This option allows one to convert the read timezone. Must be a tz database label or offset e.g. `America/New_York`, `+1300`. If none is given then we use the local system timezone.
 
 **Examples:**
 
@@ -219,9 +220,9 @@ $ time-conv -o %H:%M:%S 08:30
 
 ## Source Timezone
 
-**Arg:** `-s,--src-tz TZ_DB`
+**Arg:** `-s,--src-tz TZ`
 
-**Description:** Timezone in which to read the string. Must be a tz database label like `America/New_York`. If none is given then we use the local system timezone. This option requires [Time String](#time-string).
+**Description:** Timezone in which to read the string. Must be a tz database label or offset e.g. `America/New_York`, `+1300`. If none is given then we use the local system timezone. This option requires [Time String](#time-string).
 
 **Examples:**
 

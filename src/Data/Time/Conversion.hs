@@ -20,13 +20,13 @@ module Data.Time.Conversion
     readTimeFormat,
 
     -- ** Converting ZonedTime
-    convertZonedLabel,
+    convertZoned,
 
     -- * Types
     Date (..),
     TimeFormat (..),
     TimeReader (..),
-    TZDatabase (..),
+    TZInput (..),
 
     -- ** Re-exports
     TZLabel (..),
@@ -34,7 +34,7 @@ module Data.Time.Conversion
 
     -- ** Exceptions
     ParseTimeException (..),
-    ParseTZDatabaseException (..),
+    ParseTZInputException (..),
     LocalTimeZoneException (..),
     LocalSystemTimeException (..),
   )
@@ -50,7 +50,6 @@ import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Clock (UTCTime)
-import Data.Time.Conversion.Internal qualified as Internal
 import Data.Time.Conversion.Types.Date
   ( Date (DateLiteral, DateToday),
     unDateString,
@@ -58,12 +57,10 @@ import Data.Time.Conversion.Types.Date
 import Data.Time.Conversion.Types.Exception
   ( LocalSystemTimeException (MkLocalSystemTimeException),
     LocalTimeZoneException (MkLocalTimeZoneException),
-    ParseTZDatabaseException (MkParseTZDatabaseException),
+    ParseTZInputException (MkParseTZInputException),
     ParseTimeException (MkParseTimeException),
   )
-import Data.Time.Conversion.Types.TZDatabase
-  ( TZDatabase (TZDatabaseLabel, TZDatabaseText),
-  )
+import Data.Time.Conversion.Types.TZInput (TZInput (TZActual, TZDatabase))
 import Data.Time.Conversion.Types.TimeFormat
   ( TimeFormat (MkTimeFormat, unTimeFormat),
   )
@@ -142,7 +139,7 @@ readConvertTime ::
   -- | Source time.
   Maybe TimeReader ->
   -- | Dest timezone.
-  Maybe TZDatabase ->
+  Maybe TZInput ->
   -- | Converted time.
   m ZonedTime
 readConvertTime mtimeReader destTZ =
@@ -219,7 +216,7 @@ convertTime ::
     MonadTime m
   ) =>
   ZonedTime ->
-  Maybe TZDatabase ->
+  Maybe TZInput ->
   m ZonedTime
 convertTime inTime Nothing = do
   let inTimeUtc = Local.zonedTimeToUTC inTime
@@ -227,7 +224,7 @@ convertTime inTime Nothing = do
     getCurrentTimeZone
       `catchSync` (throwM . MkLocalTimeZoneException)
   pure $ Local.utcToZonedTime currTZ inTimeUtc
-convertTime inTime (Just tzdb) = convertZonedLabel inTime <$> tzDatabaseToTZLabel tzdb
+convertTime inTime (Just tzOut) = pure $ convertZoned inTime tzOut
 
 readTimeString ::
   ( HasCallStack,
@@ -243,10 +240,9 @@ readTimeString timeReader =
       -- add system date if specified
       (timeStrDate, formatDate) <- maybeAddDate Nothing
       readInLocalTimeZone formatDate timeStrDate
-    Just tzdb -> do
-      lbl <- tzDatabaseToTZLabel tzdb
+    Just tzInput -> do
       -- add src date if specified
-      (timeStrDate, formatDate) <- maybeAddDate (Just lbl)
+      (timeStrDate, formatDate) <- maybeAddDate (Just tzInput)
 
       -- Read string as a LocalTime, no TZ info. This allow us to correctly
       -- get the source's timezone, taking the desired date into account.
@@ -256,7 +252,7 @@ readTimeString timeReader =
           pure
           (readTimeFormatLocal Format.defaultTimeLocale formatDate timeStrDate)
 
-      pure $ convertLocalLabel localTime lbl
+      pure $ convertLocalToZoned localTime tzInput
   where
     format = timeReader ^. #format
     timeStr = timeReader ^. #timeString
@@ -270,16 +266,16 @@ readTimeString timeReader =
         MonadTime m
       ) =>
       -- Maybe source timezone
-      Maybe TZLabel ->
+      Maybe TZInput ->
       m (Text, TimeFormat)
-    maybeAddDate mlabel = case timeReader ^. #date of
+    maybeAddDate mTZ = case timeReader ^. #date of
       Nothing -> pure (timeStr, format)
       Just (DateLiteral dateStr) -> do
         let str = unDateString dateStr
         pure (str +-+ timeStr, dateString +-+ format)
       Just DateToday -> do
         -- get the current date in the source timezone
-        currDateStr <- currentDate mlabel
+        currDateStr <- currentDate mTZ
         pure (T.pack currDateStr +-+ timeStr, dateString +-+ format)
 
 currentDate ::
@@ -287,16 +283,16 @@ currentDate ::
     MonadCatch m,
     MonadTime m
   ) =>
-  Maybe TZLabel ->
+  Maybe TZInput ->
   m String
-currentDate mlabel = do
+currentDate mTZ = do
   currTime <-
     getSystemZonedTime
       `catchSync` (throwM . MkLocalSystemTimeException)
 
   -- Convert into the given label if present. Otherwise keep in system
   -- timezone.
-  let currTime' = maybe currTime (convertZonedLabel currTime) mlabel
+  let currTime' = maybe currTime (convertZoned currTime) mTZ
 
   pure $ Format.formatTime Format.defaultTimeLocale dateString currTime'
 
@@ -382,17 +378,6 @@ readTimeFormat locale format timeStr = Format.parseTimeM True locale format' tim
     format' = T.unpack $ format ^. #unTimeFormat
     timeStr' = T.unpack timeStr
 
--- | Converts a zoned time to the given timezone.
---
--- ==== __Examples__
--- >>> let (Just sixPmUtc) = readTimeFormat Format.defaultTimeLocale TimeFmt.hm "18:00"
--- >>> convertZonedLabel sixPmUtc America__New_York
--- 1970-01-01 13:00:00 EST
---
--- @since 0.1
-convertZonedLabel :: ZonedTime -> TZLabel -> ZonedTime
-convertZonedLabel = convertLabel (const Local.zonedTimeToUTC)
-
 -- | Converts a local time to the given timezone.
 --
 -- ==== __Examples__
@@ -401,11 +386,63 @@ convertZonedLabel = convertLabel (const Local.zonedTimeToUTC)
 -- 1970-01-01 18:00:00 EST
 --
 -- @since 0.1
-convertLocalLabel :: LocalTime -> TZLabel -> ZonedTime
-convertLocalLabel = convertLabel Zones.localTimeToUTCTZ
+convertLocalToZoned :: LocalTime -> TZInput -> ZonedTime
+convertLocalToZoned localTime tzInput =
+  case tzInput of
+    -- We have a TZLabel. We need to perform to/from UTC conversions to get
+    -- the correct time, because the Label -> TimeZone function is not
+    -- constant (consider e.g. daylight savings).
+    TZDatabase label -> convertFromLabel Zones.localTimeToUTCTZ localTime label
+    -- If we have a TimeZone then we can just create the ZonedTime directly.
+    -- No need for any conversions.
+    TZActual timeZone -> ZonedTime localTime timeZone
 
-convertLabel :: (TZ -> a -> UTCTime) -> a -> TZLabel -> ZonedTime
-convertLabel toUtcTime t tzLabel = Local.utcToZonedTime timeZone utcTime
+-- | Converts a zoned time to the given timezone.
+--
+-- ==== __Examples__
+-- >>> let (Just sixPmUtc) = readTimeFormat Format.defaultTimeLocale TimeFmt.hm "18:00"
+-- >>> convertZonedLabel sixPmUtc America__New_York
+-- 1970-01-01 13:00:00 EST
+--
+-- @since 0.1
+convertZoned :: ZonedTime -> TZInput -> ZonedTime
+convertZoned zonedTime tzInput =
+  case tzInput of
+    TZDatabase label -> convertFromLabel f zonedTime label
+    TZActual timeZone -> convertFromActual zonedTime timeZone
+  where
+    f = const Local.zonedTimeToUTC
+
+-- | Converts the ZonedTime to UTCTime and finally the requested TimeZone.
+--
+-- The parameter 'TimeZone' is the destination.
+convertFromActual :: ZonedTime -> TimeZone -> ZonedTime
+convertFromActual zt timeZone = Local.utcToZonedTime timeZone utcTime
+  where
+    -- Convert to UTC.
+    utcTime = Local.zonedTimeToUTC zt
+
+-- | Converts some time ('LocalTime' or 'ZonedTime') to 'UTCTime' then finally
+-- a ZonedTime based on the given 'TZLabel'.
+--
+-- ZonedTime is expected to pass a toUtcTime function that ignored the
+-- 'TZ' parameter, since it already has its own time zone info. the 'TZLabel'
+-- is used purely to convert the destination.
+--
+-- LocalTime, on the other hand, is expected to use 'TZ' since it does not
+-- have its own time zone info. This may seem silly, since we are using the
+-- parameter to TZLabel to determine the (source) LocalTime's zone, converting
+-- to UTC, then converting to (dest) ZonedTime based on the same zone. Why
+-- are we "converting" to the same time zone?
+--
+-- There may well be a more direct method, but we have to do _something_
+-- non-trivial here because the actual TimeZone will vary with the LocalTime
+-- (e.g. daylight savings, leap seconds). Thus we first get a zoned time (UTC)
+-- with the LocalTime and TZLabel. Then we convert that to the TimeZone of our
+-- choice. The returned ZonedTime's LocalTime should be very similar, with the
+-- only differences due to the aforementioned issues.
+convertFromLabel :: (TZ -> a -> UTCTime) -> a -> TZLabel -> ZonedTime
+convertFromLabel toUtcTime t tzLabel = Local.utcToZonedTime timeZone utcTime
   where
     -- This is a TZ i.e. the preliminary timezone corresponding to our
     -- label e.g. America/New_York -> TZ. This type is a stepping stone
@@ -419,13 +456,6 @@ convertLabel toUtcTime t tzLabel = Local.utcToZonedTime timeZone utcTime
     -- the time as the TimeZone can vary with the actual time e.g.
     -- America/New_York -> EST / EDT.
     timeZone = Zones.timeZoneForUTCTime tz utcTime
-
-tzDatabaseToTZLabel :: (HasCallStack, MonadThrow m) => TZDatabase -> m TZLabel
-tzDatabaseToTZLabel (TZDatabaseLabel lbl) = pure lbl
-tzDatabaseToTZLabel (TZDatabaseText txt) =
-  case Internal.tzNameToTZLabel txt of
-    Just lbl -> pure lbl
-    Nothing -> throwM $ MkParseTZDatabaseException txt
 
 -- concat with a space
 (+-+) :: (Semigroup a, IsString a) => a -> a -> a

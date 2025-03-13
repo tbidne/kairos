@@ -10,7 +10,7 @@ where
 import Control.DeepSeq (NFData (rnf), deepseq)
 import Data.Text (Text)
 import Data.Time.Conversion.Types.Date (Date)
-import Data.Time.Conversion.Types.TZDatabase (TZDatabase)
+import Data.Time.Conversion.Types.TZInput (TZInput)
 import Data.Time.Conversion.Types.TimeFormat (TimeFormat, defaultTimeFormat)
 import GHC.Generics (Generic)
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)
@@ -29,7 +29,7 @@ data TimeReader = MkTimeReader
     -- local timezone.
     --
     -- @since 0.1
-    srcTZ :: Maybe TZDatabase,
+    srcTZ :: Maybe TZInput,
     -- | Date corresponding to the 'timeString'. If 'Nothing', uses the
     -- unix epoch.
     --
@@ -66,7 +66,7 @@ instance
 
 -- | @since 0.1
 instance
-  (k ~ A_Lens, a ~ Maybe TZDatabase, b ~ Maybe TZDatabase) =>
+  (k ~ A_Lens, a ~ Maybe TZInput, b ~ Maybe TZInput) =>
   LabelOptic "srcTZ" k TimeReader TimeReader a b
   where
   labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _today _timeString) ->

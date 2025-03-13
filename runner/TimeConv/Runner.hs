@@ -9,6 +9,7 @@ module TimeConv.Runner
 where
 
 import Control.Monad.Catch (MonadCatch, MonadThrow, throwM)
+import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -17,10 +18,21 @@ import Data.Time.Conversion qualified as Conv
 import Data.Time.Conversion.Types.Date (Date (DateToday))
 import Data.Time.Conversion.Types.Exception
   ( DateNoTimeStringException (MkDateNoTimeStringException),
+    ParseTZInputException (MkParseTZInputException),
     SrcTZNoTimeStringException (MkSrcTZNoTimeStringException),
   )
-import Data.Time.Conversion.Types.TZDatabase (TZDatabase, _TZDatabaseText)
-import Data.Time.Conversion.Types.TimeReader (TimeReader)
+import Data.Time.Conversion.Types.TZInput (TZInput)
+import Data.Time.Conversion.Types.TZInput qualified as TZInput
+import Data.Time.Conversion.Types.TimeFormat qualified as TimeFmt
+import Data.Time.Conversion.Types.TimeReader
+  ( TimeReader
+      ( MkTimeReader,
+        date,
+        format,
+        srcTZ,
+        timeString
+      ),
+  )
 import Data.Time.Format qualified as Format
 import Effects.FileSystem.FileReader (MonadFileReader, readFileUtf8ThrowM)
 import Effects.FileSystem.PathReader
@@ -33,18 +45,14 @@ import Effects.System.Terminal (MonadTerminal)
 import Effects.System.Terminal qualified as T
 import Effects.Time (MonadTime)
 import FileSystem.OsPath (osp, (</>))
+import GHC.Stack.Types (HasCallStack)
 import Optics.Core
-  ( A_Setter,
-    Is,
-    Optic',
-    Prism,
-    Prism',
-    over',
+  ( Prism',
+    preview,
     prism,
-    set',
     (%),
-    (%?),
     (^.),
+    _Just,
   )
 import Optics.Core.Extras (is)
 import TOML qualified
@@ -52,12 +60,14 @@ import TimeConv.Runner.Args
   ( Args
       ( config,
         date,
+        destTZ,
+        formatIn,
+        formatOut,
         noConfig,
         noDate,
         srcTZ,
         timeString
       ),
-    argsToBuilder,
     parserInfo,
   )
 import TimeConv.Runner.Toml (Toml)
@@ -82,6 +92,7 @@ runTimeConv = do
 --
 -- @since 0.1
 runWithArgs ::
+  forall m.
   ( MonadCatch m,
     MonadFileReader m,
     MonadPathReader m,
@@ -101,24 +112,54 @@ runWithArgs args = do
         Just _ -> throwM MkDateNoTimeStringException
         Nothing -> pure ()
 
-  -- Transform Args to TimeReader, DestTZ and FormatOut
-  let (mtimeReader, destTZ, formatOut) = argsToBuilder args
-      formatStr = T.unpack $ formatOut ^. #unTimeFormat
+  let formatOut = fromMaybe TimeFmt.rfc822 args.formatOut
+      formatOutStr = T.unpack $ formatOut ^. #unTimeFormat
 
-  -- If the toml config exists, further transform TimeReader and DestTZ
-  -- according to its config
-  (mtimeReader', destTZ') <-
+  mToml <-
     if args.noConfig
-      then pure (mtimeReader, destTZ)
-      else
-        updateFromTomlFile
-          args.config
-          mtimeReader
-          args.noDate
-          destTZ
+      then pure Nothing
+      else mGetToml args.config
 
-  readAndHandle mtimeReader' destTZ' formatStr
+  let aliases :: Maybe (Map Text Text)
+      aliases = preview (_Just % #aliases % _Just) mToml
+
+      today :: Bool
+      today = is (_Just % #today % _Just % _True) mToml
+
+  mTimeReader <- case args.timeString of
+    Nothing -> pure Nothing
+    Just timeString -> do
+      srcTZ <- parseTZ aliases args.srcTZ
+
+      -- CLI date (date string or literal 'today') can be overridden
+      --    in exactly one scenario:
+      --
+      --    1. noDate is False (--no-date unspecified).
+      --    2. CLI --date unspecified.
+      --    3. toml.today = true
+      let date
+            -- 1. --no-date specified: overrides all.
+            | args.noDate = Nothing
+            | otherwise = case args.date of
+                -- 2. --date specified: use it.
+                Just d -> Just d
+                -- 3. Overwrite w/ DateToday iff it is set on the toml.
+                Nothing -> if today then Just DateToday else Nothing
+
+      pure $
+        Just $
+          MkTimeReader
+            { format = args.formatIn,
+              date,
+              srcTZ,
+              timeString
+            }
+
+  destTZ <- parseTZ aliases args.destTZ
+
+  readAndHandle mTimeReader destTZ formatOutStr
   where
+    readAndHandle :: Maybe TimeReader -> Maybe TZInput -> String -> m ()
     readAndHandle tr d fmt = do
       time <- Conv.readConvertTime tr d
       let result = T.pack $ Format.formatTime locale fmt time
@@ -128,124 +169,52 @@ runWithArgs args = do
     -- extra tz info here.
     locale = Format.defaultTimeLocale
 
-updateFromTomlFile ::
+parseTZ ::
+  forall m.
+  ( HasCallStack,
+    MonadThrow m
+  ) =>
+  -- | Maybe aliases map.
+  Maybe (Map Text Text) ->
+  Maybe Text ->
+  m (Maybe TZInput)
+parseTZ _ Nothing = pure Nothing
+parseTZ mAliasMap (Just txt) = do
+  -- If the map exists, lookup the txt in it first, falling back to itself
+  -- if it is not found. Then attempt to parse the result.
+  let toParse = maybe txt (Map.findWithDefault txt txt) mAliasMap
+  Just <$> parseFromTxt toParse
+  where
+    parseFromTxt :: Text -> m TZInput
+    parseFromTxt t = case TZInput.parseTZInput t of
+      Just tz -> pure tz
+      Nothing -> throwM $ MkParseTZInputException t
+
+mGetToml ::
   ( MonadFileReader m,
     MonadPathReader m,
     MonadThrow m
   ) =>
   -- | Path to toml config file.
   Maybe OsPath ->
-  -- | TimeReader so far (CLI Args)
-  Maybe TimeReader ->
-  -- | CLI Args' noDate
-  Bool ->
-  -- | Dest TZ
-  Maybe TZDatabase ->
-  -- | Updated (TimeReader, DestTZ)
-  m (Maybe TimeReader, Maybe TZDatabase)
-updateFromTomlFile mconfigPath mtimeReader noDate mdestTZ = do
+  -- | Reads toml, if we are given a path or we find it via XDG.
+  m (Maybe Toml)
+mGetToml mconfigPath = do
   case mconfigPath of
     Nothing -> do
       configDir <- getXdgConfig [osp|time-conv|]
       let configPath = configDir </> [osp|config.toml|]
       exists <- doesFileExist configPath
       if exists
-        then updateFromFile configPath
-        else pure (mtimeReader, mdestTZ)
-    Just configPath -> updateFromFile configPath
+        then Just <$> readToml configPath
+        else pure Nothing
+    Just configPath -> Just <$> readToml configPath
   where
-    updateFromFile configPath = do
+    readToml configPath = do
       contents <- readFileUtf8ThrowM configPath
       case TOML.decode @Toml contents of
         Left ex -> throwM ex
-        Right toml -> pure $ updateFromToml mtimeReader noDate mdestTZ toml
-
-updateFromToml ::
-  -- | TimeReader from args.
-  Maybe TimeReader ->
-  -- | noDate: If true, ignore toml's 'today' field.
-  Bool ->
-  -- | Dest TZ.
-  Maybe TZDatabase ->
-  -- | Toml.
-  Toml ->
-  -- | Updated TimeReader and Dest TZ.
-  (Maybe TimeReader, Maybe TZDatabase)
-updateFromToml mTimeReader noDate mDestTZ toml = (mFinalTimeReader, mFinalDest)
-  where
-    mFinalTimeReader :: Maybe TimeReader
-    mFinalTimeReader = do
-      timeReader <- mTimeReader
-
-      let -- 1. Update src via aliases
-          timeReaderAliases =
-            updateAliases
-              (#srcTZ %? _TZDatabaseText)
-              timeReader
-
-          -- 2. CLI date (date string or literal 'today') can be overridden
-          --    in exactly one scenario:
-          --
-          --    1. noDate is False (--no-date unspecified).
-          --    2. CLI --date unspecified.
-          --    3. toml.today = true
-          --
-          -- maybeUpdateDate checks conditions 1 and 3.
-          maybeUpdateDate :: Bool
-          maybeUpdateDate = not noDate && is (#today %? _True) toml
-
-          -- AffineTraversal here checks condition 2.
-          timeReaderAliasesDate =
-            if maybeUpdateDate
-              then
-                set'
-                  (#date % _UnlawfulNothing)
-                  DateToday
-                  timeReaderAliases
-              else
-                timeReaderAliases
-
-      Just timeReaderAliasesDate
-
-    mFinalDest :: Maybe TZDatabase
-    -- 1. Update via aliases
-    mFinalDest = updateAliases _TZDatabaseText <$> mDestTZ
-
-    -- if aliases exist, update relevant fields (timeReader's srcTZ and destTZ)
-    updateAliases :: (Is k A_Setter) => Optic' k is s Text -> s -> s
-    updateAliases k = over' k aliasOrDefault
-
-    -- returns 'Map.lookup txt aliases' if aliases and the key both exist.
-    aliasOrDefault :: Text -> Text
-    aliasOrDefault txt = fromMaybe txt $ do
-      aliasesMap <- toml ^. #aliases
-      Map.lookup txt aliasesMap
-
--- | Matches Nothing but overrides with Just.
---
--- __WARNING:__ This is __unlawful__ since e.g. the law
---
--- @
---   preview l (review l b) ≡ Just b
--- @
---
--- does not hold here. To wit,
---
--- @
---   preview _UnlawfulNothing (review _UnlawfulNothing ()) ≡ Just ()
---   preview _UnlawfulNothing (Just ()) ≡ Just ()
---   Nothing ≢ Just ()
--- @
---
--- But this is exactly the behavior we want here, swapping constructors.
-_UnlawfulNothing :: Prism (Maybe a) (Maybe a) () a
-_UnlawfulNothing =
-  prism
-    Just
-    ( \case
-        Nothing -> Right ()
-        other -> Left other
-    )
+        Right toml -> pure toml
 
 _True :: Prism' Bool ()
 _True =

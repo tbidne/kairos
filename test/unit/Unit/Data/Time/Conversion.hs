@@ -9,7 +9,7 @@ import Data.Text qualified as T
 import Data.Time.Clock (NominalDiffTime)
 import Data.Time.Conversion qualified as Conversion
 import Data.Time.Conversion.Types.Date (Date (DateLiteral, DateToday))
-import Data.Time.Conversion.Types.TZDatabase (TZDatabase (TZDatabaseLabel))
+import Data.Time.Conversion.Types.TZInput (TZInput (TZDatabase))
 import Data.Time.Conversion.Types.TimeFormat qualified as TimeFmt
 import Data.Time.Conversion.Types.TimeReader
   ( TimeReader
@@ -47,7 +47,7 @@ testDestSrcRoundtrips :: TestTree
 testDestSrcRoundtrips =
   testPropertyCompat "currTime == fromSource . toDest (date today)" "testDestSrcRoundtrips" $
     H.property $ do
-      tzdb <- TZDatabaseLabel <$> H.forAll G.tzLabel
+      tzdb <- TZDatabase <$> H.forAll G.tzLabel
 
       currTime <- liftIO $ Conversion.readConvertTime Nothing Nothing
       H.annotateShow currTime
@@ -79,7 +79,7 @@ testDestSrcDateRoundtrips :: TestTree
 testDestSrcDateRoundtrips =
   testPropertyCompat "currTime == fromSource . toDest (date literal)" "testDestSrcDateRoundtrips" $
     H.property $ do
-      tzdb <- TZDatabaseLabel <$> H.forAll G.tzLabel
+      tzdb <- TZDatabase <$> H.forAll G.tzLabel
 
       currTime <- liftIO $ Conversion.readConvertTime Nothing Nothing
       H.annotateShow currTime

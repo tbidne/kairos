@@ -1,7 +1,7 @@
 -- | @since 0.1
 module Data.Time.Conversion.Types.Exception
   ( ParseTimeException (..),
-    ParseTZDatabaseException (..),
+    ParseTZInputException (..),
     LocalTimeZoneException (..),
     LocalSystemTimeException (..),
     SrcTZNoTimeStringException (..),
@@ -41,10 +41,10 @@ instance Exception ParseTimeException where
       <> T.unpack (f ^. #unTimeFormat)
       <> "'"
 
--- | Exception parsing tz database names.
+-- | Exception parsing tz input names.
 --
 -- @since 0.1
-newtype ParseTZDatabaseException = MkParseTZDatabaseException Text
+newtype ParseTZInputException = MkParseTZInputException Text
   deriving stock
     ( -- | @since 0.1
       Generic,
@@ -57,11 +57,11 @@ newtype ParseTZDatabaseException = MkParseTZDatabaseException Text
     )
 
 -- | @since 0.1
-instance Exception ParseTZDatabaseException where
-  displayException (MkParseTZDatabaseException tzdb) =
-    "Could not parse tz database name '"
+instance Exception ParseTZInputException where
+  displayException (MkParseTZInputException tzdb) =
+    "Could not parse tz from '"
       <> T.unpack tzdb
-      <> "'. Wanted a name like America/New_York."
+      <> "'. Wanted a name or offset e.g. 'America/New_York', '+0800'."
 
 -- | Exception reading local system timezone.
 --

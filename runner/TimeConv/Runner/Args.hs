@@ -6,31 +6,19 @@
 -- @since 0.1
 module TimeConv.Runner.Args
   ( Args (..),
-    argsToBuilder,
     parserInfo,
   )
 where
 
 import Data.Functor ((<&>))
 import Data.List qualified as L
-import Data.Maybe (fromMaybe)
 import Data.String (IsString (fromString))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Conversion.Types.Date (Date)
 import Data.Time.Conversion.Types.Date qualified as Date
-import Data.Time.Conversion.Types.TZDatabase (TZDatabase (TZDatabaseText))
 import Data.Time.Conversion.Types.TimeFormat (TimeFormat)
 import Data.Time.Conversion.Types.TimeFormat qualified as TimeFmt
-import Data.Time.Conversion.Types.TimeReader
-  ( TimeReader
-      ( MkTimeReader,
-        date,
-        format,
-        srcTZ,
-        timeString
-      ),
-  )
 import Data.Version (Version (versionBranch))
 import Effects.Optparse (OsPath, osPath)
 import Optics.Core ((^.))
@@ -63,10 +51,10 @@ data Args = MkArgs
     noConfig :: Bool,
     date :: Maybe Date,
     noDate :: Bool,
-    destTZ :: Maybe TZDatabase,
+    destTZ :: Maybe Text,
     formatIn :: TimeFormat,
     formatOut :: Maybe TimeFormat,
-    srcTZ :: Maybe TZDatabase,
+    srcTZ :: Maybe Text,
     timeString :: Maybe Text
   }
   deriving stock (Eq, Show)
@@ -90,9 +78,10 @@ parserInfo =
     footer = Just $ fromString versNum
     desc =
       Chunk.paragraph $
-        "time-conv reads time strings and converts between timezones."
-          <> " For the src and dest options, TZ_DB refers to labels like"
-          <> " America/New_York. See https://en.wikipedia.org/wiki/Tz_database."
+        "time-conv reads time strings and converts between timezones. "
+          <> "For the src and dest options, TZ refers to labels like "
+          <> "'America/New_York' or offsets like '+1300'. See "
+          <> "https://en.wikipedia.org/wiki/Tz_database."
 
 parseArgs :: Parser Args
 parseArgs =
@@ -108,35 +97,6 @@ parseArgs =
     <*> parseTimeStr
       <**> OA.helper
       <**> version
-
--- | Maps 'Args' to 'TimeReader'. Details:
---
--- * If no 'Args.timeString' is given then no 'TimeReader' is returned.
--- * The output format is, in order:
---
---     1. 'formatOut' if it exists.
---     2. 'Args.format' if no 'formatOut' and 'Args.timeString' exists.
---     3. Otherwise, default format of "%H:%M".
---
--- @since 0.1
-argsToBuilder :: Args -> (Maybe TimeReader, Maybe TZDatabase, TimeFormat)
-argsToBuilder args = (mtimeReader, args.destTZ, formatOut)
-  where
-    mtimeReader = case args.timeString of
-      Just str ->
-        Just $
-          MkTimeReader
-            { format = args.formatIn,
-              srcTZ = args.srcTZ,
-              date =
-                if args.noDate
-                  then Nothing
-                  else args.date,
-              timeString = str
-            }
-      Nothing -> Nothing
-
-    formatOut = fromMaybe TimeFmt.rfc822 args.formatOut
 
 parseConfig :: Parser (Maybe OsPath)
 parseConfig =
@@ -168,27 +128,24 @@ parseNoConfig =
   where
     helpTxt = "Disables --config."
 
-parseDestTZ :: Parser (Maybe TZDatabase)
+parseDestTZ :: Parser (Maybe Text)
 parseDestTZ =
-  OA.option
-    readTZDatabase
+  OA.optional
+    $ OA.option
+      OA.str
     $ mconcat
-      [ OA.value Nothing,
-        OA.long "dest-tz",
+      [ OA.long "dest-tz",
         OA.short 'd',
-        OA.metavar "TZ_DB",
+        OA.metavar "TZ",
         mkHelp helpTxt
       ]
   where
     helpTxt =
       mconcat
-        [ "Timezone in which to convert the read string. Must be a tz database",
-          " label like America/New_York. If none is given then we use the",
-          " local system timezone."
+        [ "Timezone in which to convert the read string. Must be a tz database ",
+          "label or offset e.g. 'America/New_York', '+1300'. If none is given ",
+          "then we use the local system timezone."
         ]
-
-readTZDatabase :: ReadM (Maybe TZDatabase)
-readTZDatabase = Just . TZDatabaseText <$> OA.str
 
 parseFormatIn :: Parser TimeFormat
 parseFormatIn =
@@ -236,23 +193,23 @@ readFormat =
     "rfc822" -> TimeFmt.rfc822
     other -> fromString other
 
-parseSrcTZ :: Parser (Maybe TZDatabase)
+parseSrcTZ :: Parser (Maybe Text)
 parseSrcTZ =
-  OA.option
-    readTZDatabase
+  OA.optional
+    $ OA.option
+      OA.str
     $ mconcat
-      [ OA.value Nothing,
-        OA.long "src-tz",
+      [ OA.long "src-tz",
         OA.short 's',
-        OA.metavar "TZ_DB",
+        OA.metavar "TZ",
         mkHelp helpTxt
       ]
   where
     helpTxt =
       mconcat
-        [ "Timezone in which to read the string. Must be a tz database",
-          " label like America/New_York. If none is given then we use the",
-          " local system timezone. This option requires TIME_STR."
+        [ "Timezone in which to read the string. Must be a tz database ",
+          "label or offset e.g. 'America/New_York', '+1300'. If none is given ",
+          "then we use the local system timezone. This option requires TIME_STR."
         ]
 
 parseDate :: Parser (Maybe Date)

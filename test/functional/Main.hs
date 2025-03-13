@@ -15,7 +15,7 @@ import Data.Text qualified as T
 import Data.Time.Conversion.Types.Date qualified as Date
 import Data.Time.Conversion.Types.Exception
   ( DateNoTimeStringException,
-    ParseTZDatabaseException,
+    ParseTZInputException,
     ParseTimeException,
     SrcTZNoTimeStringException,
   )
@@ -49,6 +49,7 @@ main =
         formatOutputTests,
         srcTzTests,
         destTzTests,
+        tzOffsetTests,
         testNoArgs,
         testNoTimeString,
         testToday,
@@ -149,13 +150,13 @@ testSrcTzDatabaseCase = testCase desc $ do
 
 testSrcTzFails :: TestTree
 testSrcTzFails = testCase "Bad source timezone fails" $ do
-  assertException @ParseTZDatabaseException expected $ captureTimeConvIO args
+  assertException @ParseTZInputException expected $ captureTimeConvIO args
   where
     args = pureDestTZ <> ["-s", "Europe/Pariss", "08:30"]
     expected =
       mconcat
-        [ "Could not parse tz database name 'Europe/Pariss'. ",
-          "Wanted a name like America/New_York."
+        [ "Could not parse tz from 'Europe/Pariss'. Wanted a name or offset ",
+          "e.g. 'America/New_York', '+0800'."
         ]
 
 testSrcTzDST :: TestTree
@@ -243,14 +244,52 @@ testSrcDestTzDatabase = testCase "Uses src to dest" $ do
 
 testDestTzFails :: TestTree
 testDestTzFails = testCase "Bad dest timezone fails" $ do
-  assertException @ParseTZDatabaseException expected $ captureTimeConvIO args
+  assertException @ParseTZInputException expected $ captureTimeConvIO args
   where
     args = pureSrcTZ <> ["-d", "Europe/Pariss", "08:30"]
     expected =
       mconcat
-        [ "Could not parse tz database name 'Europe/Pariss'. ",
-          "Wanted a name like America/New_York."
+        [ "Could not parse tz from 'Europe/Pariss'. Wanted a name or offset ",
+          "e.g. 'America/New_York', '+0800'."
         ]
+
+tzOffsetTests :: TestTree
+tzOffsetTests =
+  testGroup
+    "Parses TZ offsets"
+    [ testTzOffsetColon,
+      testTzOffsetNoColon,
+      testTzOffsetHours,
+      testTzOffsetUtc
+    ]
+
+testTzOffsetColon :: TestTree
+testTzOffsetColon = testCase "Uses tz offsets with colon" $ do
+  result <-
+    captureTimeConvIO $
+      ["-f", "%H:%M", "-s", "+13:00", "08:30", "-d", "-08:00"]
+  "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
+
+testTzOffsetNoColon :: TestTree
+testTzOffsetNoColon = testCase "Uses tz offsets without colon" $ do
+  result <-
+    captureTimeConvIO $
+      ["-f", "%H:%M", "-s", "+1300", "08:30", "-d", "-0800"]
+  "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
+
+testTzOffsetHours :: TestTree
+testTzOffsetHours = testCase "Uses tz offsets with hours only" $ do
+  result <-
+    captureTimeConvIO $
+      ["-f", "%H:%M", "-s", "+13", "08:30", "-d", "-08"]
+  "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
+
+testTzOffsetUtc :: TestTree
+testTzOffsetUtc = testCase "Uses tz offsets without colon" $ do
+  result <-
+    captureTimeConvIO $
+      ["-f", "%H:%M", "-s", "Z", "08:30", "-d", "-0800"]
+  "Thu,  1 Jan 1970 00:30:00 -0800" @=? result
 
 testNoArgs :: TestTree
 testNoArgs = testCase "No args succeeds" $ do
@@ -367,6 +406,9 @@ testTomlAliases = testCase "Config aliases succeed" $ do
 
   resultZagreb <- captureTimeConvParamsIO (withDest "zagreb")
   "Tue, 12 Jul 2022 10:30:00 CEST" @=? resultZagreb
+
+  resultOffset <- captureTimeConvParamsIO (withDest "some_offset")
+  "Tue, 12 Jul 2022 15:30:00 +0700" @=? resultOffset
   where
     withDest d =
       MkTestParams
@@ -480,7 +522,7 @@ captureTimeConvParamsIO params = case params.mCurrentTime of
         MonadPathReader m,
         MonadTime m
       ) =>
-      -- \| Args.
+      -- Args.
       [String] ->
       m Text
     captureTimeConvConfigM argList = SysEnv.withArgs argList $ runTermT runTimeConv

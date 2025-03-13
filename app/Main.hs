@@ -9,7 +9,7 @@ import Data.Time.Conversion.Types.Exception
   ( DateNoTimeStringException,
     LocalSystemTimeException,
     LocalTimeZoneException,
-    ParseTZDatabaseException,
+    ParseTZInputException,
     ParseTimeException,
     SrcTZNoTimeStringException,
   )
@@ -29,6 +29,6 @@ main = do
         MkExceptionProxy @LocalSystemTimeException,
         MkExceptionProxy @LocalTimeZoneException,
         MkExceptionProxy @ParseTimeException,
-        MkExceptionProxy @ParseTZDatabaseException,
+        MkExceptionProxy @ParseTZInputException,
         MkExceptionProxy @SrcTZNoTimeStringException
       ]

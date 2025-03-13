@@ -43,6 +43,7 @@ common common-lang
     DeriveTraversable
     DerivingStrategies
     DerivingVia
+    DuplicateRecordFields
     FlexibleContexts
     FlexibleInstances
     FunctionalDependencies
@@ -81,7 +82,7 @@ library
     Data.Time.Conversion.Types.Exception
     Data.Time.Conversion.Types.TimeFormat
     Data.Time.Conversion.Types.TimeReader
-    Data.Time.Conversion.Types.TZDatabase
+    Data.Time.Conversion.Types.TZInput
 
   build-depends:
     , base             >=4.14.0.0 && <4.22
