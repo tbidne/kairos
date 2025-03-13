@@ -21,6 +21,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16, Word8)
 import GHC.Generics (Generic)
+import GHC.Records (HasField (getField))
 import Optics.Core
   ( A_Getter,
     A_ReversedPrism,
@@ -49,6 +50,11 @@ data DateString = UnsafeDateString Word16 Word8 Word8
     )
 
 -- | @since 0.1
+instance HasField "unDateString" DateString Text where
+  getField = unDateString
+  {-# INLINE getField #-}
+
+-- | @since 0.1
 instance
   (k ~ A_ReversedPrism, a ~ Text, b ~ Text) =>
   LabelOptic "unDateString" k DateString DateString a b
@@ -62,6 +68,11 @@ instance
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
+instance HasField "year" DateString Word16 where
+  getField = year
+  {-# INLINE getField #-}
+
+-- | @since 0.1
 instance
   (k ~ A_Getter, a ~ Word16, b ~ Word16) =>
   LabelOptic "year" k DateString DateString a b
@@ -70,12 +81,22 @@ instance
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
+instance HasField "month" DateString Word8 where
+  getField = month
+  {-# INLINE getField #-}
+
+-- | @since 0.1
 instance
   (k ~ A_Getter, a ~ Word8, b ~ Word8) =>
   LabelOptic "month" k DateString DateString a b
   where
   labelOptic = to month
   {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance HasField "day" DateString Word8 where
+  getField = day
+  {-# INLINE getField #-}
 
 -- | @since 0.1
 instance
