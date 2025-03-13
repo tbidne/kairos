@@ -22,7 +22,7 @@ package time-conv
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: 973852fc69a3bb7c0477dafcc933c14ec4cb0f75
+    tag: 37ec7127fbd0f591d4539e4bf72a0badd7569181
 
 source-repository-package
     type: git
@@ -32,17 +32,17 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/exception-utils.git
-    tag: d9d3d6061d9ad16d9840a4e5e9cdc36a498a2a82
+    tag: e28b28ae3bc90a0336abf69eff28369b790f4e13
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/fs-utils.git
-    tag: e2273c91c411e1fe12347524065855ba8e34a481
+    tag: 83472bc22a938db0d3b4c02a24a52bfca0484637
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 9e2258864a4c6a25d444eeeb915211d38a08fdf6
+    tag: 80cc48f2ebba62e526ca623da75053cd943473f7
     subdir:
       lib/effects-env
       lib/effects-fs
@@ -54,7 +54,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: d1b9dceac83d677f55798cee2c98b0fc1f54e6f9
+    tag: a39c02ec6a5a9c4b551baffafd75f26be74dd457
 
 allow-newer: path:hashable
 
