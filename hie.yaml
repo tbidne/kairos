@@ -1,16 +1,16 @@
 cradle:
   cabal:
-    - path: "./src"
-      component: "lib:kairos"
+    - path: "./lib/core/src"
+      component: "lib:kairos-core"
 
-    - path: "./runner"
+    - path: "./lib/core/test/unit"
+      component: "kairos-core:test:unit"
+
+    - path: "./lib/exe/runner"
       component: "kairos:lib:kairos-runner"
 
-    - path: "./app/Main.hs"
+    - path: "./lib/exe/app/Main.hs"
       component: "kairos:exe:kairos"
 
-    - path: "./test/unit"
-      component: "kairos:test:unit"
-
-    - path: "./test/functional"
+    - path: "./lib/exe/test/functional"
       component: "kairos:test:functional"

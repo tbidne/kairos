@@ -89,11 +89,16 @@
           };
           hlib = pkgs.haskell.lib;
           mkPkg =
-            returnShellEnv:
+            name: root: source-overrides: returnShellEnv:
             nix-hs-utils.mkHaskellPkg {
-              inherit compiler pkgs returnShellEnv;
-              name = "kairos";
-              root = ./.;
+              inherit
+                compiler
+                name
+                pkgs
+                returnShellEnv
+                root
+                source-overrides
+                ;
 
               # TODO: Once hlint is back to working with our GHC we can
               # use nix-hs-utils.mkDevTools ++ otherDeps.
@@ -114,11 +119,20 @@
           compilerPkgs = {
             inherit compiler pkgs;
           };
+
+          mkKairosCore = mkPkg "kairos-core" ./lib/core { };
+          mkKairosExe = mkPkg "kairos" ./lib/exe {
+            kairos-core = ./lib/core;
+          } false;
         in
         {
-          packages.default = mkPkg false;
+          packages = {
+            core = mkKairosCore false;
+            default = mkKairosExe;
+            exe = mkKairosExe;
+          };
           devShells = {
-            default = mkPkg true;
+            default = mkKairosCore true;
 
             stack = pkgs.mkShell {
               buildInputs = [

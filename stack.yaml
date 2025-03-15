@@ -1,7 +1,8 @@
 ---
 resolver: nightly-2025-03-11
 packages:
-  - .
+  - ./lib/core/
+  - ./lib/exe/
 ghc-options:
   "$locals":
     -Wall -Wcompat

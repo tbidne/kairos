@@ -1,0 +1,123 @@
+cabal-version:   2.4
+name:            kairos-core
+version:         0.1
+license:         MIT
+license-file:    LICENSE
+tested-with:
+  GHC ==9.2.8
+   || ==9.4.8
+   || ==9.6.6
+   || ==9.8.2
+   || ==9.10.1
+   || ==9.12.1
+
+copyright:       2022-2025 Thomas Bidne
+author:          Thomas Bidne
+maintainer:      tbidne@protonmail.com
+homepage:        https://github.com/tbidne/kairos/
+bug-reports:     https://github.com/tbidne/kairos/issues
+synopsis:        A utility program for converting between timezones.
+description:
+  A utility program for converting between timezones.
+  Please see the README at https://github.com/tbidne/kairos/#readme
+
+category:        Time, Shell scripting
+extra-doc-files: CHANGELOG.md
+
+source-repository head
+  type:     git
+  location: https://github.com/tbidne/kairos
+
+common common-lang
+  default-extensions:
+    BangPatterns
+    ConstraintKinds
+    DataKinds
+    DeriveAnyClass
+    DeriveFunctor
+    DeriveGeneric
+    DeriveTraversable
+    DerivingStrategies
+    DerivingVia
+    DuplicateRecordFields
+    FlexibleContexts
+    FlexibleInstances
+    FunctionalDependencies
+    GADTs
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    InstanceSigs
+    LambdaCase
+    MultiParamTypeClasses
+    MultiWayIf
+    NamedFieldPuns
+    NumericUnderscores
+    OverloadedLabels
+    OverloadedRecordDot
+    OverloadedStrings
+    PatternSynonyms
+    RankNTypes
+    ScopedTypeVariables
+    StandaloneDeriving
+    StandaloneKindSignatures
+    StrictData
+    TupleSections
+    TypeApplications
+    TypeFamilyDependencies
+    TypeOperators
+
+  default-language:   Haskell2010
+
+library
+  import:          common-lang
+  exposed-modules:
+    Kairos
+    Kairos.Internal
+    Kairos.Types.Date
+    Kairos.Types.Date.Internal
+    Kairos.Types.Exception
+    Kairos.Types.TimeFormat
+    Kairos.Types.TimeReader
+    Kairos.Types.TZInput
+
+  build-depends:
+    , base             >=4.14.0.0 && <4.22
+    , containers       >=0.6.3.1  && <0.9
+    , deepseq          >=1.4.4.0  && <1.6
+    , effects-time     ^>=0.1
+    , exception-utils  ^>=0.1
+    , exceptions       ^>=0.10.4
+    , optics-core      ^>=0.4
+    , text             >=1.2.3.2  && <2.2
+    , time             >=1.9.3    && <1.15
+    , tz               ^>=0.1.3.3
+
+  hs-source-dirs:  src
+
+test-suite unit
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  other-modules:
+    Props.Generators
+    Unit.Kairos
+    Unit.Kairos.Internal
+    Unit.Kairos.Types.Date
+    Unit.Utils
+
+  build-depends:
+    , base
+    , deepseq
+    , exception-utils
+    , hedgehog         >=1.0.2   && <1.6
+    , kairos-core
+    , optics-core
+    , tasty            >=1.1.0.3 && <1.6
+    , tasty-hedgehog   >=1.0.1.0 && <1.5
+    , tasty-hunit      >=0.9     && <0.11
+    , text
+    , time
+    , tz
+
+  hs-source-dirs: test/unit
+  ghc-options:    -threaded -with-rtsopts=-N

@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
 -- | Functional test suite
@@ -21,7 +22,7 @@ import Effects.System.Environment (MonadEnv)
 import Effects.System.Environment qualified as SysEnv
 import Effects.System.Terminal (MonadTerminal (putStrLn))
 import Effects.Time (MonadTime (getMonotonicTime, getSystemZonedTime))
-import FileSystem.OsPath (combineFilePaths)
+import FileSystem.OsPath (ospPathSep, unsafeDecode)
 import Kairos.Runner (runKairos)
 import Kairos.Types.Date qualified as Date
 import Kairos.Types.Exception
@@ -368,7 +369,7 @@ testTomlToday = testCase "Uses toml 'today'" $ do
       MkTestParams
         { args =
             [ "-c",
-              "test" `cfp` "functional" `cfp` "today.toml",
+              todayTomlFp,
               "-s",
               "Etc/Utc",
               "--format-out",
@@ -388,7 +389,7 @@ testArgsOverridesTomlToday = testCase "Args overrides toml's 'today'" $ do
       MkTestParams
         { args =
             [ "-c",
-              "test" `cfp` "functional" `cfp` "today.toml",
+              todayTomlFp,
               "-s",
               "Etc/Utc",
               "--date",
@@ -414,7 +415,7 @@ testTomlAliases = testCase "Config aliases succeed" $ do
       MkTestParams
         { args =
             [ "-c",
-              "examples" `cfp` "config.toml",
+              configFp,
               "-s",
               "Etc/Utc",
               "-d",
@@ -436,7 +437,7 @@ testTomlNoDate = testCase "Disables toml 'today'" $ do
       MkTestParams
         { args =
             [ "-c",
-              "examples" `cfp` "config.toml",
+              configFp,
               "-s",
               "Etc/Utc",
               "-d",
@@ -607,5 +608,8 @@ runTermT (MkTermT m) = do
   _ <- runReaderT m outputRef
   readIORef outputRef
 
-cfp :: FilePath -> FilePath -> FilePath
-cfp = combineFilePaths
+configFp :: FilePath
+configFp = unsafeDecode [ospPathSep|examples/config.toml|]
+
+todayTomlFp :: FilePath
+todayTomlFp = unsafeDecode [ospPathSep|test/functional/today.toml|]

@@ -50,7 +50,7 @@ echo "*** Building kairos ***"
 cd /opt/kairos
 
 cabal update
-cabal install --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping exe:kairos --project-file cabal.ghc9101.project --ghc-options -Werror
+cabal install kairos --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping --project-file cabal.ghc9101.project --ghc-options -Werror
 
 echo "*** Copy binary ***"
 

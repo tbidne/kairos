@@ -132,7 +132,7 @@ Version: 0.1
 
 **Arg:** `-c,--config PATH `
 
-**Description:** Path to `toml` config file. Can be used to define aliases for tz_database labels. See [examples](./examples/) directory for examples.
+**Description:** Path to `toml` config file. Can be used to define aliases for tz_database labels. See [examples](./lib/exe/examples/) directory for examples.
 
 **Examples:**
 
@@ -282,12 +282,12 @@ The easiest way to install these is generally [`ghcup`](https://www.haskell.org/
 
 ### Build Kairos
 
-Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build` or installed globally (i.e. `~/.local/bin/kairos`) with `cabal install`.
+Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build kairos` or installed globally (i.e. `~/.local/bin/kairos`) with `cabal install kairos`.
 
 For further reproducibility, optional freeze files can be used e.g.
 
 ```sh
-cabal build --project-file cabal.ghc9101.project
+cabal build kairos-exe --project-file cabal.ghc9101.project
 ```
 
 > [!NOTE]
@@ -304,7 +304,7 @@ Like `cabal` and `ghc`, `stack` can be installed with [`ghcup`](https://www.hask
 
 ### Build Kairos
 
-Once you have `stack`, `kairos` can be built with `stack build` or installed globally (i.e. `~/.local/bin/kairos`) with `stack install`.
+Once you have `stack`, `kairos` can be built with `stack build kairos` or installed globally (i.e. `~/.local/bin/kairos`) with `stack install kairos`.
 
 ## Nix
 
