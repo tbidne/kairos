@@ -40,7 +40,7 @@ import Options.Applicative.Help (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse), ReadM)
-import Paths_kairos qualified as Paths
+import Paths_kairos_exe qualified as Paths
 
 -- | CLI args.
 --

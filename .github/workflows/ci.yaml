@@ -46,13 +46,13 @@ jobs:
         run: cabal configure ${{ matrix.ghc.proj-file }} --enable-tests --ghc-options -Werror
 
       - name: Compile
-        run: cabal build ${{ matrix.ghc.proj-file }} exe:kairos
+        run: cabal build ${{ matrix.ghc.proj-file }} kairos-exe
 
       - name: Unit Tests
-        run: cabal test ${{ matrix.ghc.proj-file }} unit --test-options "--hedgehog-tests 100000"
+        run: cabal test ${{ matrix.ghc.proj-file }} kairos:unit  --test-options "--hedgehog-tests 100000"
 
       - name: Functional Tests
-        run: cabal test ${{ matrix.ghc.proj-file }} functional
+        run: cabal test ${{ matrix.ghc.proj-file }} kairos-exe:functional
 
   stack:
     strategy:
