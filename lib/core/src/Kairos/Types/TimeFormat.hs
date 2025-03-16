@@ -3,7 +3,7 @@
 -- | @since 0.1
 module Kairos.Types.TimeFormat
   ( TimeFormat (..),
-    defaultTimeFormat,
+    defaultTimeFormats,
     hm,
     hm12h,
     hmTZ,
@@ -13,6 +13,7 @@ module Kairos.Types.TimeFormat
 where
 
 import Control.DeepSeq (NFData)
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.String (IsString)
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -53,9 +54,19 @@ instance
   labelOptic = iso (\(MkTimeFormat f) -> f) MkTimeFormat
   {-# INLINE labelOptic #-}
 
--- | Alias for 'hm'.
-defaultTimeFormat :: TimeFormat
-defaultTimeFormat = hm
+-- | Parses 24 hour time w/ and w/o colon (13:00, 1300) and 12 hour
+-- time w/ and w/o passing (1:30 pm, 1 pm, 10:15 am).
+--
+-- @since 0.1
+defaultTimeFormats :: NonEmpty TimeFormat
+defaultTimeFormats =
+  hm
+    :| [ hmNoColon, -- 0300
+         "%-I:%M %P", -- 1:30 pm,
+         "%-I:%M%P", -- 1:30pm
+         "%-I %P", -- 1pm
+         "%-I%P" -- 1 pm
+       ]
 
 -- | Format for 24-hour @hours:minutes@.
 --
@@ -63,6 +74,13 @@ defaultTimeFormat = hm
 hm :: TimeFormat
 hm = "%H:%M"
 {-# INLINE hm #-}
+
+-- | Format for 24-hour @hoursminutes@ (no colon).
+--
+-- @since 0.1
+hmNoColon :: TimeFormat
+hmNoColon = "%H%M"
+{-# INLINE hmNoColon #-}
 
 -- | Format for 12-hour @hours:minutes am/pm@.
 --

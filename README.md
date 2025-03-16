@@ -73,14 +73,13 @@ The timezone names are based on the tz_database. See https://en.wikipedia.org/wi
 ```
 kairos: A tool for timezone conversions.
 
-Usage: kairos [-c|--config PATH] [--date (today | YYYY-mm-dd)]
-                 [-d|--dest-tz TZ] [-f|--format-in FMT_STR]
-                 [-o|--format-out (rfc822 | FMT_STR)] [-s|--src-tz TZ]
-                 [TIME_STR] [-v|--version]
+Usage: kairos [-c|--config PATH] [--date (today | YYYY-mm-dd)] [-d|--dest-tz TZ]
+              [-f|--format-in FMT_STR] [-o|--format-out (rfc822 | FMT_STR)]
+              [-s|--src-tz TZ] [TIME_STR] [-v|--version]
 
-  kairos reads time strings and converts between timezones. For the src and
-  dest options, TZ refers to labels like 'America/New_York' or offsets like
-  '+1300'. See https://en.wikipedia.org/wiki/Tz_database.
+  kairos reads time strings and converts between timezones. For the src and dest
+  options, TZ refers to labels like 'America/New_York' or offsets like '+1300'.
+  See https://en.wikipedia.org/wiki/Tz_database.
 
 Available options:
   -c,--config PATH         Path to TOML config file. It not given we
@@ -105,8 +104,8 @@ Available options:
   -f,--format-in FMT_STR   Glibc-style format string for parsing the time
                            string. Should not contain a timezone flag like %Z
                            (see --src-tz) nor a date (see --date). Defaults to
-                           %H:%M i.e. 24-hr hour:minute. See 'man date' for
-                           basic examples.
+                           standard 12 and 24 hour formats e.g. '17:00', '0300',
+                           '4:30 pm', '2 am'. See 'man date' for basic examples.
 
   -o,--format-out (rfc822 | FMT_STR)
                            Like --format-in, but used for the output. If this is
@@ -192,13 +191,22 @@ Wed, 31 Dec 1969 21:30:00 +0200
 
 **Arg:** `-f,--format-in FMT_STR`
 
-**Description:** Glibc-style format string for parsing the time string. Should not contain a timezone flag like `%Z` (see [`--src-tz`](#source_timezone)) nor a date (see [`--date`](#date)). Defaults to `%H:%M` i.e. 24-hr hour:minute. See 'man date' for basic examples.
+**Description:** Glibc-style format string for parsing the time string. Should not contain a timezone flag like `%Z` (see [`--src-tz`](#source_timezone)) nor a date (see [`--date`](#date)). Defaults to standard 12 and 24 hour formats e.g. `17:00`, `0300`, `4:30 pm`, `2 am`. See 'man date' for basic examples.
 
 **Examples:**
 
 ```
 $ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZDT
+
+$ kairos 0830
+Thu,  1 Jan 1970 08:30:00 NZST
+
+$ kairos '8:30 am'
+Thu,  1 Jan 1970 08:30:00 NZST
+
+$ kairos 8am
+Thu,  1 Jan 1970 08:00:00 NZST
 
 $ kairos -f "%I:%M %p" "08:00 pm"
 Thu,  1 Jan 1970 20:00:00 NZST

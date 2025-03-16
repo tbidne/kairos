@@ -8,23 +8,26 @@ module Kairos.Types.TimeReader
 where
 
 import Control.DeepSeq (NFData (rnf), deepseq)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Kairos.Types.Date (Date)
 import Kairos.Types.TZInput (TZInput)
-import Kairos.Types.TimeFormat (TimeFormat, defaultTimeFormat)
+import Kairos.Types.TimeFormat (TimeFormat, defaultTimeFormats)
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)
 
 -- | Determines how to read a time string.
 --
 -- @since 0.1
 data TimeReader = MkTimeReader
-  { -- | Format used when parsing the time string. This should __not__ include
-    -- timezone formatting e.g. @%Z@. Use 'srcTZ' instead. It should also
-    -- not include date information. Use 'date' instead.
+  { -- | Format(s) used when parsing the time string. This should __not__
+    -- include timezone formatting e.g. @%Z@. Use 'srcTZ' instead. It should
+    -- also not include date information. Use 'date' instead.
+    --
+    -- The formats are tried in order.
     --
     -- @since 0.1
-    format :: TimeFormat,
+    formats :: NonEmpty TimeFormat,
     -- | Timezone in which to read the string. 'Nothing' corresponds to
     -- local timezone.
     --
@@ -57,8 +60,8 @@ instance NFData TimeReader where
 
 -- | @since 0.1
 instance
-  (k ~ A_Lens, a ~ TimeFormat, b ~ TimeFormat) =>
-  LabelOptic "format" k TimeReader TimeReader a b
+  (k ~ A_Lens, a ~ NonEmpty TimeFormat, b ~ NonEmpty TimeFormat) =>
+  LabelOptic "formats" k TimeReader TimeReader a b
   where
   labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _today _timeString) ->
     fmap (\format' -> MkTimeReader format' _srcTZ _today _timeString) (f _format)
@@ -95,4 +98,4 @@ instance
 --
 -- @since 0.1
 defaultTimeReader :: Text -> TimeReader
-defaultTimeReader = MkTimeReader defaultTimeFormat Nothing Nothing
+defaultTimeReader = MkTimeReader defaultTimeFormats Nothing Nothing

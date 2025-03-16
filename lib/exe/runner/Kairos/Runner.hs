@@ -10,6 +10,8 @@ module Kairos.Runner
 where
 
 import Control.Monad.Catch (MonadCatch, MonadThrow, throwM)
+import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
@@ -53,11 +55,12 @@ import Kairos.Types.Exception
 import Kairos.Types.TZInput (TZInput)
 import Kairos.Types.TZInput qualified as TZInput
 import Kairos.Types.TimeFormat qualified as TimeFmt
+import Kairos.Types.TimeFormat qualified as TimeFormat
 import Kairos.Types.TimeReader
   ( TimeReader
       ( MkTimeReader,
         date,
-        format,
+        formats,
         srcTZ,
         timeString
       ),
@@ -149,10 +152,15 @@ runWithArgs args = do
                 -- 3. Overwrite w/ DateToday iff it is set on the toml.
                 Nothing -> if today then Just DateToday else Nothing
 
+      let formats :: NonEmpty TimeFormat.TimeFormat
+          formats = case args.formatIn of
+            Nothing -> TimeFormat.defaultTimeFormats
+            Just fmt -> NE.singleton fmt
+
       pure $
         Just $
           MkTimeReader
-            { format = args.formatIn,
+            { formats,
               date,
               srcTZ,
               timeString

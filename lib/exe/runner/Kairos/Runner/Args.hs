@@ -20,7 +20,6 @@ import Kairos.Types.Date (Date)
 import Kairos.Types.Date qualified as Date
 import Kairos.Types.TimeFormat (TimeFormat)
 import Kairos.Types.TimeFormat qualified as TimeFmt
-import Optics.Core ((^.))
 import Options.Applicative
   ( Parser,
     ParserInfo
@@ -51,7 +50,7 @@ data Args = MkArgs
     date :: Maybe Date,
     noDate :: Bool,
     destTZ :: Maybe Text,
-    formatIn :: TimeFormat,
+    formatIn :: Maybe TimeFormat,
     formatOut :: Maybe TimeFormat,
     srcTZ :: Maybe Text,
     timeString :: Maybe Text
@@ -146,13 +145,13 @@ parseDestTZ =
           "then we use the local system timezone."
         ]
 
-parseFormatIn :: Parser TimeFormat
+parseFormatIn :: Parser (Maybe TimeFormat)
 parseFormatIn =
-  OA.option
-    (fromString <$> OA.str)
+  OA.optional
+    $ OA.option
+      (fromString <$> OA.str)
     $ mconcat
-      [ OA.value TimeFmt.defaultTimeFormat,
-        OA.long "format-in",
+      [ OA.long "format-in",
         OA.short 'f',
         OA.metavar "FMT_STR",
         mkHelp helpTxt
@@ -162,11 +161,9 @@ parseFormatIn =
       mconcat
         [ "Glibc-style format string for parsing the time string. Should not ",
           "contain a timezone flag like %Z (see --src-tz) nor a date ",
-          "(see --date). Defaults to ",
-          defFormatStr,
-          " i.e. 24-hr hour:minute. See 'man date' for basic examples."
+          "(see --date). Defaults to standard 12 and 24 hour formats e.g. ",
+          "'17:00', '0300', '4:30 pm', '2 am'. See 'man date' for basic examples."
         ]
-    defFormatStr = T.unpack $ TimeFmt.defaultTimeFormat ^. #unTimeFormat
 
 parseFormatOut :: Parser (Maybe TimeFormat)
 parseFormatOut =

@@ -11,16 +11,18 @@ where
 
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception (displayException))
+import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.Text (Text)
 import Data.Text qualified as T
 import GHC.Generics (Generic)
-import Kairos.Types.TimeFormat (TimeFormat)
-import Optics.Core ((^.))
+import Kairos.Types.TimeFormat (TimeFormat (unTimeFormat))
+import Optics.Core (view)
 
 -- | Exception parsing time string.
 --
 -- @since 0.1
-data ParseTimeException = MkParseTimeException TimeFormat Text
+data ParseTimeException = MkParseTimeException (NonEmpty TimeFormat) Text
   deriving stock
     ( -- | @since 0.1
       Generic,
@@ -34,12 +36,15 @@ data ParseTimeException = MkParseTimeException TimeFormat Text
 
 -- | @since 0.1
 instance Exception ParseTimeException where
-  displayException (MkParseTimeException f t) =
-    "Could not parse time string '"
-      <> T.unpack t
-      <> "' with format '"
-      <> T.unpack (f ^. #unTimeFormat)
-      <> "'"
+  displayException (MkParseTimeException fmts t) =
+    mconcat
+      [ "Could not parse time string '",
+        T.unpack t,
+        "' with format(s): ",
+        fmtStrs
+      ]
+    where
+      fmtStrs = foldMap (T.unpack . ("\n - " <>) . (.unTimeFormat)) fmts
 
 -- | Exception parsing tz input names.
 --

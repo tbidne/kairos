@@ -72,8 +72,26 @@ formatTests =
 
 testFormatDefault :: TestTree
 testFormatDefault = testCase "Uses default parsing" $ do
-  result <- captureKairosIO ["08:30", "-o", "%H:%M"]
-  "08:30" @=? result
+  result1 <- captureKairosIO ["08:30", "-o", "%H:%M"]
+  "08:30" @=? result1
+
+  result2 <- captureKairosIO ["0830", "-o", "%H:%M"]
+  "08:30" @=? result2
+
+  result3 <- captureKairosIO ["4:15 pm", "-o", "%H:%M"]
+  "16:15" @=? result3
+
+  result4 <- captureKairosIO ["4:15pm", "-o", "%H:%M"]
+  "16:15" @=? result4
+
+  result5 <- captureKairosIO ["4 pm", "-o", "%H:%M"]
+  "16:00" @=? result5
+
+  result6 <- captureKairosIO ["7 am", "-o", "%H:%M"]
+  "07:00" @=? result6
+
+  result7 <- captureKairosIO ["7am", "-o", "%H:%M"]
+  "07:00" @=? result7
 
 testFormatCustom :: TestTree
 testFormatCustom = testCase "Uses custom parsing" $ do
@@ -89,7 +107,11 @@ testFormatFails =
       captureKairosIO args
   where
     args = pureTZ <> ["-f", "%Y %H:%M", "08:30"]
-    expected = "Could not parse time string '08:30' with format '%Y %H:%M'"
+    expected =
+      mconcat
+        [ "Could not parse time string '08:30' with format(s): ",
+          "\n - %Y %H:%M"
+        ]
 
 formatOutputTests :: TestTree
 formatOutputTests =

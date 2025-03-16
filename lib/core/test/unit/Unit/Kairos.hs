@@ -5,6 +5,7 @@ module Unit.Kairos (tests) where
 import Control.Exception.Utils (catchSync)
 import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO (liftIO))
+import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Data.Time.Clock (NominalDiffTime)
 import Data.Time.Format qualified as Format
@@ -21,7 +22,7 @@ import Kairos.Types.TimeReader
   ( TimeReader
       ( MkTimeReader,
         date,
-        format,
+        formats,
         srcTZ,
         timeString
       ),
@@ -33,6 +34,7 @@ import Test.Tasty.Hedgehog (testPropertyNamed)
 #else
 import Test.Tasty.Hedgehog (testProperty)
 #endif
+import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
 import Unit.Utils qualified as Utils
 
 tests :: TestTree
@@ -40,7 +42,8 @@ tests =
   testGroup
     "Kairos"
     [ testDestSrcRoundtrips,
-      testDestSrcDateRoundtrips
+      testDestSrcDateRoundtrips,
+      defaultFormatTests
     ]
 
 testDestSrcRoundtrips :: TestTree
@@ -56,7 +59,7 @@ testDestSrcRoundtrips =
       let currTimeDestStr = fmt currTimeDest
           timeReader =
             MkTimeReader
-              { format = TimeFmt.hm,
+              { formats = NE.singleton TimeFmt.hm,
                 srcTZ = Just tzdb,
                 date = Just DateToday,
                 timeString = T.pack currTimeDestStr
@@ -109,7 +112,7 @@ testDestSrcDateRoundtrips =
       H.annotateShow currDateDestStr'
       let timeReader =
             MkTimeReader
-              { format = TimeFmt.hm,
+              { formats = NE.singleton TimeFmt.hm,
                 srcTZ = Just tzdb,
                 date = Just $ DateLiteral currDateDestStr',
                 timeString = currTimeDestStr
@@ -152,6 +155,40 @@ addSecond (ZonedTime lt tz) = ZonedTime (Time.addLocalTime nominalSecond lt) tz
   where
     nominalSecond :: NominalDiffTime
     nominalSecond = 1
+
+defaultFormatTests :: TestTree
+defaultFormatTests =
+  testGroup
+    "Parses local time with default format"
+    $ mkParseTest
+      <$> [ ("17:00", "17:00"),
+            ("09:00", "09:00"),
+            ("17:00", "1700"),
+            ("09:00", "0900"),
+            ("14:30", "02:30 pm"),
+            ("14:30", "2:30 pm"),
+            ("14:30", "02:30pm"),
+            ("14:30", "2:30pm"),
+            ("09:10", "09:10 am"),
+            ("09:10", "9:10 am"),
+            ("14:00", "2 pm"),
+            ("09:00", "9 am"),
+            ("14:00", "2pm"),
+            ("09:00", "9am")
+          ]
+
+mkParseTest :: (String, String) -> TestTree
+mkParseTest (expected, s) = testCase ("Parses " ++ s) (parsesDefault expected s)
+
+parsesDefault :: String -> String -> IO ()
+parsesDefault expected s = case Kairos.readTimeFormatLocal locale fmts (T.pack s) of
+  Nothing -> assertFailure $ "Failed to parse local time: " ++ s
+  Just result -> expected @=? format result
+  where
+    fmts = TimeFmt.defaultTimeFormats
+    locale = Format.defaultTimeLocale
+
+    format = Format.formatTime locale "%H:%M"
 
 #if MIN_VERSION_tasty_hedgehog(1, 2, 0)
 testPropertyCompat :: TestName -> PropertyName -> Property -> TestTree

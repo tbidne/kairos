@@ -40,12 +40,14 @@ module Kairos
   )
 where
 
+import Control.Applicative (asum)
 import Control.Exception.Utils (catchSync)
 import Control.Monad.Catch
   ( MonadCatch,
     MonadThrow,
     throwM,
   )
+import Data.List.NonEmpty (NonEmpty)
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -86,12 +88,12 @@ import Kairos.Types.TimeReader
   ( TimeReader
       ( MkTimeReader,
         date,
-        format,
+        formats,
         srcTZ,
         timeString
       ),
   )
-import Optics.Core ((^.))
+import Optics.Core (view, (^.))
 
 -- | Reads the given time string based on the source 'TimeReader' and
 -- converts to the destination timezone. This is the composition of
@@ -178,26 +180,28 @@ readTimeString timeReader =
     -- read in local timezone
     Nothing -> do
       -- add system date if specified
-      (timeStrDate, formatDate) <- maybeAddDate Nothing
-      readInLocalTimeZone formatDate timeStrDate
+      (timeStrDate, formatDates) <- maybeAddDate Nothing
+      readInLocalTimeZone formatDates timeStrDate
     Just tzInput -> do
       -- add src date if specified
-      (timeStrDate, formatDate) <- maybeAddDate (Just tzInput)
+      (timeStrDate, formatDates) <- maybeAddDate (Just tzInput)
 
       -- Read string as a LocalTime, no TZ info. This allow us to correctly
       -- get the source's timezone, taking the desired date into account.
       localTime <-
         maybe
-          (throwParseEx formatDate timeStrDate)
+          (throwParseEx formatDates timeStrDate)
           pure
-          (readTimeFormatLocal Format.defaultTimeLocale formatDate timeStrDate)
+          (readTimeFormatLocal Format.defaultTimeLocale formatDates timeStrDate)
 
       pure $ convertLocalToZoned localTime tzInput
   where
-    format = timeReader ^. #format
+    formats = timeReader ^. #formats
     timeStr = timeReader ^. #timeString
 
-    throwParseEx :: (HasCallStack, MonadThrow m) => TimeFormat -> Text -> m void
+    throwParseEx ::
+      (HasCallStack, MonadThrow m) =>
+      NonEmpty TimeFormat -> Text -> m void
     throwParseEx f = throwM . MkParseTimeException f
 
     maybeAddDate ::
@@ -207,16 +211,16 @@ readTimeString timeReader =
       ) =>
       -- Maybe source timezone
       Maybe TZInput ->
-      m (Text, TimeFormat)
+      m (Text, NonEmpty TimeFormat)
     maybeAddDate mTZ = case timeReader ^. #date of
-      Nothing -> pure (timeStr, format)
+      Nothing -> pure (timeStr, formats)
       Just (DateLiteral dateStr) -> do
         let str = unDateString dateStr
-        pure (str +-+ timeStr, dateString +-+ format)
+        pure (str +-+ timeStr, (dateString +-+) <$> formats)
       Just DateToday -> do
         -- get the current date in the source timezone
         currDateStr <- currentDate mTZ
-        pure (T.pack currDateStr +-+ timeStr, dateString +-+ format)
+        pure (T.pack currDateStr +-+ timeStr, (dateString +-+) <$> formats)
 
 currentDate ::
   ( HasCallStack,
@@ -265,10 +269,10 @@ readInLocalTimeZone ::
     MonadCatch m,
     MonadTime m
   ) =>
-  TimeFormat ->
+  NonEmpty TimeFormat ->
   Text ->
   m ZonedTime
-readInLocalTimeZone format timeStr = do
+readInLocalTimeZone formats timeStr = do
   localTz <-
     getCurrentTimeZone
       `catchSync` (throwM . MkLocalTimeZoneException)
@@ -276,22 +280,22 @@ readInLocalTimeZone format timeStr = do
 
       -- Add the local tz string to the time string, and the tz flag to the format
       timeStr' = timeStr +-+ tzStr
-  case readTimeFormatZoned Format.defaultTimeLocale format' timeStr' of
+  case readTimeFormatZoned Format.defaultTimeLocale formats' timeStr' of
     Just zt -> pure zt
-    Nothing -> throwM $ MkParseTimeException format' timeStr'
+    Nothing -> throwM $ MkParseTimeException formats' timeStr'
   where
-    format' = format +-+ tzString
+    formats' = (+-+ tzString) <$> formats
 
 -- | 'readTimeFormat' specialized to 'ZonedTime'.
 --
 -- @since 0.1
-readTimeFormatZoned :: TimeLocale -> TimeFormat -> Text -> Maybe ZonedTime
+readTimeFormatZoned :: TimeLocale -> NonEmpty TimeFormat -> Text -> Maybe ZonedTime
 readTimeFormatZoned = readTimeFormat
 
 -- | 'readTimeFormat' specialized to 'LocalTime'.
 --
 -- @since 0.1
-readTimeFormatLocal :: TimeLocale -> TimeFormat -> Text -> Maybe LocalTime
+readTimeFormatLocal :: TimeLocale -> NonEmpty TimeFormat -> Text -> Maybe LocalTime
 readTimeFormatLocal = readTimeFormat
 
 -- | @readTimeFormat locale format timeStr@ attempts to parse the @timeStr@ given
@@ -299,10 +303,13 @@ readTimeFormatLocal = readTimeFormat
 -- the result is UTC.
 --
 -- @since 0.1
-readTimeFormat :: (ParseTime t) => TimeLocale -> TimeFormat -> Text -> Maybe t
-readTimeFormat locale format timeStr = Format.parseTimeM True locale format' timeStr'
+readTimeFormat :: (ParseTime t) => TimeLocale -> NonEmpty TimeFormat -> Text -> Maybe t
+readTimeFormat locale formats timeStr =
+  asum (parseFn . toFmtStr <$> formats)
   where
-    format' = T.unpack $ format ^. #unTimeFormat
+    parseFn f = Format.parseTimeM True locale f timeStr'
+
+    toFmtStr = T.unpack . view #unTimeFormat
     timeStr' = T.unpack timeStr
 
 -- | Converts a local time to the given timezone.
