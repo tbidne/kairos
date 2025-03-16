@@ -4,7 +4,7 @@ packages:
   ./lib/core/kairos-core.cabal
   ./lib/exe/kairos.cabal
 
-package kairos
+package program-options
   ghc-options:
     -Wall -Wcompat
     -Widentities

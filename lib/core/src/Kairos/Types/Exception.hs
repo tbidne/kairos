@@ -12,12 +12,10 @@ where
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception (displayException))
 import Data.List.NonEmpty (NonEmpty)
-import Data.List.NonEmpty qualified as NE
 import Data.Text (Text)
 import Data.Text qualified as T
 import GHC.Generics (Generic)
 import Kairos.Types.TimeFormat (TimeFormat (unTimeFormat))
-import Optics.Core (view)
 
 -- | Exception parsing time string.
 --
