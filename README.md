@@ -73,12 +73,12 @@ The timezone names are based on the tz_database. See https://en.wikipedia.org/wi
 
 **Arg:** `-c,--config PATH `
 
-**Description:** Path to `toml` config file. Can be used to define aliases for tz_database labels. See [examples](./lib/exe/examples/) directory for examples.
+**Description:** Path to `toml` config file. Can be used to define aliases for tz_database labels. See the [examples](./lib/exe/examples/) directory for examples.
 
 **Examples:**
 
 ```
-$ kairos -c ./examples/config.toml -d la
+$ kairos -c ./lib/exe/examples/config.toml -d la
 Thu, 20 Apr 2023 22:25:37 PDT
 ```
 
@@ -138,6 +138,7 @@ Wed, 31 Dec 1969 21:30:00 +0200
 **Examples:**
 
 ```
+# default formats
 $ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZDT
 
@@ -150,6 +151,7 @@ Thu,  1 Jan 1970 08:30:00 NZST
 $ kairos 8am
 Thu,  1 Jan 1970 08:00:00 NZST
 
+# custom format
 $ kairos -f "%I:%M %p" "08:00 pm"
 Thu,  1 Jan 1970 20:00:00 NZST
 ```
@@ -163,7 +165,7 @@ Thu,  1 Jan 1970 20:00:00 NZST
 **Examples:**
 
 ```
-# using implicit rc822 format for output
+# using implicit rfc822 format for output
 $ kairos 08:30
 Thu,  1 Jan 1970 08:30:00 NZST
 
@@ -189,6 +191,7 @@ Thu,  1 Jan 1970 08:30:00 NZST
 $ kairos -s america/new_york 08:30
 Fri,  2 Jan 1970 01:30:00 NZST
 
+# use tz offset
 $ kairos -s -13 08:30
 Fri,  2 Jan 1970 10:30:00 NZDT
 ```

@@ -35,7 +35,7 @@ import Options.Applicative
     (<**>),
   )
 import Options.Applicative qualified as OA
-import Options.Applicative.Help (Chunk (Chunk))
+import Options.Applicative.Help (Chunk (Chunk), Doc)
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse), ReadM)
@@ -75,11 +75,35 @@ parserInfo =
     header = Just "kairos: A tool for timezone conversions."
     footer = Just $ fromString versNum
     desc =
-      Chunk.paragraph $
-        "kairos reads time strings and converts between timezones. "
-          <> "For the src and dest options, TZ refers to labels like "
-          <> "'America/New_York' or offsets like '+1300'. See "
-          <> "https://en.wikipedia.org/wiki/Tz_database."
+      Chunk.vsepChunks
+        [ Chunk.paragraph $
+            mconcat
+              [ "Kairos reads time strings and converts between timezones. ",
+                "For the src and dest options, TZ refers to labels like ",
+                "'America/New_York' or offsets like '+1300'. See ",
+                "https://en.wikipedia.org/wiki/Tz_database."
+              ],
+          Chunk.paragraph
+            "See https://github.com/tbidne/kairos#README for full documentation.",
+          Chunk.paragraph "Examples:",
+          mkExample
+            [ "$ kairos",
+              "Mon, 17 Mar 2025 10:12:10 NZDT"
+            ],
+          mkExample
+            [ "$ kairos -d europe/paris",
+              "Sun, 16 Mar 2025 22:12:10 CET"
+            ],
+          mkExample
+            [ "$ kairos --date today -s america/new_york 18:30",
+              "Mon, 17 Mar 2025 11:30:00 NZDT"
+            ]
+        ]
+
+    mkExample :: [String] -> Chunk Doc
+    mkExample =
+      Chunk.vcatChunks
+        . fmap (fmap (Pretty.indent 2) . Chunk.stringChunk)
 
 parseArgs :: Parser Args
 parseArgs =
@@ -247,7 +271,7 @@ parseTimeStr =
         <> " local system time. To format the output, use --format-out."
 
 version :: Parser (a -> a)
-version = OA.infoOption versNum (OA.long "version" <> OA.short 'v')
+version = OA.infoOption versNum (OA.long "version" <> OA.short 'v' <> OA.hidden)
 
 versNum :: String
 versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
