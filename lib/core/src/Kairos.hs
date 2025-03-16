@@ -80,7 +80,7 @@ import Kairos.Types.Exception
     ParseTZInputException (MkParseTZInputException),
     ParseTimeException (MkParseTimeException),
   )
-import Kairos.Types.TZInput (TZInput (TZActual, TZDatabase))
+import Kairos.Types.TZInput (TZInput (TZActual, TZDatabase), locale)
 import Kairos.Types.TimeFormat
   ( TimeFormat (MkTimeFormat, unTimeFormat),
   )
@@ -137,7 +137,9 @@ readTime ::
     MonadCatch m,
     MonadTime m
   ) =>
+  -- | Optional time reader.
   Maybe TimeReader ->
+  -- | Read time.
   m ZonedTime
 readTime (Just timeReader) = readTimeString timeReader
 readTime Nothing =
@@ -148,7 +150,7 @@ readTime Nothing =
 --
 -- __Throws:__
 --
--- * 'ParseTZDatabaseException': Error parsing the tz database name.
+-- * 'ParseTimeException': Error parsing the time string.
 -- * 'LocalTimeZoneException': Error retrieving local timezone.
 --
 -- @since 0.1
@@ -157,8 +159,11 @@ convertTime ::
     MonadCatch m,
     MonadTime m
   ) =>
+  -- | Time to convert.
   ZonedTime ->
+  -- | Optional destination timezone.
   Maybe TZInput ->
+  -- | Converted time.
   m ZonedTime
 convertTime inTime Nothing = do
   let inTimeUtc = Local.zonedTimeToUTC inTime
@@ -192,7 +197,7 @@ readTimeString timeReader =
         maybe
           (throwParseEx formatDates timeStrDate)
           pure
-          (readTimeFormatLocal Format.defaultTimeLocale formatDates timeStrDate)
+          (readTimeFormatLocal formatDates timeStrDate)
 
       pure $ convertLocalToZoned localTime tzInput
   where
@@ -238,7 +243,7 @@ currentDate mTZ = do
   -- timezone.
   let currTime' = maybe currTime (convertZoned currTime) mTZ
 
-  pure $ Format.formatTime Format.defaultTimeLocale dateString currTime'
+  pure $ Format.formatTime locale dateString currTime'
 
 dateString :: (IsString s) => s
 dateString = "%Y-%m-%d"
@@ -269,8 +274,11 @@ readInLocalTimeZone ::
     MonadCatch m,
     MonadTime m
   ) =>
+  -- | List of formats to try.
   NonEmpty TimeFormat ->
+  -- | The time string to parse.
   Text ->
+  -- | The time string in the local time zone, if parsing was successful.
   m ZonedTime
 readInLocalTimeZone formats timeStr = do
   localTz <-
@@ -280,7 +288,7 @@ readInLocalTimeZone formats timeStr = do
 
       -- Add the local tz string to the time string, and the tz flag to the format
       timeStr' = timeStr +-+ tzStr
-  case readTimeFormatZoned Format.defaultTimeLocale formats' timeStr' of
+  case readTimeFormatZoned formats' timeStr' of
     Just zt -> pure zt
     Nothing -> throwM $ MkParseTimeException formats' timeStr'
   where
@@ -289,13 +297,13 @@ readInLocalTimeZone formats timeStr = do
 -- | 'readTimeFormat' specialized to 'ZonedTime'.
 --
 -- @since 0.1
-readTimeFormatZoned :: TimeLocale -> NonEmpty TimeFormat -> Text -> Maybe ZonedTime
+readTimeFormatZoned :: NonEmpty TimeFormat -> Text -> Maybe ZonedTime
 readTimeFormatZoned = readTimeFormat
 
 -- | 'readTimeFormat' specialized to 'LocalTime'.
 --
 -- @since 0.1
-readTimeFormatLocal :: TimeLocale -> NonEmpty TimeFormat -> Text -> Maybe LocalTime
+readTimeFormatLocal :: NonEmpty TimeFormat -> Text -> Maybe LocalTime
 readTimeFormatLocal = readTimeFormat
 
 -- | @readTimeFormat locale format timeStr@ attempts to parse the @timeStr@ given
@@ -303,8 +311,8 @@ readTimeFormatLocal = readTimeFormat
 -- the result is UTC.
 --
 -- @since 0.1
-readTimeFormat :: (ParseTime t) => TimeLocale -> NonEmpty TimeFormat -> Text -> Maybe t
-readTimeFormat locale formats timeStr =
+readTimeFormat :: (ParseTime t) => NonEmpty TimeFormat -> Text -> Maybe t
+readTimeFormat formats timeStr =
   asum (parseFn . toFmtStr <$> formats)
   where
     parseFn f = Format.parseTimeM True locale f timeStr'

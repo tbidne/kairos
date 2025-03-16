@@ -1,4 +1,4 @@
-# Revision history for kairos
+# Revision history for kairos-core
 
 ## 0.1 -- YYYY-mm-dd
 

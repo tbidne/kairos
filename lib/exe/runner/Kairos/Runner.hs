@@ -52,7 +52,7 @@ import Kairos.Types.Exception
     ParseTZInputException (MkParseTZInputException),
     SrcTZNoTimeStringException (MkSrcTZNoTimeStringException),
   )
-import Kairos.Types.TZInput (TZInput)
+import Kairos.Types.TZInput (TZInput, locale)
 import Kairos.Types.TZInput qualified as TZInput
 import Kairos.Types.TimeFormat qualified as TimeFmt
 import Kairos.Types.TimeFormat qualified as TimeFormat
@@ -180,10 +180,6 @@ runWithArgs args = do
       time <- Kairos.readConvertTime tr d
       let result = T.pack $ Format.formatTime locale fmt time
       T.putTextLn result
-    -- NOTE: It seems that the locale's timezone info is not used when
-    -- formatting the output, so we do not have to worry about including
-    -- extra tz info here.
-    locale = Format.defaultTimeLocale
 
 parseTZ ::
   forall m.

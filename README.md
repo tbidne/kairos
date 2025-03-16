@@ -17,7 +17,6 @@
 ### Table of Contents
 
 * [Introduction](#introduction)
-  * [Usage](#usage)
 * [Options](#options)
   * [Config](#config)
   * [Date](#date)
@@ -67,63 +66,6 @@
     ```
 
 The timezone names are based on the tz_database. See https://en.wikipedia.org/wiki/Tz_database for more information.
-
-## Usage
-
-```
-kairos: A tool for timezone conversions.
-
-Usage: kairos [-c|--config PATH] [--date (today | YYYY-mm-dd)] [-d|--dest-tz TZ]
-              [-f|--format-in FMT_STR] [-o|--format-out (rfc822 | FMT_STR)]
-              [-s|--src-tz TZ] [TIME_STR] [-v|--version]
-
-  kairos reads time strings and converts between timezones. For the src and dest
-  options, TZ refers to labels like 'America/New_York' or offsets like '+1300'.
-  See https://en.wikipedia.org/wiki/Tz_database.
-
-Available options:
-  -c,--config PATH         Path to TOML config file. It not given we
-                           automatically look in the XDG config e.g.
-                           ~/.config/kairos/config.toml.
-
-  --no-config              Disables --config.
-
-  --date (today | YYYY-mm-dd)
-                           Date in which to read the string. Today uses the
-                           current date, as determined by the source. This
-                           option requires TIME_STR.
-
-  --no-date                Disables --date. Useful for disabling the toml field
-                           'today'.
-
-  -d,--dest-tz TZ          Timezone in which to convert the read string. Must be
-                           a tz database label or offset e.g.
-                           'America/New_York', '+1300'. If none is given then we
-                           use the local system timezone.
-
-  -f,--format-in FMT_STR   Glibc-style format string for parsing the time
-                           string. Should not contain a timezone flag like %Z
-                           (see --src-tz) nor a date (see --date). Defaults to
-                           standard 12 and 24 hour formats e.g. '17:00', '0300',
-                           '4:30 pm', '2 am'. See 'man date' for basic examples.
-
-  -o,--format-out (rfc822 | FMT_STR)
-                           Like --format-in, but used for the output. If this is
-                           not present we default to rfc822 i.e. RFC822.
-
-  -s,--src-tz TZ           Timezone in which to read the string. Must be a tz
-                           database label or offset e.g. 'America/New_York',
-                           '+1300'. If none is given then we use the local
-                           system timezone. This option requires TIME_STR.
-
-  TIME_STR                 Time string to parse. If none is given then we parse
-                           the local system time. To format the output, use
-                           --format-out.
-
-  -h,--help                Show this help text
-
-Version: 0.1
-```
 
 # Options
 
@@ -284,8 +226,6 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
   * [`ghc 9.10`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
   * [`ghc 9.12`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
 
-* [`ghcup`](https://www.haskell.org/ghcup/)
-
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
 ### Build Kairos
@@ -295,7 +235,7 @@ Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build kairos`
 For further reproducibility, optional freeze files can be used e.g.
 
 ```sh
-cabal build kairos-exe --project-file cabal.ghc9101.project
+cabal build kairos --project-file cabal.ghc9101.project
 ```
 
 > [!NOTE]

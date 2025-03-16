@@ -16,7 +16,7 @@ import Hedgehog qualified as H
 import Hedgehog.Internal.Property ((===))
 import Kairos qualified
 import Kairos.Types.Date (Date (DateLiteral, DateToday))
-import Kairos.Types.TZInput (TZInput (TZDatabase))
+import Kairos.Types.TZInput (TZInput (TZDatabase), locale)
 import Kairos.Types.TimeFormat qualified as TimeFmt
 import Kairos.Types.TimeReader
   ( TimeReader
@@ -76,7 +76,6 @@ testDestSrcRoundtrips =
   where
     fmt = Format.formatTime locale fmtOut
     fmtOut = "%H:%M"
-    locale = Format.defaultTimeLocale
 
 testDestSrcDateRoundtrips :: TestTree
 testDestSrcDateRoundtrips =
@@ -130,7 +129,6 @@ testDestSrcDateRoundtrips =
   where
     fmt = Format.formatTime locale fmtOut
     fmtOut = "%Y-%m-%d %H:%M"
-    locale = Format.defaultTimeLocale
 
 compareTime :: String -> ZonedTime -> ZonedTime -> H.PropertyT IO ()
 compareTime fmtOut currTime currTime' = do
@@ -148,7 +146,6 @@ compareTime fmtOut currTime currTime' = do
     fmt (addSecond currTime) === fmt currTime'
   where
     fmt = Format.formatTime locale fmtOut
-    locale = Format.defaultTimeLocale
 
 addSecond :: ZonedTime -> ZonedTime
 addSecond (ZonedTime lt tz) = ZonedTime (Time.addLocalTime nominalSecond lt) tz
@@ -181,12 +178,11 @@ mkParseTest :: (String, String) -> TestTree
 mkParseTest (expected, s) = testCase ("Parses " ++ s) (parsesDefault expected s)
 
 parsesDefault :: String -> String -> IO ()
-parsesDefault expected s = case Kairos.readTimeFormatLocal locale fmts (T.pack s) of
+parsesDefault expected s = case Kairos.readTimeFormatLocal fmts (T.pack s) of
   Nothing -> assertFailure $ "Failed to parse local time: " ++ s
   Just result -> expected @=? format result
   where
     fmts = TimeFmt.defaultTimeFormats
-    locale = Format.defaultTimeLocale
 
     format = Format.formatTime locale "%H:%M"
 

@@ -2,6 +2,7 @@
 module Kairos.Types.TZInput
   ( TZInput (..),
     parseTZInput,
+    locale,
     _TZDatabase,
     _TZActual,
   )

@@ -61,6 +61,6 @@ cd ../../
 EOF
 
 # export executable
-FROM scratch as export-stage
+FROM scratch AS export-stage
 LABEL stage=export-stage
 COPY --from=build-stage /opt/kairos/bin/* /
