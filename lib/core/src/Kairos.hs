@@ -52,7 +52,7 @@ import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Clock (UTCTime)
-import Data.Time.Format (ParseTime, TimeLocale)
+import Data.Time.Format (ParseTime)
 import Data.Time.Format qualified as Format
 import Data.Time.LocalTime
   ( LocalTime,
@@ -93,7 +93,6 @@ import Kairos.Types.TimeReader
         timeString
       ),
   )
-import Optics.Core (view, (^.))
 
 -- | Reads the given time string based on the source 'TimeReader' and
 -- converts to the destination timezone. This is the composition of
@@ -181,7 +180,7 @@ readTimeString ::
   TimeReader ->
   m ZonedTime
 readTimeString timeReader =
-  case timeReader ^. #srcTZ of
+  case timeReader.srcTZ of
     -- read in local timezone
     Nothing -> do
       -- add system date if specified
@@ -201,8 +200,8 @@ readTimeString timeReader =
 
       pure $ convertLocalToZoned localTime tzInput
   where
-    formats = timeReader ^. #formats
-    timeStr = timeReader ^. #timeString
+    formats = timeReader.formats
+    timeStr = timeReader.timeString
 
     throwParseEx ::
       (HasCallStack, MonadThrow m) =>
@@ -217,7 +216,7 @@ readTimeString timeReader =
       -- Maybe source timezone
       Maybe TZInput ->
       m (Text, NonEmpty TimeFormat)
-    maybeAddDate mTZ = case timeReader ^. #date of
+    maybeAddDate mTZ = case timeReader.date of
       Nothing -> pure (timeStr, formats)
       Just (DateLiteral dateStr) -> do
         let str = unDateString dateStr
@@ -317,7 +316,7 @@ readTimeFormat formats timeStr =
   where
     parseFn f = Format.parseTimeM True locale f timeStr'
 
-    toFmtStr = T.unpack . view #unTimeFormat
+    toFmtStr = T.unpack . (.unTimeFormat)
     timeStr' = T.unpack timeStr
 
 -- | Converts a local time to the given timezone.

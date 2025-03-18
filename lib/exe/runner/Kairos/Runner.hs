@@ -70,7 +70,6 @@ import Optics.Core
     preview,
     prism,
     (%),
-    (^.),
     _Just,
   )
 import Optics.Core.Extras (is)
@@ -119,7 +118,7 @@ runWithArgs args = do
         Nothing -> pure ()
 
   let formatOut = fromMaybe TimeFmt.rfc822 args.formatOut
-      formatOutStr = T.unpack $ formatOut ^. #unTimeFormat
+      formatOutStr = T.unpack $ formatOut.unTimeFormat
 
   mToml <-
     if args.noConfig
