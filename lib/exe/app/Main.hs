@@ -9,6 +9,7 @@ import Kairos.Runner (runKairos)
 import Kairos.Types.Exception
   ( DateNoTimeStringException,
     LocalSystemTimeException,
+    LocalTZException,
     LocalTimeZoneException,
     ParseTZInputException,
     ParseTimeException,
@@ -28,6 +29,7 @@ main = do
       [ MkExceptionProxy @DateNoTimeStringException,
         MkExceptionProxy @LocalSystemTimeException,
         MkExceptionProxy @LocalTimeZoneException,
+        MkExceptionProxy @LocalTZException,
         MkExceptionProxy @ParseTimeException,
         MkExceptionProxy @ParseTZInputException,
         MkExceptionProxy @SrcTZNoTimeStringException
