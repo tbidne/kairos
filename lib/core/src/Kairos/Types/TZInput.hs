@@ -41,6 +41,8 @@ data TZInput
     )
 
 -- | Attempts to parse 'TZInput'.
+--
+-- @since 0.1
 parseTZInput :: Text -> Maybe TZInput
 parseTZInput txt = asum parsers
   where
@@ -70,6 +72,9 @@ utcAbbrev :: Text -> Maybe TZInput
 utcAbbrev "Z" = Just $ TZActual LT.utc
 utcAbbrev _ = Nothing
 
+-- | Default locale.
+--
+-- @since 0.1
 locale :: TimeLocale
 locale = Format.defaultTimeLocale
 

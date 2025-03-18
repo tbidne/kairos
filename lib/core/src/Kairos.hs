@@ -247,7 +247,9 @@ readTimeFormatM ::
     MonadThrow m,
     ParseTime t
   ) =>
+  -- | Formats.
   NonEmpty TimeFormat ->
+  -- | Text to parse.
   Text ->
   m t
 readTimeFormatM formats timeStr = case readTimeFormat formats timeStr of
@@ -304,8 +306,8 @@ convertFromActual zt timeZone = Local.utcToZonedTime timeZone utcTime
     -- Convert to UTC.
     utcTime = Local.zonedTimeToUTC zt
 
--- | Converts some time ('LocalTime' or 'ZonedTime') to 'UTCTime' then finally
--- a ZonedTime based on the given 'TZLabel'.
+-- | Converts some time ('Data.Time.LocalTime' or 'Data.Time.ZonedTime') to
+-- 'UTCTime' then finally a ZonedTime based on the given 'TZLabel'.
 --
 -- ZonedTime is expected to pass a toUtcTime function that ignored the
 -- 'TZ' parameter, since it already has its own time zone info. the 'TZLabel'

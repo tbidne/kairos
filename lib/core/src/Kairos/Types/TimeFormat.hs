@@ -91,7 +91,7 @@ hm12h = "%I:%M %P"
 
 -- | Format for 24-hour @hours:minutes TZ@. As this contains a timezone
 -- flag, it should be used for formatting output only. In particular, it should
--- __not__ be used with 'TimeReader'\'s 'format'.
+-- __not__ be used with 'Kairos.Types.TimeReader.format'.
 --
 -- @since 0.1
 hmTZ :: TimeFormat
@@ -100,7 +100,7 @@ hmTZ = "%H:%M %Z"
 
 -- | Format for 12-hour @hours:minutes am/pm TZ@. As this contains a timezone
 -- flag, it should be used for formatting output only. In particular, it should
--- __not__ be used with 'TimeReader'\'s 'format'.
+-- __not__ be used with 'Kairos.Types.TimeReader.format'.
 --
 -- @since 0.1
 hmTZ12h :: TimeFormat
@@ -109,7 +109,7 @@ hmTZ12h = "%I:%M %P %Z"
 
 -- | Format for RFC822: @%a, %_d %b %Y %H:%M:%S %Z@. As this contains a timezone
 -- flag, it should be used for formatting output only. In particular, it should
--- __not__ be used with 'TimeReader'\'s 'format'.
+-- __not__ be used with 'Kairos.Types.TimeReader.format'.
 --
 -- @since 0.1
 rfc822 :: TimeFormat
