@@ -14,13 +14,12 @@ module Kairos
     -- * Low-level functions
 
     -- ** Parsing time strings
-    readInLocalTimeZone,
-    readTimeFormatLocal,
-    readTimeFormatZoned,
+    readTimeFormatM,
     readTimeFormat,
 
     -- ** Converting ZonedTime
     convertZoned,
+    convertLocalToZoned,
 
     -- * Types
     Date (..),
@@ -36,6 +35,7 @@ module Kairos
     ParseTimeException (..),
     ParseTZInputException (..),
     LocalTimeZoneException (..),
+    LocalTZException (..),
     LocalSystemTimeException (..),
   )
 where
@@ -48,14 +48,17 @@ import Control.Monad.Catch
     throwM,
   )
 import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Time (Day)
 import Data.Time.Clock (UTCTime)
 import Data.Time.Format (ParseTime)
 import Data.Time.Format qualified as Format
 import Data.Time.LocalTime
-  ( LocalTime,
+  ( LocalTime (LocalTime),
+    TimeOfDay,
     TimeZone,
     ZonedTime
       ( ZonedTime,
@@ -68,14 +71,12 @@ import Data.Time.Zones (TZ)
 import Data.Time.Zones qualified as Zones
 import Data.Time.Zones.All (TZLabel (..))
 import Data.Time.Zones.All qualified as All
-import Effects.Time (MonadTime (getSystemZonedTime))
+import Effects.Time (MonadTime (getSystemZonedTime, getTimeZone, loadLocalTZ))
 import GHC.Stack (HasCallStack)
-import Kairos.Types.Date
-  ( Date (DateLiteral, DateToday),
-    unDateString,
-  )
+import Kairos.Types.Date (Date (MkDateString))
 import Kairos.Types.Exception
   ( LocalSystemTimeException (MkLocalSystemTimeException),
+    LocalTZException (MkLocalTZException),
     LocalTimeZoneException (MkLocalTimeZoneException),
     ParseTZInputException (MkParseTZInputException),
     ParseTimeException (MkParseTimeException),
@@ -104,6 +105,7 @@ import Kairos.Types.TimeReader
 --
 -- * 'ParseTimeException': Error parsing the time string.
 -- * 'LocalTimeZoneException': Error retrieving local timezone.
+-- * 'LocalTZException': Error retrieving local tz_database name.
 -- * 'LocalSystemTimeException': Error retrieving local system time.
 --
 -- @since 0.1
@@ -128,6 +130,7 @@ readConvertTime mtimeReader destTZ =
 --
 -- * 'ParseTimeException': Error parsing the time string.
 -- * 'LocalTimeZoneException': Error retrieving local timezone.
+-- * 'LocalTZException': Error retrieving local tz_database name.
 -- * 'LocalSystemTimeException': Error retrieving local system time.
 --
 -- @since 0.1
@@ -141,8 +144,7 @@ readTime ::
   -- | Read time.
   m ZonedTime
 readTime (Just timeReader) = readTimeString timeReader
-readTime Nothing =
-  getSystemZonedTime `catchSync` (throwM . MkLocalSystemTimeException)
+readTime Nothing = getSystemZonedTimeKairos
 
 -- | Converts the given time to the destination timezone. If no destination
 -- timezone is given then we convert to the local system timezone.
@@ -166,144 +168,91 @@ convertTime ::
   m ZonedTime
 convertTime inTime Nothing = do
   let inTimeUtc = Local.zonedTimeToUTC inTime
-  currTZ <-
-    getCurrentTimeZone
-      `catchSync` (throwM . MkLocalTimeZoneException)
+  currTZ <- getTimeZoneKairos inTimeUtc
   pure $ Local.utcToZonedTime currTZ inTimeUtc
 convertTime inTime (Just tzOut) = pure $ convertZoned inTime tzOut
 
 readTimeString ::
+  forall m.
   ( HasCallStack,
     MonadCatch m,
     MonadTime m
   ) =>
   TimeReader ->
   m ZonedTime
-readTimeString timeReader =
-  case timeReader.srcTZ of
-    -- read in local timezone
-    Nothing -> do
-      -- add system date if specified
-      (timeStrDate, formatDates) <- maybeAddDate Nothing
-      readInLocalTimeZone formatDates timeStrDate
-    Just tzInput -> do
-      -- add src date if specified
-      (timeStrDate, formatDates) <- maybeAddDate (Just tzInput)
-
-      -- Read string as a LocalTime, no TZ info. This allow us to correctly
-      -- get the source's timezone, taking the desired date into account.
-      localTime <-
-        maybe
-          (throwParseEx formatDates timeStrDate)
-          pure
-          (readTimeFormatLocal formatDates timeStrDate)
-
-      pure $ convertLocalToZoned localTime tzInput
+readTimeString timeReader = case (timeReader.date, timeReader.srcTZ) of
+  (Nothing, Nothing) -> onNoInputs
+  (Nothing, Just srcTZ) -> onSrcTZ srcTZ
+  (Just date, Nothing) -> onDate date
+  (Just date, Just srcTZ) -> onDateAndSrcTZ date srcTZ
   where
+    -- 1. We are given no date nor tz info. Interpret given TimeOfDay in
+    -- current system timezone.
+    onNoInputs :: (HasCallStack) => m ZonedTime
+    onNoInputs = do
+      ZonedTime (LocalTime currSysDay _) currSysTz <- getSystemZonedTimeKairos
+      givenTod <- readTimeFormatM formats timeReader.timeString
+      pure $ ZonedTime (LocalTime currSysDay givenTod) currSysTz
+
+    -- 2. We are given no date but some source timezone info. Interpret given
+    -- TimeOfDay as current source timezone.
+    onSrcTZ :: (HasCallStack) => TZInput -> m ZonedTime
+    onSrcTZ src = do
+      currSysZonedTime <- getSystemZonedTimeKairos
+      let ZonedTime (LocalTime currSrcDay _) curSrcTz =
+            convertZoned currSysZonedTime src
+      givenTod <- readTimeFormatM formats timeReader.timeString
+      pure $ ZonedTime (LocalTime currSrcDay givenTod) curSrcTz
+
+    -- 3. We are given date but no timezone info. Interpret given TimeOfDay in
+    -- system timezone at that date.
+    onDate :: (HasCallStack) => Date -> m ZonedTime
+    onDate (MkDateString date) = do
+      givenDay <- readTimeFormatM @Day dayFmt date
+      givenTod <- readTimeFormatM @TimeOfDay formats timeReader.timeString
+      let givenLocalTime = LocalTime givenDay givenTod
+
+      -- see NOTE: [LocalTZException error message]
+      localTZ <- loadLocalTZKairos
+
+      let givenUtcTime = Zones.localTimeToUTCTZ localTZ givenLocalTime
+          timeZone = Zones.timeZoneForUTCTime localTZ givenUtcTime
+
+      pure $ ZonedTime givenLocalTime timeZone
+
+    -- 4. We are given date and timezone info. Interpret given TimeOfDay in
+    -- source timezone at that date.
+    onDateAndSrcTZ :: (HasCallStack) => Date -> TZInput -> m ZonedTime
+    onDateAndSrcTZ (MkDateString date) srcTZ = do
+      givenDay <- readTimeFormatM @Day dayFmt date
+      givenTod <- readTimeFormatM @TimeOfDay formats timeReader.timeString
+      let givenLocalTime = LocalTime givenDay givenTod
+      pure $ convertLocalToZoned givenLocalTime srcTZ
+
+    formats :: NonEmpty TimeFormat
     formats = timeReader.formats
-    timeStr = timeReader.timeString
 
-    throwParseEx ::
-      (HasCallStack, MonadThrow m) =>
-      NonEmpty TimeFormat -> Text -> m void
-    throwParseEx f = throwM . MkParseTimeException f
+    dayFmt :: NonEmpty TimeFormat
+    dayFmt = NE.singleton dateString
 
-    maybeAddDate ::
-      ( HasCallStack,
-        MonadCatch m,
-        MonadTime m
-      ) =>
-      -- Maybe source timezone
-      Maybe TZInput ->
-      m (Text, NonEmpty TimeFormat)
-    maybeAddDate mTZ = case timeReader.date of
-      Nothing -> pure (timeStr, formats)
-      Just (DateLiteral dateStr) -> do
-        let str = unDateString dateStr
-        pure (str +-+ timeStr, (dateString +-+) <$> formats)
-      Just DateToday -> do
-        -- get the current date in the source timezone
-        currDateStr <- currentDate mTZ
-        pure (T.pack currDateStr +-+ timeStr, (dateString +-+) <$> formats)
+    dateString :: (IsString s) => s
+    dateString = "%Y-%m-%d"
 
-currentDate ::
-  ( HasCallStack,
-    MonadCatch m,
-    MonadTime m
-  ) =>
-  Maybe TZInput ->
-  m String
-currentDate mTZ = do
-  currTime <-
-    getSystemZonedTime
-      `catchSync` (throwM . MkLocalSystemTimeException)
-
-  -- Convert into the given label if present. Otherwise keep in system
-  -- timezone.
-  let currTime' = maybe currTime (convertZoned currTime) mTZ
-
-  pure $ Format.formatTime locale dateString currTime'
-
-dateString :: (IsString s) => s
-dateString = "%Y-%m-%d"
-
-tzString :: (IsString s) => s
-tzString = "%z"
-
--- | @readInLocalTimeZone locale format timeStr@ attempts to parse the
--- @timeStr@ given the expected @format@. We parse into the current
--- system timezone, so:
---
--- * @format@ should __not__ mention "%Z"
--- * @timeStr@ should __not__ contain timezone information.
---
--- @
--- λ. readInLocalTimeZone "%H" "17"
--- Just 1970-01-01 17:00:00 NZST
--- @
---
--- __Throws:__
---
--- * 'ParseTimeException': Error parsing the time string.
--- * 'LocalTimeZoneException': Error retrieving local timezone.
+-- | 'readTimeFormatM' that throws 'ParseTimeException'.
 --
 -- @since 0.1
-readInLocalTimeZone ::
+readTimeFormatM ::
+  forall t m.
   ( HasCallStack,
-    MonadCatch m,
-    MonadTime m
+    MonadThrow m,
+    ParseTime t
   ) =>
-  -- | List of formats to try.
   NonEmpty TimeFormat ->
-  -- | The time string to parse.
   Text ->
-  -- | The time string in the local time zone, if parsing was successful.
-  m ZonedTime
-readInLocalTimeZone formats timeStr = do
-  localTz <-
-    getCurrentTimeZone
-      `catchSync` (throwM . MkLocalTimeZoneException)
-  let tzStr = T.pack $ Local.timeZoneOffsetString localTz
-
-      -- Add the local tz string to the time string, and the tz flag to the format
-      timeStr' = timeStr +-+ tzStr
-  case readTimeFormatZoned formats' timeStr' of
-    Just zt -> pure zt
-    Nothing -> throwM $ MkParseTimeException formats' timeStr'
-  where
-    formats' = (+-+ tzString) <$> formats
-
--- | 'readTimeFormat' specialized to 'ZonedTime'.
---
--- @since 0.1
-readTimeFormatZoned :: NonEmpty TimeFormat -> Text -> Maybe ZonedTime
-readTimeFormatZoned = readTimeFormat
-
--- | 'readTimeFormat' specialized to 'LocalTime'.
---
--- @since 0.1
-readTimeFormatLocal :: NonEmpty TimeFormat -> Text -> Maybe LocalTime
-readTimeFormatLocal = readTimeFormat
+  m t
+readTimeFormatM formats timeStr = case readTimeFormat formats timeStr of
+  Nothing -> throwM $ MkParseTimeException formats timeStr
+  Just t -> pure t
 
 -- | @readTimeFormat locale format timeStr@ attempts to parse the @timeStr@ given
 -- the expected @format@. No timezone is assumed, so if it is left off then
@@ -316,6 +265,7 @@ readTimeFormat formats timeStr =
   where
     parseFn f = Format.parseTimeM True locale f timeStr'
 
+    toFmtStr :: TimeFormat -> String
     toFmtStr = T.unpack . (.unTimeFormat)
     timeStr' = T.unpack timeStr
 
@@ -342,6 +292,7 @@ convertZoned zonedTime tzInput =
     TZDatabase label -> convertFromLabel f zonedTime label
     TZActual timeZone -> convertFromActual zonedTime timeZone
   where
+    f :: forall a. a -> ZonedTime -> UTCTime
     f = const Local.zonedTimeToUTC
 
 -- | Converts the ZonedTime to UTCTime and finally the requested TimeZone.
@@ -388,13 +339,46 @@ convertFromLabel toUtcTime t tzLabel = Local.utcToZonedTime timeZone utcTime
     -- America/New_York -> EST / EDT.
     timeZone = Zones.timeZoneForUTCTime tz utcTime
 
--- concat with a space
-(+-+) :: (Semigroup a, IsString a) => a -> a -> a
-xs +-+ ys = xs <> " " <> ys
+-- These get*Kairos functions are just wrapperes for upstream functions that
+-- we wrap in our own exceptions.
 
-infixr 5 +-+
+getSystemZonedTimeKairos ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadTime m
+  ) =>
+  m ZonedTime
+getSystemZonedTimeKairos =
+  getSystemZonedTime `catchSync` (throwM . MkLocalSystemTimeException)
 
-getCurrentTimeZone :: (HasCallStack, MonadTime m) => m TimeZone
-getCurrentTimeZone = do
-  ZonedTime _ tz <- getSystemZonedTime
-  pure tz
+getTimeZoneKairos ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadTime m
+  ) =>
+  UTCTime ->
+  m TimeZone
+getTimeZoneKairos utc =
+  getTimeZone utc `catchSync` (throwM . MkLocalTimeZoneException)
+
+-- | NOTE: [LocalTZException error message]
+--
+-- The exception here, LocalTZException, has a highly specific message
+-- that only applies when we are trying to find the user's local TZ
+-- because it was not explicitly given.
+--
+-- This is fine because this function is only called in the following scenario:
+--
+-- - User supplies a 'time string' but no --source, hence we need to interpret
+--   it in the local timezone.
+--
+-- - User supplies --date, hence we cannot take the _current_ system timezone,
+--   as it may not be correct for the given date. Thus we use time-agnostic
+--   loadLocalTZ (tz_database).
+--
+-- This is not always reliable e.g. windows, so it pays to have a good error
+-- message. But note that the error message might need to change if this
+-- function was used more widely.
+loadLocalTZKairos :: (HasCallStack, MonadCatch m, MonadTime m) => m TZ
+loadLocalTZKairos =
+  loadLocalTZ `catchSync` (throwM . MkLocalTZException)

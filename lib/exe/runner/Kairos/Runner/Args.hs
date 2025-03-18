@@ -48,7 +48,6 @@ data Args = MkArgs
   { config :: Maybe OsPath,
     noConfig :: Bool,
     date :: Maybe Date,
-    noDate :: Bool,
     destTZ :: Maybe Text,
     formatIn :: Maybe TimeFormat,
     formatOut :: Maybe TimeFormat,
@@ -95,8 +94,8 @@ parserInfo =
               "Sun, 16 Mar 2025 22:12:10 CET"
             ],
           mkExample
-            [ "$ kairos --date today -s america/new_york 18:30",
-              "Mon, 17 Mar 2025 11:30:00 NZDT"
+            [ "$ kairos --date 2025-04-17 -s america/new_york 18:30",
+              "Fri, 18 Apr 2025 10:30:00 NZST"
             ]
         ]
 
@@ -111,7 +110,6 @@ parseArgs =
     <$> parseConfig
     <*> parseNoConfig
     <*> parseDate
-    <*> parseNoDate
     <*> parseDestTZ
     <*> parseFormatIn
     <*> parseFormatOut
@@ -238,25 +236,16 @@ parseDate =
     OA.option readDate $
       mconcat
         [ OA.long "date",
-          OA.metavar "(today | YYYY-mm-dd)",
+          OA.metavar "YYYY-mm-dd",
           mkHelp helpTxt
         ]
   where
     helpTxt =
       mconcat
-        [ "Date in which to read the string. Today uses the current date, as ",
-          "determined by the source. This option requires TIME_STR."
+        [ "Date in which to read the string. This option requires TIME_STR. ",
+          "No date uses the current date, as determined by the source."
         ]
-    readDate = OA.str >>= Date.parseDate
-
-parseNoDate :: Parser Bool
-parseNoDate =
-  OA.switch $
-    mconcat
-      [ OA.long "no-date",
-        OA.hidden,
-        mkHelp "Disables --date. Useful for disabling the toml field 'today'."
-      ]
+    readDate = OA.str >>= Date.parseDateString
 
 parseTimeStr :: Parser (Maybe Text)
 parseTimeStr =

@@ -34,7 +34,7 @@ data TimeReader = MkTimeReader
     -- @since 0.1
     srcTZ :: Maybe TZInput,
     -- | Date corresponding to the 'timeString'. If 'Nothing', uses the
-    -- unix epoch.
+    -- current date, determined by the source.
     --
     -- @since 0.1
     date :: Maybe Date,
@@ -63,8 +63,8 @@ instance
   (k ~ A_Lens, a ~ NonEmpty TimeFormat, b ~ NonEmpty TimeFormat) =>
   LabelOptic "formats" k TimeReader TimeReader a b
   where
-  labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _today _timeString) ->
-    fmap (\format' -> MkTimeReader format' _srcTZ _today _timeString) (f _format)
+  labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _date _timeString) ->
+    fmap (\format' -> MkTimeReader format' _srcTZ _date _timeString) (f _format)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -72,8 +72,8 @@ instance
   (k ~ A_Lens, a ~ Maybe TZInput, b ~ Maybe TZInput) =>
   LabelOptic "srcTZ" k TimeReader TimeReader a b
   where
-  labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _today _timeString) ->
-    fmap (\srcTZ' -> MkTimeReader _format srcTZ' _today _timeString) (f _srcTZ)
+  labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _date _timeString) ->
+    fmap (\srcTZ' -> MkTimeReader _format srcTZ' _date _timeString) (f _srcTZ)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -90,8 +90,8 @@ instance
   (k ~ A_Lens, a ~ Text, b ~ Text) =>
   LabelOptic "timeString" k TimeReader TimeReader a b
   where
-  labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _today _timeString) ->
-    fmap (MkTimeReader _format _srcTZ _today) (f _timeString)
+  labelOptic = lensVL $ \f (MkTimeReader _format _srcTZ _date _timeString) ->
+    fmap (MkTimeReader _format _srcTZ _date) (f _timeString)
   {-# INLINE labelOptic #-}
 
 -- | Given a time string, returns a default time reader.

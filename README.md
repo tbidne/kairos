@@ -47,22 +47,22 @@
 2. Converting a "time string" from one timezone to another:
 
     ````
-    $ kairos --date today -s america/new_york 18:30
-    Sat, 18 Jun 2022 11:30:00 NZST
+    $ kairos --date 2022-06-17 -s america/new_york 18:30
+    Sat, 18 Jun 2022 10:30:00 NZST
 
-    # --date today means "today's date" as determined by the source
     # -s sets the "source" timezone
     # no dest means we convert to local time
-    # i.e. 6:30 pm in New York on its current day (17 Jun 2022) will be 11:30 am NZST (18 Jun 2022)
+    # i.e. 6:30 pm in New York on 2022-06-17 will be 10:30 am NZST (18 Jun 2022)
     ````
 
     We can also convert between two non-local timezones:
 
     ```
     $ kairos -s america/new_york -d europe/paris 18:30
-    Fri,  2 Jan 1970 00:30:00 CET
+    Mon, 17 Mar 2025 23:30:00 CET
 
-    # no --date information means we assume the initial unix date, 1 Jan 1970.
+    # no --date information means we use the current date, as determined by
+    # the source i.e. 18:30 in nyc on the current date (2025-03-17).
     ```
 
 The timezone names are based on the tz_database. See https://en.wikipedia.org/wiki/Tz_database for more information.
@@ -84,22 +84,15 @@ Thu, 20 Apr 2023 22:25:37 PDT
 
 ## Date
 
-**Arg:** `--date (today | YYYY-mm-dd)`
+**Arg:** `--date YYYY-mm-dd`
 
-**Description:** Date in which to read the string. Today uses the current date, as determined by the source. This option requires [Time String](#time-string).
+**Description:** Date in which to read the string. This option requires [Time String](#time-string). No date uses the current date, as determined by the source.
 
 **Examples:**
 
 ```
 $ kairos 08:30
-Thu,  1 Jan 1970 08:30:00 NZST
-
-# use today's date instead of initial unix time
-$ kairos --date today 08:30
-Thu, 20 Apr 2023 08:30:00 NZST
-
-$ kairos --date today -s america/new_york 08:30
-Thu, 20 Apr 2023 00:30:00 NZST
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 $ kairos --date 2022-04-10 -s america/new_york 08:30
 Mon, 11 Apr 2022 00:30:00 NZST
@@ -116,17 +109,17 @@ Mon, 11 Apr 2022 00:30:00 NZST
 ```
 # use the local system timezone
 $ kairos 08:30
-Thu,  1 Jan 1970 08:30:00 NZST
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 # using tz database name
 $ kairos -d america/new_york 08:30
-Wed, 31 Dec 1969 15:30:00 EST
+Mon, 17 Mar 2025 15:30:00 EDT
 
 $ kairos -s america/new_york -d etc/utc 08:30
-Thu,  1 Jan 1970 13:30:00 UTC
+Mon, 17 Mar 2025 12:30:00 UTC
 
 $ kairos -d +0200 08:30
-Wed, 31 Dec 1969 21:30:00 +0200
+Mon, 17 Mar 2025 21:30:00 +0200
 ```
 
 ## Format In
@@ -140,20 +133,20 @@ Wed, 31 Dec 1969 21:30:00 +0200
 ```
 # default formats
 $ kairos 08:30
-Thu,  1 Jan 1970 08:30:00 NZDT
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 $ kairos 0830
-Thu,  1 Jan 1970 08:30:00 NZST
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 $ kairos '8:30 am'
-Thu,  1 Jan 1970 08:30:00 NZST
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 $ kairos 8am
-Thu,  1 Jan 1970 08:00:00 NZST
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 # custom format
 $ kairos -f "%I:%M %p" "08:00 pm"
-Thu,  1 Jan 1970 20:00:00 NZST
+Tue, 18 Mar 2025 20:00:00 NZDT
 ```
 
 ## Format Out
@@ -167,7 +160,7 @@ Thu,  1 Jan 1970 20:00:00 NZST
 ```
 # using implicit rfc822 format for output
 $ kairos 08:30
-Thu,  1 Jan 1970 08:30:00 NZST
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 # overriding output format
 $ kairos -o %H:%M:%S 08:30
@@ -185,15 +178,15 @@ $ kairos -o %H:%M:%S 08:30
 ```
 # use the local system timezone
 $ kairos 08:30
-Thu,  1 Jan 1970 08:30:00 NZST
+Tue, 18 Mar 2025 08:30:00 NZDT
 
 # using tz database name
 $ kairos -s america/new_york 08:30
-Fri,  2 Jan 1970 01:30:00 NZST
+Tue, 18 Mar 2025 01:30:00 NZDT
 
 # use tz offset
 $ kairos -s -13 08:30
-Fri,  2 Jan 1970 10:30:00 NZDT
+Tue, 18 Mar 2025 10:30:00 NZDT
 ```
 
 ## Time String
@@ -206,10 +199,10 @@ Fri,  2 Jan 1970 10:30:00 NZDT
 
 ```
 $ kairos
-Thu, 16 Jun 2022 21:30:00 NZST
+Tue, 18 Mar 2025 15:33:30 NZDT
 
 $ kairos -d europe/paris
-Thu, 16 Jun 2022 12:30:00 CEST
+Tue, 18 Mar 2025 03:33:30 CET
 ```
 
 # Building
@@ -269,7 +262,7 @@ Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `kairos` can 
 
 ### Nix expression
 
-Because `kairos` is a flake, it be built as part of a nix expression. For instance, if you want to add `kairos` to `NixOS`, your `flake.nix` should have:
+Because `kairos` is a flake, it can be built as part of a nix expression. For instance, if you want to add `kairos` to `NixOS`, your `flake.nix` should have:
 
 ```nix
 # flake.nix

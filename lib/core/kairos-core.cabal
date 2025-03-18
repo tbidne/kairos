@@ -111,7 +111,6 @@ test-suite unit
     , exception-utils
     , hedgehog         >=1.0.2   && <1.6
     , kairos-core
-    , optics-core
     , tasty            >=1.1.0.3 && <1.6
     , tasty-hedgehog   >=1.0.1.0 && <1.5
     , tasty-hunit      >=0.9     && <0.11

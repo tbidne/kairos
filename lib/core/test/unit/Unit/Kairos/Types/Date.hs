@@ -2,11 +2,8 @@
 
 module Unit.Kairos.Types.Date (tests) where
 
-import Control.Monad ((>=>))
-import Data.Bifunctor (bimap)
-import Kairos.Types.Date (Date (DateToday), _DateLiteral)
-import Kairos.Types.Date.Internal qualified as Date
-import Optics.Core (matching)
+import Data.Bifunctor (Bifunctor (second))
+import Kairos.Types.Date qualified as Date
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@=?))
 import Unit.Utils qualified as Utils
@@ -15,17 +12,12 @@ tests :: TestTree
 tests =
   testGroup
     "Kairos.Types.Date"
-    [ testParseDateTodaySuccess,
-      testParseDateLiteralSuccess,
+    [ testParseDateLiteralSuccess,
       testParseDateLiteralBadYear,
       testParseDateLiteralBadMonth,
       testParseDateLiteralBadDay,
       testParseDateLiteralBadFormat
     ]
-
-testParseDateTodaySuccess :: TestTree
-testParseDateTodaySuccess = testCase "parseDateString today success" $ do
-  Right DateToday @=? Utils.runParseDate "today"
 
 testParseDateLiteralSuccess :: TestTree
 testParseDateLiteralSuccess = testCase "parseDateString literal success" $ do
@@ -34,10 +26,7 @@ testParseDateLiteralSuccess = testCase "parseDateString literal success" $ do
   Right "1900-02-29" @=? runParseDate "1900-02-29"
   Right "2099-08-25" @=? runParseDate "2099-08-25"
   where
-    runParseDate = Utils.runParseDate >=> toDateStr
-    toDateStr =
-      bimap (const "Could not match _DateLiteral") Date.unDateString
-        . matching _DateLiteral
+    runParseDate = second Date.unDateString . Utils.runParseDate
 
 testParseDateLiteralBadYear :: TestTree
 testParseDateLiteralBadYear = testCase "parseDateString bad year fails" $ do

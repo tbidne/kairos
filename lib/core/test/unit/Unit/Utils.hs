@@ -5,21 +5,16 @@ module Unit.Utils
 
     -- * Misc
     runParseDate,
-    runParseDateString,
   )
 where
 
 import Data.Text (Text)
-import Kairos.Types.Date (Date, DateString)
+import Kairos.Types.Date (Date)
 import Kairos.Types.Date qualified as Date
 
 -- | Pure 'Date.parseDate' that returns a string error via 'EString'.
 runParseDate :: Text -> Either String Date
-runParseDate = unEString . Date.parseDate
-
--- | Pure 'Date.parseDateString' that returns a string error via 'EString'.
-runParseDateString :: Text -> Either String DateString
-runParseDateString = unEString . Date.parseDateString
+runParseDate = unEString . Date.parseDateString
 
 -- | Either fixed to 'Either String' for the purpose of its 'MonadFail'
 -- instance.

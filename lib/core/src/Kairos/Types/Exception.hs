@@ -3,6 +3,7 @@ module Kairos.Types.Exception
   ( ParseTimeException (..),
     ParseTZInputException (..),
     LocalTimeZoneException (..),
+    LocalTZException (..),
     LocalSystemTimeException (..),
     SrcTZNoTimeStringException (..),
     DateNoTimeStringException (..),
@@ -79,6 +80,26 @@ deriving stock instance Show LocalTimeZoneException
 instance Exception LocalTimeZoneException where
   displayException (MkLocalTimeZoneException e) =
     "Local timezone exception: " <> displayException e
+
+-- | Exception reading local system tz. In contrast to
+-- 'LocalTimeZoneException', this is for when we try and fail to find
+-- the local tz_database name e.g. America/New_York.
+--
+-- @since 0.1
+data LocalTZException = forall e. (Exception e) => MkLocalTZException e
+
+-- | @since 0.1
+deriving stock instance Show LocalTZException
+
+-- | @since 0.1
+instance Exception LocalTZException where
+  displayException (MkLocalTZException e) =
+    mconcat
+      [ "Could not find local tz_database name: ",
+        displayException e,
+        "\nTry again, explictly setting your location e.g. ",
+        "'-s america/new_york'."
+      ]
 
 -- | Exception reading local system time.
 --

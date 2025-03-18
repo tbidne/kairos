@@ -52,6 +52,8 @@ jobs:
         run: cabal test ${{ matrix.ghc.proj-file }} kairos-core:unit --test-options "--hedgehog-tests 100000"
 
       - name: Functional Tests
+        env:
+          FUNC_EXTRA: ${{ matrix.os != 'windows-latest' && '1' }}
         run: cabal test ${{ matrix.ghc.proj-file }} kairos:functional
 
   stack:

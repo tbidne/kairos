@@ -22,6 +22,7 @@ ghc-options:
     -Wunused-type-patterns
     -Wno-unticked-promoted-constructors
 extra-deps:
+  - env-guard-0.2@sha256:4251503bde7549e267bd307f4b293c8c0ac48c6585968108e3e3fc5a3cfbb179,1312
   - git: https://github.com/tbidne/algebra-simple.git
     commit: 37ec7127fbd0f591d4539e4bf72a0badd7569181
   - git: https://github.com/tbidne/bounds.git
@@ -31,7 +32,7 @@ extra-deps:
   - git: https://github.com/tbidne/fs-utils.git
     commit: 83472bc22a938db0d3b4c02a24a52bfca0484637
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 80cc48f2ebba62e526ca623da75053cd943473f7
+    commit: 3099ce03d0126f83aa84284d40f98d57fe01d9e0
     subdirs:
       - lib/effects-env
       - lib/effects-fs

@@ -39,14 +39,12 @@ import Kairos.Runner.Args
         formatIn,
         formatOut,
         noConfig,
-        noDate,
         srcTZ,
         timeString
       ),
     parserInfo,
   )
 import Kairos.Runner.Toml (Toml)
-import Kairos.Types.Date (Date (DateToday))
 import Kairos.Types.Exception
   ( DateNoTimeStringException (MkDateNoTimeStringException),
     ParseTZInputException (MkParseTZInputException),
@@ -72,7 +70,6 @@ import Optics.Core
     (%),
     _Just,
   )
-import Optics.Core.Extras (is)
 import TOML qualified
 
 -- | Runs kairos with CLI args.
@@ -128,28 +125,10 @@ runWithArgs args = do
   let aliases :: Maybe (Map Text Text)
       aliases = preview (_Just % #aliases % _Just) mToml
 
-      today :: Bool
-      today = is (_Just % #today % _Just % _True) mToml
-
   mTimeReader <- case args.timeString of
     Nothing -> pure Nothing
     Just timeString -> do
       srcTZ <- parseTZ aliases args.srcTZ
-
-      -- CLI date (date string or literal 'today') can be overridden
-      --    in exactly one scenario:
-      --
-      --    1. noDate is False (--no-date unspecified).
-      --    2. CLI --date unspecified.
-      --    3. toml.today = true
-      let date
-            -- 1. --no-date specified: overrides all.
-            | args.noDate = Nothing
-            | otherwise = case args.date of
-                -- 2. --date specified: use it.
-                Just d -> Just d
-                -- 3. Overwrite w/ DateToday iff it is set on the toml.
-                Nothing -> if today then Just DateToday else Nothing
 
       let formats :: NonEmpty TimeFormat.TimeFormat
           formats = case args.formatIn of
@@ -160,7 +139,7 @@ runWithArgs args = do
         Just $
           MkTimeReader
             { formats,
-              date,
+              date = args.date,
               srcTZ,
               timeString
             }

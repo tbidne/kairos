@@ -9,13 +9,12 @@ import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Data.Time.Clock (NominalDiffTime)
 import Data.Time.Format qualified as Format
-import Data.Time.LocalTime (ZonedTime (ZonedTime))
+import Data.Time.LocalTime (LocalTime, ZonedTime (ZonedTime))
 import Data.Time.LocalTime qualified as Time
 import Hedgehog (Property, PropertyName)
 import Hedgehog qualified as H
 import Hedgehog.Internal.Property ((===))
 import Kairos qualified
-import Kairos.Types.Date (Date (DateLiteral, DateToday))
 import Kairos.Types.TZInput (TZInput (TZDatabase), locale)
 import Kairos.Types.TimeFormat qualified as TimeFmt
 import Kairos.Types.TimeReader
@@ -42,44 +41,12 @@ tests =
   testGroup
     "Kairos"
     [ testDestSrcRoundtrips,
-      testDestSrcDateRoundtrips,
       defaultFormatTests
     ]
 
 testDestSrcRoundtrips :: TestTree
 testDestSrcRoundtrips =
-  testPropertyCompat "currTime == fromSource . toDest (date today)" "testDestSrcRoundtrips" $
-    H.property $ do
-      tzdb <- TZDatabase <$> H.forAll G.tzLabel
-
-      currTime <- liftIO $ Kairos.readConvertTime Nothing Nothing
-      H.annotateShow currTime
-      currTimeDest <- liftIO $ Kairos.readConvertTime Nothing (Just tzdb)
-      H.annotateShow currTimeDest
-      let currTimeDestStr = fmt currTimeDest
-          timeReader =
-            MkTimeReader
-              { formats = NE.singleton TimeFmt.hm,
-                srcTZ = Just tzdb,
-                date = Just DateToday,
-                timeString = T.pack currTimeDestStr
-              }
-
-      currTime' <-
-        liftIO (Kairos.readConvertTime (Just timeReader) Nothing)
-          `catchSync` \ex -> do
-            H.annotateShow ex
-            H.failure
-      H.annotateShow currTime'
-
-      compareTime fmtOut currTime currTime'
-  where
-    fmt = Format.formatTime locale fmtOut
-    fmtOut = "%H:%M"
-
-testDestSrcDateRoundtrips :: TestTree
-testDestSrcDateRoundtrips =
-  testPropertyCompat "currTime == fromSource . toDest (date literal)" "testDestSrcDateRoundtrips" $
+  testPropertyCompat "currTime == fromSource . toDest" "testDestSrcDateRoundtrips" $
     H.property $ do
       tzdb <- TZDatabase <$> H.forAll G.tzLabel
 
@@ -102,7 +69,7 @@ testDestSrcDateRoundtrips =
             H.failure
       H.annotate $ T.unpack currDateDestStr
       H.annotate $ T.unpack currTimeDestStr
-      currDateDestStr' <- case Utils.runParseDateString currDateDestStr of
+      currDateDestStr' <- case Utils.runParseDate currDateDestStr of
         Right s -> pure s
         Left err -> do
           H.annotate err
@@ -113,7 +80,7 @@ testDestSrcDateRoundtrips =
             MkTimeReader
               { formats = NE.singleton TimeFmt.hm,
                 srcTZ = Just tzdb,
-                date = Just $ DateLiteral currDateDestStr',
+                date = Just currDateDestStr',
                 timeString = currTimeDestStr
               }
 
@@ -178,7 +145,7 @@ mkParseTest :: (String, String) -> TestTree
 mkParseTest (expected, s) = testCase ("Parses " ++ s) (parsesDefault expected s)
 
 parsesDefault :: String -> String -> IO ()
-parsesDefault expected s = case Kairos.readTimeFormatLocal fmts (T.pack s) of
+parsesDefault expected s = case Kairos.readTimeFormat @LocalTime fmts (T.pack s) of
   Nothing -> assertFailure $ "Failed to parse local time: " ++ s
   Just result -> expected @=? format result
   where

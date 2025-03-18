@@ -4,7 +4,7 @@ packages:
   ./lib/core/kairos-core.cabal
   ./lib/exe/kairos.cabal
 
-package program-options
+program-options
   ghc-options:
     -Wall -Wcompat
     -Widentities
@@ -46,7 +46,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 80cc48f2ebba62e526ca623da75053cd943473f7
+    tag: 3099ce03d0126f83aa84284d40f98d57fe01d9e0
     subdir:
       lib/effects-env
       lib/effects-fs
