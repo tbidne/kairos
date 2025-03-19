@@ -154,7 +154,7 @@ testFormatOutputRfc822 :: TestTree
 testFormatOutputRfc822 = testCase "Uses rfc822 output" $ do
   result <-
     captureKairosIO $ pureTZDate ["-o", "rfc822", "08:30"]
-  "Thu,  1 Jan 1970 08:30:00 UTC" @=? result
+  "Sat,  5 Jan 1980 08:30:00 UTC" @=? result
 
 srcTzTests :: TestTree
 srcTzTests =
@@ -171,17 +171,17 @@ testSrcTzDatabase :: TestTree
 testSrcTzDatabase = testCase "Uses source timezone from tz database" $ do
   result <-
     captureKairosIO $ pureDestTZDate ["-s", "Europe/Paris", "08:30"]
-  "Thu,  1 Jan 1970 07:30:00 UTC" @=? result
+  "Sat,  5 Jan 1980 07:30:00 UTC" @=? result
 
 testSrcTzDatabaseCase :: TestTree
 testSrcTzDatabaseCase = testCase desc $ do
   result <-
     captureKairosIO $ pureDestTZDate ["-s", "aMeRiCa/new_yoRk", "08:30"]
-  "Thu,  1 Jan 1970 13:30:00 UTC" @=? result
+  "Sat,  5 Jan 1980 13:30:00 UTC" @=? result
 
   result2 <-
     captureKairosIO $ pureDestTZDate ["-s", "etc/utc", "08:30"]
-  "Thu,  1 Jan 1970 08:30:00 UTC" @=? result2
+  "Sat,  5 Jan 1980 08:30:00 UTC" @=? result2
   where
     desc = "Uses source timezone from tz database with 'wrong' case"
 
@@ -264,14 +264,14 @@ testDestTzDatabase :: TestTree
 testDestTzDatabase = testCase "Uses dest timezone from tz database" $ do
   result <-
     captureKairosIO $ pureSrcTZDate ["-d", "Europe/Paris", "08:30"]
-  "Thu,  1 Jan 1970 09:30:00 CET" @=? result
+  "Sat,  5 Jan 1980 09:30:00 CET" @=? result
 
 testSrcDestTzDatabase :: TestTree
 testSrcDestTzDatabase = testCase "Uses src to dest" $ do
   result <-
     captureKairosIO $
       fixedDate ["-s", "America/New_York", "-d", "Europe/Paris", "08:30"]
-  "Thu,  1 Jan 1970 14:30:00 CET" @=? result
+  "Sat,  5 Jan 1980 14:30:00 CET" @=? result
 
 testDestTzFails :: TestTree
 testDestTzFails = testCase "Bad dest timezone fails" $ do
@@ -299,28 +299,28 @@ testTzOffsetColon = testCase "Uses tz offsets with colon" $ do
   result <-
     captureKairosIO $
       fixedDate ["-s", "+13:00", "08:30", "-d", "-08:00"]
-  "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
+  "Fri,  4 Jan 1980 11:30:00 -0800" @=? result
 
 testTzOffsetNoColon :: TestTree
 testTzOffsetNoColon = testCase "Uses tz offsets without colon" $ do
   result <-
     captureKairosIO $
       fixedDate ["-s", "+1300", "08:30", "-d", "-0800"]
-  "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
+  "Fri,  4 Jan 1980 11:30:00 -0800" @=? result
 
 testTzOffsetHours :: TestTree
 testTzOffsetHours = testCase "Uses tz offsets with hours only" $ do
   result <-
     captureKairosIO $
       fixedDate ["-s", "+13", "08:30", "-d", "-08"]
-  "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
+  "Fri,  4 Jan 1980 11:30:00 -0800" @=? result
 
 testTzOffsetUtc :: TestTree
 testTzOffsetUtc = testCase "Uses tz offsets without colon" $ do
   result <-
     captureKairosIO $
       fixedDate ["-s", "Z", "08:30", "-d", "-0800"]
-  "Thu,  1 Jan 1970 00:30:00 -0800" @=? result
+  "Sat,  5 Jan 1980 00:30:00 -0800" @=? result
 
 dateTests :: TestTree
 dateTests =
@@ -805,7 +805,7 @@ pureDestTZ :: CliArgs -> CliArgs
 pureDestTZ = set' #destTZ "utc"
 
 fixedDate :: CliArgs -> CliArgs
-fixedDate = set' #date "1970-01-01"
+fixedDate = set' #date "1980-01-05"
 
 pureSrcTZDate :: CliArgs -> CliArgs
 pureSrcTZDate = pureSrcTZ . fixedDate
