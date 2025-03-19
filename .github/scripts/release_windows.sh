@@ -10,7 +10,7 @@ arch="x86_64"
 
 mkdir -p bin
 
-suffix="_$kairos_vers-$arch-windows-$windows_vers-mingw64"
+suffix="_$kairos_vers-$arch-windows_$windows_vers-mingw64"
 
 cabal install kairos --installdir bin/ --program-suffix $suffix --project-file cabal.ghc9101.project --ghc-options -Werror
 

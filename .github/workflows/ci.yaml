@@ -147,7 +147,7 @@ jobs:
             name: "windows-2019"
             os: "windows-2019"
             script: ".github/scripts/release_windows.sh"
-            scriptargs: "2019"
+            script_args: "2019"
 
           - docker: false
             name: "windows-2022"
