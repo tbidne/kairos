@@ -132,7 +132,7 @@ parseConfig =
   where
     helpTxt =
       mconcat
-        [ "Path to TOML config file. It not given we automatically look in ",
+        [ "Path to TOML config file. If not given, we automatically look in ",
           "the XDG config e.g. ~/.config/kairos/config.toml."
         ]
 
