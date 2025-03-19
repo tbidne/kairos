@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 module Unit.Kairos (tests) where
 
 import Control.Exception.Utils (catchSync)
@@ -11,7 +9,6 @@ import Data.Time.Clock (NominalDiffTime)
 import Data.Time.Format qualified as Format
 import Data.Time.LocalTime (LocalTime, ZonedTime (ZonedTime))
 import Data.Time.LocalTime qualified as Time
-import Hedgehog (Property, PropertyName)
 import Hedgehog qualified as H
 import Hedgehog.Internal.Property ((===))
 import Kairos qualified
@@ -27,12 +24,7 @@ import Kairos.Types.TimeReader
       ),
   )
 import Props.Generators qualified as G
-import Test.Tasty (TestName, TestTree, testGroup)
-#if MIN_VERSION_tasty_hedgehog(1, 2, 0)
-import Test.Tasty.Hedgehog (testPropertyNamed)
-#else
-import Test.Tasty.Hedgehog (testProperty)
-#endif
+import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
 import Unit.Utils qualified as Utils
 
@@ -45,55 +37,54 @@ tests =
     ]
 
 testDestSrcRoundtrips :: TestTree
-testDestSrcRoundtrips =
-  testPropertyCompat "currTime == fromSource . toDest" "testDestSrcDateRoundtrips" $
-    H.property $ do
-      tzdb <- TZDatabase <$> H.forAll G.tzLabel
+testDestSrcRoundtrips = Utils.testProp desc "testDestSrcDateRoundtrips" $ do
+  tzdb <- TZDatabase <$> H.forAll G.tzLabel
 
-      currTime <- liftIO $ Kairos.readConvertTime Nothing Nothing
-      H.annotateShow currTime
-      currTimeDest <- liftIO $ Kairos.readConvertTime Nothing (Just tzdb)
-      H.annotateShow currTime
-      (currDateDestStr, currTimeDestStr) <-
-        case T.split (== ' ') (T.pack $ fmt currTimeDest) of
-          [y, d] -> pure (y, d)
-          _ -> do
-            let err =
-                  mconcat
-                    [ "Unit.Kairos: date should have format ",
-                      "YYYY-MM-DD HH:MM, received: '",
-                      fmt currTimeDest,
-                      "'"
-                    ]
-            H.annotate err
-            H.failure
-      H.annotate $ T.unpack currDateDestStr
-      H.annotate $ T.unpack currTimeDestStr
-      currDateDestStr' <- case Utils.runParseDate currDateDestStr of
-        Right s -> pure s
-        Left err -> do
-          H.annotate err
-          H.failure
+  currTime <- liftIO $ Kairos.readConvertTime Nothing Nothing
+  H.annotateShow currTime
+  currTimeDest <- liftIO $ Kairos.readConvertTime Nothing (Just tzdb)
+  H.annotateShow currTime
+  (currDateDestStr, currTimeDestStr) <-
+    case T.split (== ' ') (T.pack $ fmt currTimeDest) of
+      [y, d] -> pure (y, d)
+      _ -> do
+        let err =
+              mconcat
+                [ "Unit.Kairos: date should have format ",
+                  "YYYY-MM-DD HH:MM, received: '",
+                  fmt currTimeDest,
+                  "'"
+                ]
+        H.annotate err
+        H.failure
+  H.annotate $ T.unpack currDateDestStr
+  H.annotate $ T.unpack currTimeDestStr
+  currDateDestStr' <- case Utils.runParseDate currDateDestStr of
+    Right s -> pure s
+    Left err -> do
+      H.annotate err
+      H.failure
 
-      H.annotateShow currDateDestStr'
-      let timeReader =
-            MkTimeReader
-              { formats = NE.singleton TimeFmt.hm,
-                srcTZ = Just tzdb,
-                date = Just currDateDestStr',
-                timeString = currTimeDestStr
-              }
+  H.annotateShow currDateDestStr'
+  let timeReader =
+        MkTimeReader
+          { formats = NE.singleton TimeFmt.hm,
+            srcTZ = Just tzdb,
+            date = Just currDateDestStr',
+            timeString = currTimeDestStr
+          }
 
-      currTime' <-
-        liftIO (Kairos.readConvertTime (Just timeReader) Nothing)
-          `catchSync` \ex -> do
-            H.annotateShow ex
-            H.failure
+  currTime' <-
+    liftIO (Kairos.readConvertTime (Just timeReader) Nothing)
+      `catchSync` \ex -> do
+        H.annotateShow ex
+        H.failure
 
-      H.annotateShow currTime'
+  H.annotateShow currTime'
 
-      compareTime fmtOut currTime currTime'
+  compareTime fmtOut currTime currTime'
   where
+    desc = "currTime == fromSource . toDest"
     fmt = Format.formatTime locale fmtOut
     fmtOut = "%Y-%m-%d %H:%M"
 
@@ -152,11 +143,3 @@ parsesDefault expected s = case Kairos.readTimeFormat @LocalTime fmts (T.pack s)
     fmts = TimeFmt.defaultTimeFormats
 
     format = Format.formatTime locale "%H:%M"
-
-#if MIN_VERSION_tasty_hedgehog(1, 2, 0)
-testPropertyCompat :: TestName -> PropertyName -> Property -> TestTree
-testPropertyCompat = testPropertyNamed
-#else
-testPropertyCompat :: TestName -> PropertyName -> Property -> TestTree
-testPropertyCompat tn _ = testProperty tn
-#endif

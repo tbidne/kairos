@@ -115,7 +115,7 @@ Tue, 18 Mar 2025 08:30:00 NZDT
 $ kairos -d america/new_york 08:30
 Mon, 17 Mar 2025 15:30:00 EDT
 
-$ kairos -s america/new_york -d etc/utc 08:30
+$ kairos -s america/new_york -d utc 08:30
 Mon, 17 Mar 2025 12:30:00 UTC
 
 $ kairos -d +0200 08:30

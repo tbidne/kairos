@@ -30,6 +30,7 @@ source-repository head
 
 common common-lang
   default-extensions:
+    ApplicativeDo
     BangPatterns
     ConstraintKinds
     DataKinds
@@ -103,6 +104,7 @@ test-suite unit
     Unit.Kairos
     Unit.Kairos.Internal
     Unit.Kairos.Types.Date
+    Unit.Kairos.Types.TZInput
     Unit.Utils
 
   build-depends:

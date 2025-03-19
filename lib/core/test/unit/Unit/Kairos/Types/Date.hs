@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 module Unit.Kairos.Types.Date (tests) where
 
 import Data.Bifunctor (Bifunctor (second))

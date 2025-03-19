@@ -3,6 +3,7 @@
 module Props.Generators
   ( tzText,
     tzLabel,
+    offsetTxt,
   )
 where
 
@@ -22,8 +23,7 @@ import Hedgehog.Gen qualified as HG
 --
 -- @since 0.1
 tzLabel :: Gen TZLabel
-tzLabel =
-  HG.element [minBound .. maxBound]
+tzLabel = HG.enumBounded
 
 -- | Generates text corresponding to TZLabel with random case.
 --
@@ -45,6 +45,26 @@ textCase =
     f c gacc =
       charCase c >>= \c' ->
         (TLBuilder.singleton c' <>) <$> gacc
+
+-- | Generates offset text e.g. "+08:00"
+offsetTxt :: Gen Text
+offsetTxt = do
+  s <- genSign
+  h <- gen2Digits
+  m <- HG.choice [genMin, pure ""]
+  pure $ s <> h <> m
+  where
+    genSign :: Gen Text
+    genSign = HG.element ["+", "-"]
+
+    gen2Digits :: Gen Text
+    gen2Digits = (\a b -> T.pack [a, b]) <$> HG.digit <*> HG.digit
+
+    genMin :: Gen Text
+    genMin = do
+      mColon <- HG.element [":", ""]
+      m <- gen2Digits
+      pure $ mColon <> m
 
 -- | Transforms the char's case.
 --
