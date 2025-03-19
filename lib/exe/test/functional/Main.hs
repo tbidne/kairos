@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
@@ -31,6 +32,7 @@ import Effects.Time
     ZonedTime (ZonedTime),
   )
 import FileSystem.OsPath (ospPathSep, unsafeDecode)
+import GHC.Exts (IsList (toList))
 import Kairos.Runner (runKairos)
 import Kairos.Types.Exception
   ( DateNoTimeStringException,
@@ -38,8 +40,11 @@ import Kairos.Types.Exception
     ParseTimeException,
     SrcTZNoTimeStringException,
   )
-import Optics.Core (set')
-import Params (TestParams (MkTestParams, args, configEnabled, mCurrentTime))
+import Optics.Core (over', set')
+import Params
+  ( CliArgs,
+    TestParams (MkTestParams, cliArgs, configEnabled, mCurrentTime),
+  )
 import Params qualified
 import System.Environment qualified as Env
 import System.Environment.Guard (ExpectEnv (ExpectEnvEquals))
@@ -117,7 +122,7 @@ testFormatFails :: TestTree
 testFormatFails = testCase "Bad format fails" $ do
   assertException @ParseTimeException expected $ captureKairosIO args
   where
-    args = pureTZ <> ["-f", "%Y %H:%M", "08:30"]
+    args = pureTZ ["-f", "%Y %H:%M", "08:30"]
     expected =
       mconcat
         [ "Could not parse time string '08:30' with format(s): ",
@@ -135,12 +140,12 @@ formatOutputTests =
 
 testFormatOutputCustom :: TestTree
 testFormatOutputCustom = testCase "Overrides input formatting" $ do
-  result <- captureKairosIO $ pureTZ ++ ["-o", "%H:%M %Z", "08:30"]
+  result <- captureKairosIO $ pureTZ ["-o", "%H:%M %Z", "08:30"]
   "08:30 UTC" @=? result
 
 testFormatOutputCustomTZOffset :: TestTree
 testFormatOutputCustomTZOffset = testCase desc $ do
-  result <- captureKairosIO $ pureTZ ++ ["-o", "%H:%M %Z", "08:30"]
+  result <- captureKairosIO $ pureTZ ["-o", "%H:%M %Z", "08:30"]
   "08:30 UTC" @=? result
   where
     desc = "Overrides input formatting tz offset"
@@ -148,7 +153,7 @@ testFormatOutputCustomTZOffset = testCase desc $ do
 testFormatOutputRfc822 :: TestTree
 testFormatOutputRfc822 = testCase "Uses rfc822 output" $ do
   result <-
-    captureKairosIO $ pureTZ ++ fixedDate ++ ["-o", "rfc822", "08:30"]
+    captureKairosIO $ pureTZDate ["-o", "rfc822", "08:30"]
   "Thu,  1 Jan 1970 08:30:00 UTC" @=? result
 
 srcTzTests :: TestTree
@@ -165,20 +170,17 @@ srcTzTests =
 testSrcTzDatabase :: TestTree
 testSrcTzDatabase = testCase "Uses source timezone from tz database" $ do
   result <-
-    captureKairosIO $
-      pureDestTZ ++ fixedDate ++ ["-s", "Europe/Paris", "08:30"]
+    captureKairosIO $ pureDestTZDate ["-s", "Europe/Paris", "08:30"]
   "Thu,  1 Jan 1970 07:30:00 UTC" @=? result
 
 testSrcTzDatabaseCase :: TestTree
 testSrcTzDatabaseCase = testCase desc $ do
   result <-
-    captureKairosIO $
-      pureDestTZ ++ fixedDate ++ ["-s", "aMeRiCa/new_yoRk", "08:30"]
+    captureKairosIO $ pureDestTZDate ["-s", "aMeRiCa/new_yoRk", "08:30"]
   "Thu,  1 Jan 1970 13:30:00 UTC" @=? result
 
   result2 <-
-    captureKairosIO $
-      pureDestTZ ++ fixedDate ++ ["-s", "etc/utc", "08:30"]
+    captureKairosIO $ pureDestTZDate ["-s", "etc/utc", "08:30"]
   "Thu,  1 Jan 1970 08:30:00 UTC" @=? result2
   where
     desc = "Uses source timezone from tz database with 'wrong' case"
@@ -187,7 +189,7 @@ testSrcTzFails :: TestTree
 testSrcTzFails = testCase "Bad source timezone fails" $ do
   assertException @ParseTZInputException expected $ captureKairosIO args
   where
-    args = pureDestTZ <> ["-s", "Europe/Pariss", "08:30"]
+    args = pureDestTZ ["-s", "Europe/Pariss", "08:30"]
     expected =
       mconcat
         [ "Could not parse timezone from 'Europe/Pariss'. Wanted a name or offset ",
@@ -196,20 +198,19 @@ testSrcTzFails = testCase "Bad source timezone fails" $ do
 
 testSrcTzDST :: TestTree
 testSrcTzDST = testCase "Correctly converts src w/ DST" $ do
-  result <- captureKairosIO $ pureDestTZ ++ argsDST
+  result <- captureKairosIO $ pureDestTZ argsDST
   "Mon, 10 Apr 2023 12:30:00 UTC" @=? result
 
-  result2 <- captureKairosIO $ pureDestTZ ++ argsNoDST
+  result2 <- captureKairosIO $ pureDestTZ argsNoDST
   "Tue, 10 Jan 2023 13:30:00 UTC" @=? result2
   where
-    argsDST = withDate ["--date", "2023-04-10"]
-    argsNoDST = withDate ["--date", "2023-01-10"]
-    withDate ds =
-      ds
-        ++ [ "-s",
-             "America/New_York",
-             "08:30"
-           ]
+    argsDST = set' #date "2023-04-10" args
+    argsNoDST = set' #date "2023-01-10" args
+    args =
+      [ "-s",
+        "America/New_York",
+        "08:30"
+      ]
 
 testSrcTzNoDate :: TestTree
 testSrcTzNoDate = testCase "Correctly converts src w/o --date" $ do
@@ -218,7 +219,7 @@ testSrcTzNoDate = testCase "Correctly converts src w/o --date" $ do
 
   resultNzstSrcDst <-
     captureKairosParamsIO $
-      mkSrcParams ["-d", "Pacific/Auckland"]
+      mkSrcParams (set' #destTZ "Pacific/Auckland")
   "Wed, 19 Apr 2023 11:30:00 NZST" @=? resultNzstSrcDst
 
   resultUtcDestDst <- captureKairosParamsIO $ mkDestParams pureDestTZ
@@ -226,21 +227,23 @@ testSrcTzNoDate = testCase "Correctly converts src w/o --date" $ do
 
   resultNzstDestDst <-
     captureKairosParamsIO $
-      mkDestParams ["-d", "Pacific/Auckland"]
+      mkDestParams (set' #destTZ "Pacific/Auckland")
   "Sun, 19 Feb 2023 13:30:00 NZDT" @=? resultNzstDestDst
   where
-    mkSrcParams = mkParams currTimeSrcDst
-    mkDestParams = mkParams currTimeDestDst
+    mkSrcParams :: (CliArgs -> CliArgs) -> TestParams
+    mkSrcParams f = over' #cliArgs f $ mkParams currTimeSrcDst
 
-    mkParams :: String -> [String] -> TestParams
-    mkParams currTime dest =
+    mkDestParams :: (CliArgs -> CliArgs) -> TestParams
+    mkDestParams f = over' #cliArgs f $ mkParams currTimeDestDst
+
+    mkParams :: String -> TestParams
+    mkParams currTime =
       MkTestParams
-        { args =
-            dest
-              ++ [ "-s",
-                   "America/New_York",
-                   "19:30"
-                 ],
+        { cliArgs =
+            [ "-s",
+              "America/New_York",
+              "19:30"
+            ],
           configEnabled = False,
           mCurrentTime = Just currTime
         }
@@ -260,22 +263,21 @@ destTzTests =
 testDestTzDatabase :: TestTree
 testDestTzDatabase = testCase "Uses dest timezone from tz database" $ do
   result <-
-    captureKairosIO $
-      pureSrcTZ ++ fixedDate ++ ["-d", "Europe/Paris", "08:30"]
+    captureKairosIO $ pureSrcTZDate ["-d", "Europe/Paris", "08:30"]
   "Thu,  1 Jan 1970 09:30:00 CET" @=? result
 
 testSrcDestTzDatabase :: TestTree
 testSrcDestTzDatabase = testCase "Uses src to dest" $ do
   result <-
     captureKairosIO $
-      fixedDate ++ ["-s", "America/New_York", "-d", "Europe/Paris", "08:30"]
+      fixedDate ["-s", "America/New_York", "-d", "Europe/Paris", "08:30"]
   "Thu,  1 Jan 1970 14:30:00 CET" @=? result
 
 testDestTzFails :: TestTree
 testDestTzFails = testCase "Bad dest timezone fails" $ do
   assertException @ParseTZInputException expected $ captureKairosIO args
   where
-    args = pureSrcTZ <> ["-d", "Europe/Pariss", "08:30"]
+    args = pureSrcTZ ["-d", "Europe/Pariss", "08:30"]
     expected =
       mconcat
         [ "Could not parse timezone from 'Europe/Pariss'. Wanted a name or offset ",
@@ -296,28 +298,28 @@ testTzOffsetColon :: TestTree
 testTzOffsetColon = testCase "Uses tz offsets with colon" $ do
   result <-
     captureKairosIO $
-      fixedDate ++ ["-s", "+13:00", "08:30", "-d", "-08:00"]
+      fixedDate ["-s", "+13:00", "08:30", "-d", "-08:00"]
   "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
 
 testTzOffsetNoColon :: TestTree
 testTzOffsetNoColon = testCase "Uses tz offsets without colon" $ do
   result <-
     captureKairosIO $
-      fixedDate ++ ["-s", "+1300", "08:30", "-d", "-0800"]
+      fixedDate ["-s", "+1300", "08:30", "-d", "-0800"]
   "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
 
 testTzOffsetHours :: TestTree
 testTzOffsetHours = testCase "Uses tz offsets with hours only" $ do
   result <-
     captureKairosIO $
-      fixedDate ++ ["-s", "+13", "08:30", "-d", "-08"]
+      fixedDate ["-s", "+13", "08:30", "-d", "-08"]
   "Wed, 31 Dec 1969 11:30:00 -0800" @=? result
 
 testTzOffsetUtc :: TestTree
 testTzOffsetUtc = testCase "Uses tz offsets without colon" $ do
   result <-
     captureKairosIO $
-      fixedDate ++ ["-s", "Z", "08:30", "-d", "-0800"]
+      fixedDate ["-s", "Z", "08:30", "-d", "-0800"]
   "Thu,  1 Jan 1970 00:30:00 -0800" @=? result
 
 dateTests :: TestTree
@@ -628,7 +630,7 @@ testTomlAliases = testCase "Config aliases succeed" $ do
   where
     withDest d =
       MkTestParams
-        { args =
+        { cliArgs =
             [ "-c",
               configFp,
               "-s",
@@ -708,7 +710,7 @@ assertException expected io = do
 -- - The given CLI args.
 -- - Toml config disabled.
 -- - No mocked time string.
-captureKairosIO :: [String] -> IO Text
+captureKairosIO :: CliArgs -> IO Text
 captureKairosIO = captureKairosParamsIO . Params.fromArgs
 
 -- | General function for capturing kairos output given TestParams.
@@ -719,8 +721,8 @@ captureKairosParamsIO params = case params.mCurrentTime of
   where
     args' =
       if params.configEnabled
-        then params.args
-        else "--no-config" : params.args
+        then toList $ params.cliArgs
+        else "--no-config" : toList params.cliArgs
 
     -- Runs kairos with the args, capturing terminal output.
     -- Toml configuration is not disabled, so take care that one of the following
@@ -793,17 +795,26 @@ instance MonadTime MockTimeIO where
   getMonotonicTime = pure 0
 
 -- when we want to ensure that nothing depends on local time.
-pureTZ :: [String]
-pureTZ = pureSrcTZ ++ pureDestTZ
+pureTZ :: CliArgs -> CliArgs
+pureTZ = pureDestTZ . pureSrcTZ
 
-pureSrcTZ :: [String]
-pureSrcTZ = ["-s", "Etc/UTC"]
+pureSrcTZ :: CliArgs -> CliArgs
+pureSrcTZ = set' #srcTZ "utc"
 
-pureDestTZ :: [String]
-pureDestTZ = ["-d", "Etc/UTC"]
+pureDestTZ :: CliArgs -> CliArgs
+pureDestTZ = set' #destTZ "utc"
 
-fixedDate :: [String]
-fixedDate = ["--date", "1970-01-01"]
+fixedDate :: CliArgs -> CliArgs
+fixedDate = set' #date "1970-01-01"
+
+pureSrcTZDate :: CliArgs -> CliArgs
+pureSrcTZDate = pureSrcTZ . fixedDate
+
+pureDestTZDate :: CliArgs -> CliArgs
+pureDestTZDate = pureDestTZ . fixedDate
+
+pureTZDate :: CliArgs -> CliArgs
+pureTZDate = pureTZ . fixedDate
 
 startsWith :: (Eq a) => [a] -> [a] -> Bool
 startsWith [] _ = True
