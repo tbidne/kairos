@@ -63,7 +63,7 @@ newtype ParseTZInputException = MkParseTZInputException Text
 -- | @since 0.1
 instance Exception ParseTZInputException where
   displayException (MkParseTZInputException tzdb) =
-    "Could not parse tz from '"
+    "Could not parse timezone from '"
       <> T.unpack tzdb
       <> "'. Wanted a name or offset e.g. 'America/New_York', '+0800'."
 

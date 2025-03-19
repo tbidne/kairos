@@ -190,7 +190,7 @@ testSrcTzFails = testCase "Bad source timezone fails" $ do
     args = pureDestTZ <> ["-s", "Europe/Pariss", "08:30"]
     expected =
       mconcat
-        [ "Could not parse tz from 'Europe/Pariss'. Wanted a name or offset ",
+        [ "Could not parse timezone from 'Europe/Pariss'. Wanted a name or offset ",
           "e.g. 'America/New_York', '+0800'."
         ]
 
@@ -278,7 +278,7 @@ testDestTzFails = testCase "Bad dest timezone fails" $ do
     args = pureSrcTZ <> ["-d", "Europe/Pariss", "08:30"]
     expected =
       mconcat
-        [ "Could not parse tz from 'Europe/Pariss'. Wanted a name or offset ",
+        [ "Could not parse timezone from 'Europe/Pariss'. Wanted a name or offset ",
           "e.g. 'America/New_York', '+0800'."
         ]
 
