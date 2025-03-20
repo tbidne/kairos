@@ -86,6 +86,7 @@ library kairos-runner
     , effects-optparse      ^>=0.1
     , effects-terminal      ^>=0.1
     , effects-time          ^>=0.1
+    , exception-utils       ^>=0.1
     , exceptions            ^>=0.10.4
     , kairos-core           ^>=0.1
     , optics-core           ^>=0.4
@@ -101,8 +102,6 @@ executable kairos
   main-is:        Main.hs
   build-depends:
     , base
-    , exception-utils  ^>=0.1
-    , kairos-core
     , kairos-runner
 
   hs-source-dirs: app

@@ -52,6 +52,7 @@ data Args = MkArgs
     formatIn :: Maybe TimeFormat,
     formatOut :: Maybe TimeFormat,
     srcTZ :: Maybe Text,
+    stacktrace :: Bool,
     timeString :: Maybe Text
   }
   deriving stock (Eq, Show)
@@ -114,9 +115,18 @@ parseArgs =
     <*> parseFormatIn
     <*> parseFormatOut
     <*> parseSrcTZ
+    <*> parseStacktrace
     <*> parseTimeStr
       <**> OA.helper
       <**> version
+
+parseStacktrace :: Parser Bool
+parseStacktrace =
+  OA.switch $
+    mconcat
+      [ OA.long "stacktrace",
+        OA.internal
+      ]
 
 parseConfig :: Parser (Maybe OsPath)
 parseConfig =

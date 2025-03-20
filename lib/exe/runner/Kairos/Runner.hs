@@ -6,9 +6,13 @@
 -- @since 0.1
 module Kairos.Runner
   ( runKairos,
+    runKairosIO,
   )
 where
 
+import Control.Exception.Annotation.Utils (ExceptionProxy (MkExceptionProxy))
+import Control.Exception.Annotation.Utils qualified as AnnUtils
+import Control.Monad (unless)
 import Control.Monad.Catch (MonadCatch, MonadThrow, throwM)
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
@@ -40,6 +44,7 @@ import Kairos.Runner.Args
         formatOut,
         noConfig,
         srcTZ,
+        stacktrace,
         timeString
       ),
     parserInfo,
@@ -47,7 +52,11 @@ import Kairos.Runner.Args
 import Kairos.Runner.Toml (Toml)
 import Kairos.Types.Exception
   ( DateNoTimeStringException (MkDateNoTimeStringException),
+    LocalSystemTimeException,
+    LocalTZException,
+    LocalTimeZoneException,
     ParseTZInputException (MkParseTZInputException),
+    ParseTimeException,
     SrcTZNoTimeStringException (MkSrcTZNoTimeStringException),
   )
 import Kairos.Types.TZInput (TZInput, locale)
@@ -71,6 +80,28 @@ import Optics.Core
     _Just,
   )
 import TOML qualified
+
+-- | 'IO'-specialized version of 'runKairos' that hides Kairos exception
+-- callstacks iff the (internal) --stacktrace flag is _not_ set (default).
+--
+-- @since 0.1
+runKairosIO :: (HasCallStack) => IO ()
+runKairosIO = do
+  args <- execParser parserInfo
+
+  unless args.stacktrace $ AnnUtils.setIgnoreKnownCallStackHandler proxies
+
+  runWithArgs args
+  where
+    proxies =
+      [ MkExceptionProxy @DateNoTimeStringException,
+        MkExceptionProxy @LocalSystemTimeException,
+        MkExceptionProxy @LocalTimeZoneException,
+        MkExceptionProxy @LocalTZException,
+        MkExceptionProxy @ParseTimeException,
+        MkExceptionProxy @ParseTZInputException,
+        MkExceptionProxy @SrcTZNoTimeStringException
+      ]
 
 -- | Runs kairos with CLI args.
 --
