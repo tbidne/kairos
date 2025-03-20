@@ -76,6 +76,9 @@ instance IsList CliArgs where
       f _ OptNothing = []
       f k (OptJust s) = [k, s]
 
+instance IsString CliArgs where
+  fromString s = MkCliArgs [s] OptNothing OptNothing OptNothing
+
 instance
   (k ~ A_Lens, a ~ [String], b ~ [String]) =>
   LabelOptic "args" k CliArgs CliArgs a b

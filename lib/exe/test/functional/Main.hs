@@ -170,17 +170,17 @@ srcTzTests =
 testSrcTzDatabase :: TestTree
 testSrcTzDatabase = testCase "Uses source timezone from tz database" $ do
   result <-
-    captureKairosIO $ pureDestTZDate ["-s", "Europe/Paris", "08:30"]
+    captureKairosIO $ pureDestTZDate $ set' #srcTZ "Europe/Paris" "08:30"
   "Sat,  5 Jan 1980 07:30:00 UTC" @=? result
 
 testSrcTzDatabaseCase :: TestTree
 testSrcTzDatabaseCase = testCase desc $ do
   result <-
-    captureKairosIO $ pureDestTZDate ["-s", "aMeRiCa/new_yoRk", "08:30"]
+    captureKairosIO $ pureDestTZDate $ set' #srcTZ "aMeRiCa/new_yoRk" "08:30"
   "Sat,  5 Jan 1980 13:30:00 UTC" @=? result
 
   result2 <-
-    captureKairosIO $ pureDestTZDate ["-s", "etc/utc", "08:30"]
+    captureKairosIO $ pureDestTZDate $ set' #srcTZ "etc/utc" "08:30"
   "Sat,  5 Jan 1980 08:30:00 UTC" @=? result2
   where
     desc = "Uses source timezone from tz database with 'wrong' case"
@@ -189,7 +189,7 @@ testSrcTzFails :: TestTree
 testSrcTzFails = testCase "Bad source timezone fails" $ do
   assertException @ParseTZInputException expected $ captureKairosIO args
   where
-    args = pureDestTZ ["-s", "Europe/Pariss", "08:30"]
+    args = pureDestTZ $ set' #srcTZ "Europe/Pariss" "08:30"
     expected =
       mconcat
         [ "Could not parse timezone from 'Europe/Pariss'. Wanted a name or offset ",
@@ -206,11 +206,7 @@ testSrcTzDST = testCase "Correctly converts src w/ DST" $ do
   where
     argsDST = set' #date "2023-04-10" args
     argsNoDST = set' #date "2023-01-10" args
-    args =
-      [ "-s",
-        "America/New_York",
-        "08:30"
-      ]
+    args = set' #srcTZ "America/New_York" "08:30"
 
 testSrcTzNoDate :: TestTree
 testSrcTzNoDate = testCase "Correctly converts src w/o --date" $ do
@@ -239,11 +235,7 @@ testSrcTzNoDate = testCase "Correctly converts src w/o --date" $ do
     mkParams :: String -> TestParams
     mkParams currTime =
       MkTestParams
-        { cliArgs =
-            [ "-s",
-              "America/New_York",
-              "19:30"
-            ],
+        { cliArgs = set' #srcTZ "America/New_York" "19:30",
           configEnabled = False,
           mCurrentTime = Just currTime
         }
@@ -263,21 +255,24 @@ destTzTests =
 testDestTzDatabase :: TestTree
 testDestTzDatabase = testCase "Uses dest timezone from tz database" $ do
   result <-
-    captureKairosIO $ pureSrcTZDate ["-d", "Europe/Paris", "08:30"]
+    captureKairosIO $ pureSrcTZDate $ set' #destTZ "Europe/Paris" "08:30"
   "Sat,  5 Jan 1980 09:30:00 CET" @=? result
 
 testSrcDestTzDatabase :: TestTree
 testSrcDestTzDatabase = testCase "Uses src to dest" $ do
   result <-
-    captureKairosIO $
-      fixedDate ["-s", "America/New_York", "-d", "Europe/Paris", "08:30"]
+    captureKairosIO
+      . fixedDate
+      . set' #srcTZ "America/New_York"
+      . set' #destTZ "Europe/Paris"
+      $ "08:30"
   "Sat,  5 Jan 1980 14:30:00 CET" @=? result
 
 testDestTzFails :: TestTree
 testDestTzFails = testCase "Bad dest timezone fails" $ do
   assertException @ParseTZInputException expected $ captureKairosIO args
   where
-    args = pureSrcTZ ["-d", "Europe/Pariss", "08:30"]
+    args = pureSrcTZ $ set' #destTZ "Europe/Pariss" "08:30"
     expected =
       mconcat
         [ "Could not parse timezone from 'Europe/Pariss'. Wanted a name or offset ",
@@ -297,29 +292,41 @@ tzOffsetTests =
 testTzOffsetColon :: TestTree
 testTzOffsetColon = testCase "Uses tz offsets with colon" $ do
   result <-
-    captureKairosIO $
-      fixedDate ["-s", "+13:00", "08:30", "-d", "-08:00"]
+    captureKairosIO
+      . fixedDate
+      . set' #srcTZ "+13:00"
+      . set' #destTZ "-08:00"
+      $ "08:30"
   "Fri,  4 Jan 1980 11:30:00 -0800" @=? result
 
 testTzOffsetNoColon :: TestTree
 testTzOffsetNoColon = testCase "Uses tz offsets without colon" $ do
   result <-
-    captureKairosIO $
-      fixedDate ["-s", "+1300", "08:30", "-d", "-0800"]
+    captureKairosIO
+      . fixedDate
+      . set' #srcTZ "+1300"
+      . set' #destTZ "-0800"
+      $ "08:30"
   "Fri,  4 Jan 1980 11:30:00 -0800" @=? result
 
 testTzOffsetHours :: TestTree
 testTzOffsetHours = testCase "Uses tz offsets with hours only" $ do
   result <-
-    captureKairosIO $
-      fixedDate ["-s", "+13", "08:30", "-d", "-08"]
+    captureKairosIO
+      . fixedDate
+      . set' #srcTZ "+13"
+      . set' #destTZ "-08"
+      $ "08:30"
   "Fri,  4 Jan 1980 11:30:00 -0800" @=? result
 
 testTzOffsetUtc :: TestTree
-testTzOffsetUtc = testCase "Uses tz offsets without colon" $ do
+testTzOffsetUtc = testCase "Uses tz offsets utc" $ do
   result <-
-    captureKairosIO $
-      fixedDate ["-s", "Z", "08:30", "-d", "-0800"]
+    captureKairosIO
+      . fixedDate
+      . set' #srcTZ "Z"
+      . set' #destTZ "-0800"
+      $ "08:30"
   "Sat,  5 Jan 1980 00:30:00 -0800" @=? result
 
 dateTests :: TestTree
@@ -342,23 +349,16 @@ testConvertExplicit1 = testCase desc $ do
   where
     desc = "Converts explicit src -> dest 1"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Thu, 10 Mar 2022 03:30:00 EST"
 
-    date2 = "2022-06-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-06-10" args
     expected2 = "Fri, 10 Jun 2022 03:30:00 EDT"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-s",
-        "europe/london",
-        "-d",
-        "america/new_york",
-        "08:30"
-      ]
+    args =
+      set' #srcTZ "europe/london"
+        . set' #destTZ "america/new_york"
+        $ "08:30"
 
 testConvertExplicit2 :: TestTree
 testConvertExplicit2 = testCase desc $ do
@@ -370,23 +370,16 @@ testConvertExplicit2 = testCase desc $ do
   where
     desc = "Converts explicit src -> dest 2"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Thu, 10 Mar 2022 13:30:00 GMT"
 
-    date2 = "2022-06-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-06-10" args
     expected2 = "Fri, 10 Jun 2022 13:30:00 BST"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-s",
-        "America/New_York",
-        "-d",
-        "europe/london",
-        "08:30"
-      ]
+    args =
+      set' #srcTZ "America/New_York"
+        . set' #destTZ "europe/london"
+        $ "08:30"
 
 testConvertExplicit3 :: TestTree
 testConvertExplicit3 = testCase desc $ do
@@ -398,23 +391,16 @@ testConvertExplicit3 = testCase desc $ do
   where
     desc = "Converts explicit src -> dest 3"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Fri, 11 Mar 2022 02:30:00 NZDT"
 
-    date2 = "2022-05-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-05-10" args
     expected2 = "Wed, 11 May 2022 00:30:00 NZST"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-s",
-        "america/new_york",
-        "-d",
-        "Pacific/Auckland",
-        "08:30"
-      ]
+    args =
+      set' #srcTZ "america/new_york"
+        . set' #destTZ "Pacific/Auckland"
+        $ "08:30"
 
 testConvertExplicit4 :: TestTree
 testConvertExplicit4 = testCase desc $ do
@@ -428,23 +414,16 @@ testConvertExplicit4 = testCase desc $ do
   where
     desc = "Converts explicit src -> dest 4"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Wed,  9 Mar 2022 14:30:00 EST"
 
-    date2 = "2022-05-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-05-10" args
     expected2 = "Mon,  9 May 2022 16:30:00 EDT"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-s",
-        "Pacific/Auckland",
-        "-d",
-        "america/new_york",
-        "08:30"
-      ]
+    args =
+      set' #srcTZ "Pacific/Auckland"
+        . set' #destTZ "america/new_york"
+        $ "08:30"
 
 -- These are tests that are useful to run at least locally but should not be
 -- run by default because e.g. they are not reliable on arbitrary systems.
@@ -478,21 +457,13 @@ testCurrTZFromSrcTime1 = testCase desc $ do
   where
     desc = "Derives current timezone from source time 1"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Thu, 10 Mar 2022 03:30:00 EST"
 
-    date2 = "2022-06-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-06-10" args
     expected2 = "Fri, 10 Jun 2022 03:30:00 EDT"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-s",
-        "europe/london",
-        "08:30"
-      ]
+    args = set' #srcTZ "europe/london" "08:30"
 
 testCurrTZToDestTime1 :: TestTree
 testCurrTZToDestTime1 = testCase desc $ do
@@ -510,21 +481,13 @@ testCurrTZToDestTime1 = testCase desc $ do
   where
     desc = "Derives current timezone from dest time 1"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Thu, 10 Mar 2022 13:30:00 GMT"
 
-    date2 = "2022-06-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-06-10" args
     expected2 = "Fri, 10 Jun 2022 13:30:00 BST"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-d",
-        "europe/london",
-        "08:30"
-      ]
+    args = set' #destTZ "europe/london" "08:30"
 
 -- Evidently CI on windows does not have Pacific/Auckland, so this fails.
 -- But it is still a useful test, so we include it here.
@@ -557,21 +520,13 @@ testCurrTZFromSrcTime2 = testCase desc $ do
   where
     desc = "Derives current timezone from source time 2"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Fri, 11 Mar 2022 02:30:00 NZDT"
 
-    date2 = "2022-05-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-05-10" args
     expected2 = "Wed, 11 May 2022 00:30:00 NZST"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-s",
-        "america/new_york",
-        "08:30"
-      ]
+    args = set' #srcTZ "america/new_york" "08:30"
 
 testCurrTZToDestTime2 :: TestTree
 testCurrTZToDestTime2 = testCase desc $ do
@@ -594,21 +549,13 @@ testCurrTZToDestTime2 = testCase desc $ do
   where
     desc = "Derives current timezone from dest time 2"
 
-    date1 = "2022-03-10"
-    args1 = mkArgs date1
+    args1 = set' #date "2022-03-10" args
     expected1 = "Wed,  9 Mar 2022 14:30:00 EST"
 
-    date2 = "2022-05-10"
-    args2 = mkArgs date2
+    args2 = set' #date "2022-05-10" args
     expected2 = "Mon,  9 May 2022 16:30:00 EDT"
 
-    mkArgs d =
-      [ "--date",
-        d,
-        "-d",
-        "america/new_york",
-        "08:30"
-      ]
+    args = set' #destTZ "america/new_york" "08:30"
 
 tomlTests :: TestTree
 tomlTests =
@@ -631,16 +578,13 @@ testTomlAliases = testCase "Config aliases succeed" $ do
     withDest d =
       MkTestParams
         { cliArgs =
-            [ "-c",
-              configFp,
-              "-s",
-              "Etc/Utc",
-              "-d",
-              d,
-              "--date",
-              "2022-07-12",
-              "08:30"
-            ],
+            set' #date "2022-07-12"
+              . set' #srcTZ "Etc/Utc"
+              . set' #destTZ d
+              $ [ "-c",
+                  configFp,
+                  "08:30"
+                ],
           configEnabled = True,
           mCurrentTime = Nothing
         }
@@ -665,10 +609,10 @@ testNoTimeString = testCase "No time string gets current time" $ do
   resultsLocal <- captureKairosParamsIO $ mkParams []
   "Tue, 18 Apr 2023 19:30:00 -0400" @=? resultsLocal
 
-  resultsUtc <- captureKairosParamsIO $ mkParams ["-d", "etc/utc"]
+  resultsUtc <- captureKairosParamsIO $ mkParams $ set' #destTZ "etc/utc" []
   "Tue, 18 Apr 2023 23:30:00 UTC" @=? resultsUtc
 
-  resultsParis <- captureKairosParamsIO $ mkParams ["-d", "europe/paris"]
+  resultsParis <- captureKairosParamsIO $ mkParams $ set' #destTZ "europe/paris" []
   "Wed, 19 Apr 2023 01:30:00 CEST" @=? resultsParis
   where
     mkParams args = set' #mCurrentTime (Just currTime) (Params.fromArgs args)
@@ -680,20 +624,14 @@ testSrcTzNoTimeStr = testCase "Src w/o time string fails" $ do
   assertException @SrcTZNoTimeStringException expected $ captureKairosIO args
   where
     expected = "The --src-tz option was specified without required time string"
-    args =
-      [ "-s",
-        "Etc/Utc"
-      ]
+    args = set' #srcTZ "Etc/Utc" []
 
 testDateNoTimeStr :: TestTree
 testDateNoTimeStr = testCase "Date w/o time string fails" $ do
   assertException @DateNoTimeStringException expected $ captureKairosIO args
   where
     expected = "The --date option was specified without required time string"
-    args =
-      [ "--date",
-        "2024-10-08"
-      ]
+    args = set' #date "2024-10-08" []
 
 assertException :: forall e a. (Exception e) => String -> IO a -> Assertion
 assertException expected io = do
