@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html"><span class="hs-identifier">Kairos.Types.TimeFormat</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier">TimeFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#defaultTimeFormats"><span class="hs-identifier">defaultTimeFormats</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hm"><span class="hs-identifier">hm</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hm12h"><span class="hs-identifier">hm12h</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmTZ"><span class="hs-identifier">hmTZ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmTZ12h"><span class="hs-identifier">hmTZ12h</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#rfc822"><span class="hs-identifier">rfc822</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.DeepSeq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NFData</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.NonEmpty</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NonEmpty</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(:|)</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.String</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Generics</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Generic</span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Core.html/Optics.Core.html"><span class="hs-identifier">Optics.Core</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html/Optics.Internal.Optic.Types.html#An_Iso"><span class="hs-identifier">An_Iso</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html/Optics.Label.html#LabelOptic"><span class="hs-identifier">LabelOptic</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html/Optics.Label.html#labelOptic"><span class="hs-identifier">labelOptic</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Iso.html/Optics.Iso.html#iso"><span class="hs-identifier">iso</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- | Time formatting string. The 'Monoid' instance behaves like 'Text'.</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--</span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">newtype</span><span> </span><span id="TimeFormat"><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-var">TimeFormat</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkTimeFormat"><span class="annot"><a href="Kairos.Types.TimeFormat.html#MkTimeFormat"><span class="hs-identifier hs-var">MkTimeFormat</span></a></span></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">{</span><span id="unTimeFormat"><span class="annot"><span class="annottext">TimeFormat -&gt; Text
+</span><a href="Kairos.Types.TimeFormat.html#unTimeFormat"><span class="hs-identifier hs-var hs-var">unTimeFormat</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">}</span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-29"></span><span>      </span><span id="local-6989586621679096110"><span id="local-6989586621679096114"><span class="annot"><span class="annottext">TimeFormat -&gt; TimeFormat -&gt; Bool
+(TimeFormat -&gt; TimeFormat -&gt; Bool)
+-&gt; (TimeFormat -&gt; TimeFormat -&gt; Bool) -&gt; Eq TimeFormat
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: TimeFormat -&gt; TimeFormat -&gt; Bool
+== :: TimeFormat -&gt; TimeFormat -&gt; Bool
+$c/= :: TimeFormat -&gt; TimeFormat -&gt; Bool
+/= :: TimeFormat -&gt; TimeFormat -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-31"></span><span>      </span><span id="local-6989586621679096119"><span id="local-6989586621679096121"><span class="annot"><span class="annottext">(forall x. TimeFormat -&gt; Rep TimeFormat x)
+-&gt; (forall x. Rep TimeFormat x -&gt; TimeFormat) -&gt; Generic TimeFormat
+forall x. Rep TimeFormat x -&gt; TimeFormat
+forall x. TimeFormat -&gt; Rep TimeFormat x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cfrom :: forall x. TimeFormat -&gt; Rep TimeFormat x
+from :: forall x. TimeFormat -&gt; Rep TimeFormat x
+$cto :: forall x. Rep TimeFormat x -&gt; TimeFormat
+to :: forall x. Rep TimeFormat x -&gt; TimeFormat
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Generic</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-33"></span><span>      </span><span id="local-6989586621679096127"><span id="local-6989586621679096133"><span id="local-6989586621679096137"><span class="annot"><span class="annottext">Int -&gt; TimeFormat -&gt; ShowS
+[TimeFormat] -&gt; ShowS
+TimeFormat -&gt; String
+(Int -&gt; TimeFormat -&gt; ShowS)
+-&gt; (TimeFormat -&gt; String)
+-&gt; ([TimeFormat] -&gt; ShowS)
+-&gt; Show TimeFormat
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; TimeFormat -&gt; ShowS
+showsPrec :: Int -&gt; TimeFormat -&gt; ShowS
+$cshow :: TimeFormat -&gt; String
+show :: TimeFormat -&gt; String
+$cshowList :: [TimeFormat] -&gt; ShowS
+showList :: [TimeFormat] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-37"></span><span>      </span><span id="local-6989586621679096142"><span class="annot"><span class="annottext">TimeFormat -&gt; ()
+(TimeFormat -&gt; ()) -&gt; NFData TimeFormat
+forall a. (a -&gt; ()) -&gt; NFData a
+$crnf :: TimeFormat -&gt; ()
+rnf :: TimeFormat -&gt; ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">NFData</span></span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-keyword">deriving</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-41"></span><span>      </span><span id="local-6989586621679096160"><span id="local-6989586621679096165"><span id="local-6989586621679096169"><span class="annot"><span class="annottext">Semigroup TimeFormat
+TimeFormat
+Semigroup TimeFormat =&gt;
+TimeFormat
+-&gt; (TimeFormat -&gt; TimeFormat -&gt; TimeFormat)
+-&gt; ([TimeFormat] -&gt; TimeFormat)
+-&gt; Monoid TimeFormat
+[TimeFormat] -&gt; TimeFormat
+TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+forall a.
+Semigroup a =&gt;
+a -&gt; (a -&gt; a -&gt; a) -&gt; ([a] -&gt; a) -&gt; Monoid a
+$cmempty :: TimeFormat
+mempty :: TimeFormat
+$cmappend :: TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+mappend :: TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+$cmconcat :: [TimeFormat] -&gt; TimeFormat
+mconcat :: [TimeFormat] -&gt; TimeFormat
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monoid</span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-43"></span><span>      </span><span id="local-6989586621679096175"><span class="annot"><span class="annottext">String -&gt; TimeFormat
+(String -&gt; TimeFormat) -&gt; IsString TimeFormat
+forall a. (String -&gt; a) -&gt; IsString a
+$cfromString :: String -&gt; TimeFormat
+fromString :: String -&gt; TimeFormat
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">IsString</span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-45"></span><span>      </span><span id="local-6989586621679096181"><span id="local-6989586621679096186"><span id="local-6989586621679096192"><span class="annot"><span class="annottext">NonEmpty TimeFormat -&gt; TimeFormat
+TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+(TimeFormat -&gt; TimeFormat -&gt; TimeFormat)
+-&gt; (NonEmpty TimeFormat -&gt; TimeFormat)
+-&gt; (forall b. Integral b =&gt; b -&gt; TimeFormat -&gt; TimeFormat)
+-&gt; Semigroup TimeFormat
+forall b. Integral b =&gt; b -&gt; TimeFormat -&gt; TimeFormat
+forall a.
+(a -&gt; a -&gt; a)
+-&gt; (NonEmpty a -&gt; a)
+-&gt; (forall b. Integral b =&gt; b -&gt; a -&gt; a)
+-&gt; Semigroup a
+$c&lt;&gt; :: TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+&lt;&gt; :: TimeFormat -&gt; TimeFormat -&gt; TimeFormat
+$csconcat :: NonEmpty TimeFormat -&gt; TimeFormat
+sconcat :: NonEmpty TimeFormat -&gt; TimeFormat
+$cstimes :: forall b. Integral b =&gt; b -&gt; TimeFormat -&gt; TimeFormat
+stimes :: forall b. Integral b =&gt; b -&gt; TimeFormat -&gt; TimeFormat
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Semigroup</span></span></span></span></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>    </span><span class="hs-keyword">via</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-50"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-51"></span><span>  </span><span id="local-6989586621679096078"><span id="local-6989586621679096079"><span id="local-6989586621679096080"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679096078"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html/Optics.Internal.Optic.Types.html#An_Iso"><span class="hs-identifier hs-type">An_Iso</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679096079"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679096080"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;unTimeFormat&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679096078"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679096079"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679096080"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-54"></span><span>  </span><span id="local-6989586621679096209"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx TimeFormat TimeFormat a b
+</span><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(TimeFormat -&gt; a)
+-&gt; (b -&gt; TimeFormat) -&gt; Iso TimeFormat TimeFormat a b
+forall s a b t. (s -&gt; a) -&gt; (b -&gt; t) -&gt; Iso s t a b
+</span><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Iso.html/Optics.Iso.html#iso"><span class="hs-identifier hs-var">iso</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.TimeFormat.html#MkTimeFormat"><span class="hs-identifier hs-type">MkTimeFormat</span></a></span><span> </span><span id="local-6989586621679096210"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679096210"><span class="hs-identifier hs-var">f</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Text
+</span><a href="#local-6989586621679096210"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">b -&gt; TimeFormat
+Text -&gt; TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#MkTimeFormat"><span class="hs-identifier hs-var">MkTimeFormat</span></a></span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/s6gy82bmikc1c2ar9281fhb8d03qfxj9-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- | Parses 24 hour time w/ and w/o colon (13:00, 1300) and 12 hour</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- time w/ and w/o passing (1:30 pm, 1 pm, 10:15 am).</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Kairos.Types.TimeFormat.html#defaultTimeFormats"><span class="hs-identifier hs-type">defaultTimeFormats</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">NonEmpty</span></span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span>
+</span><span id="line-62"></span><span id="defaultTimeFormats"><span class="annot"><span class="annottext">defaultTimeFormats :: NonEmpty TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#defaultTimeFormats"><span class="hs-identifier hs-var hs-var">defaultTimeFormats</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-63"></span><span>  </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#hm"><span class="hs-identifier hs-var">hm</span></a></span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><span class="annottext">TimeFormat -&gt; [TimeFormat] -&gt; NonEmpty TimeFormat
+forall a. a -&gt; [a] -&gt; NonEmpty a
+</span><span class="hs-operator hs-var">:|</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#hmNoColon"><span class="hs-identifier hs-var">hmNoColon</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-comment">-- 0300</span><span>
+</span><span id="line-65"></span><span>         </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%-I:%M %P&quot;</span></span><span class="hs-special">,</span><span> </span><span class="hs-comment">-- 1:30 pm,</span><span>
+</span><span id="line-66"></span><span>         </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%-I:%M%P&quot;</span></span><span class="hs-special">,</span><span> </span><span class="hs-comment">-- 1:30pm</span><span>
+</span><span id="line-67"></span><span>         </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%-I %P&quot;</span></span><span class="hs-special">,</span><span> </span><span class="hs-comment">-- 1pm</span><span>
+</span><span id="line-68"></span><span>         </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%-I%P&quot;</span></span><span> </span><span class="hs-comment">-- 1 pm</span><span>
+</span><span id="line-69"></span><span>       </span><span class="hs-special">]</span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- | Format for 24-hour @hours:minutes@.</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-74"></span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hm"><span class="hs-identifier hs-type">hm</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span>
+</span><span id="line-75"></span><span id="hm"><span class="annot"><span class="annottext">hm :: TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#hm"><span class="hs-identifier hs-var hs-var">hm</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%H:%M&quot;</span></span><span>
+</span><span id="line-76"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hm"><span class="hs-pragma hs-type">hm</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- | Format for 24-hour @hoursminutes@ (no colon).</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmNoColon"><span class="hs-identifier hs-type">hmNoColon</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span>
+</span><span id="line-82"></span><span id="hmNoColon"><span class="annot"><span class="annottext">hmNoColon :: TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#hmNoColon"><span class="hs-identifier hs-var hs-var">hmNoColon</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%H%M&quot;</span></span><span>
+</span><span id="line-83"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmNoColon"><span class="hs-pragma hs-type">hmNoColon</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- | Format for 12-hour @hours:minutes am/pm@.</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--</span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-88"></span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hm12h"><span class="hs-identifier hs-type">hm12h</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span>
+</span><span id="line-89"></span><span id="hm12h"><span class="annot"><span class="annottext">hm12h :: TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#hm12h"><span class="hs-identifier hs-var hs-var">hm12h</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%I:%M %P&quot;</span></span><span>
+</span><span id="line-90"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hm12h"><span class="hs-pragma hs-type">hm12h</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- | Format for 24-hour @hours:minutes TZ@. As this contains a timezone</span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- flag, it should be used for formatting output only. In particular, it should</span><span>
+</span><span id="line-94"></span><span class="hs-comment">-- __not__ be used with 'Kairos.Types.TimeReader.format'.</span><span>
+</span><span id="line-95"></span><span class="hs-comment">--</span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmTZ"><span class="hs-identifier hs-type">hmTZ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span>
+</span><span id="line-98"></span><span id="hmTZ"><span class="annot"><span class="annottext">hmTZ :: TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#hmTZ"><span class="hs-identifier hs-var hs-var">hmTZ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%H:%M %Z&quot;</span></span><span>
+</span><span id="line-99"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmTZ"><span class="hs-pragma hs-type">hmTZ</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- | Format for 12-hour @hours:minutes am/pm TZ@. As this contains a timezone</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- flag, it should be used for formatting output only. In particular, it should</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- __not__ be used with 'Kairos.Types.TimeReader.format'.</span><span>
+</span><span id="line-104"></span><span class="hs-comment">--</span><span>
+</span><span id="line-105"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-106"></span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmTZ12h"><span class="hs-identifier hs-type">hmTZ12h</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span>
+</span><span id="line-107"></span><span id="hmTZ12h"><span class="annot"><span class="annottext">hmTZ12h :: TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#hmTZ12h"><span class="hs-identifier hs-var hs-var">hmTZ12h</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%I:%M %P %Z&quot;</span></span><span>
+</span><span id="line-108"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#hmTZ12h"><span class="hs-pragma hs-type">hmTZ12h</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-109"></span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- | Format for RFC822: @%a, %_d %b %Y %H:%M:%S %Z@. As this contains a timezone</span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- flag, it should be used for formatting output only. In particular, it should</span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- __not__ be used with 'Kairos.Types.TimeReader.format'.</span><span>
+</span><span id="line-113"></span><span class="hs-comment">--</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-115"></span><span class="annot"><a href="Kairos.Types.TimeFormat.html#rfc822"><span class="hs-identifier hs-type">rfc822</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span>
+</span><span id="line-116"></span><span id="rfc822"><span class="annot"><span class="annottext">rfc822 :: TimeFormat
+</span><a href="Kairos.Types.TimeFormat.html#rfc822"><span class="hs-identifier hs-var hs-var">rfc822</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeFormat
+</span><span class="hs-string">&quot;%a, %_d %b %Y %H:%M:%S %Z&quot;</span></span><span>
+</span><span id="line-117"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#rfc822"><span class="hs-pragma hs-type">rfc822</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-118"></span></pre></body></html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html"><span class="hs-identifier">Kairos.Types.Exception</span></a></span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTimeException"><span class="hs-identifier">ParseTimeException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTZInputException"><span class="hs-identifier">ParseTZInputException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTimeZoneException"><span class="hs-identifier">LocalTimeZoneException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTZException"><span class="hs-identifier">LocalTZException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalSystemTimeException"><span class="hs-identifier">LocalSystemTimeException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#SrcTZNoTimeStringException"><span class="hs-identifier">SrcTZNoTimeStringException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Kairos.Types.Exception.html#DateNoTimeStringException"><span class="hs-identifier">DateNoTimeStringException</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.DeepSeq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NFData</span></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">displayException</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.NonEmpty</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NonEmpty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Generics</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Generic</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html"><span class="hs-identifier">Kairos.Types.TimeFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier">TimeFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.TimeFormat.html#unTimeFormat"><span class="hs-identifier">unTimeFormat</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- | Exception parsing time string.</span><span>
+</span><span id="line-22"></span><span class="hs-comment">--</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">data</span><span> </span><span id="ParseTimeException"><span class="annot"><a href="Kairos.Types.Exception.html#ParseTimeException"><span class="hs-identifier hs-var">ParseTimeException</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkParseTimeException"><span class="annot"><a href="Kairos.Types.Exception.html#MkParseTimeException"><span class="hs-identifier hs-var">MkParseTimeException</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">NonEmpty</span></span><span> </span><span class="annot"><a href="Kairos.Types.TimeFormat.html#TimeFormat"><span class="hs-identifier hs-type">TimeFormat</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-27"></span><span>      </span><span id="local-6989586621679096285"><span id="local-6989586621679096287"><span class="annot"><span class="annottext">(forall x. ParseTimeException -&gt; Rep ParseTimeException x)
+-&gt; (forall x. Rep ParseTimeException x -&gt; ParseTimeException)
+-&gt; Generic ParseTimeException
+forall x. Rep ParseTimeException x -&gt; ParseTimeException
+forall x. ParseTimeException -&gt; Rep ParseTimeException x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cfrom :: forall x. ParseTimeException -&gt; Rep ParseTimeException x
+from :: forall x. ParseTimeException -&gt; Rep ParseTimeException x
+$cto :: forall x. Rep ParseTimeException x -&gt; ParseTimeException
+to :: forall x. Rep ParseTimeException x -&gt; ParseTimeException
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Generic</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-29"></span><span>      </span><span id="local-6989586621679096293"><span id="local-6989586621679096301"><span id="local-6989586621679096305"><span class="annot"><span class="annottext">Int -&gt; ParseTimeException -&gt; ShowS
+[ParseTimeException] -&gt; ShowS
+ParseTimeException -&gt; String
+(Int -&gt; ParseTimeException -&gt; ShowS)
+-&gt; (ParseTimeException -&gt; String)
+-&gt; ([ParseTimeException] -&gt; ShowS)
+-&gt; Show ParseTimeException
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ParseTimeException -&gt; ShowS
+showsPrec :: Int -&gt; ParseTimeException -&gt; ShowS
+$cshow :: ParseTimeException -&gt; String
+show :: ParseTimeException -&gt; String
+$cshowList :: [ParseTimeException] -&gt; ShowS
+showList :: [ParseTimeException] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-33"></span><span>      </span><span id="local-6989586621679096311"><span class="annot"><span class="annottext">ParseTimeException -&gt; ()
+(ParseTimeException -&gt; ()) -&gt; NFData ParseTimeException
+forall a. (a -&gt; ()) -&gt; NFData a
+$crnf :: ParseTimeException -&gt; ()
+rnf :: ParseTimeException -&gt; ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">NFData</span></span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679096338"><span id="local-6989586621679096342"><span id="local-6989586621679096346"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTimeException"><span class="hs-identifier hs-type">ParseTimeException</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-38"></span><span>  </span><span id="local-6989586621679096363"><span class="annot"><span class="annottext">displayException :: ParseTimeException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkParseTimeException"><span class="hs-identifier hs-type">MkParseTimeException</span></a></span><span> </span><span id="local-6989586621679096364"><span class="annot"><span class="annottext">NonEmpty TimeFormat
+</span><a href="#local-6989586621679096364"><span class="hs-identifier hs-var">fmts</span></a></span></span><span> </span><span id="local-6989586621679096365"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679096365"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-40"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Could not parse time string '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679096365"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;' with format(s): &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679096367"><span class="hs-identifier hs-var">fmtStrs</span></a></span><span>
+</span><span id="line-44"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-46"></span><span>      </span><span id="local-6989586621679096367"><span class="annot"><span class="annottext">fmtStrs :: String
+</span><a href="#local-6989586621679096367"><span class="hs-identifier hs-var hs-var">fmtStrs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(TimeFormat -&gt; String) -&gt; NonEmpty TimeFormat -&gt; String
+forall m a. Monoid m =&gt; (a -&gt; m) -&gt; NonEmpty a -&gt; m
+forall (t :: * -&gt; *) m a.
+(Foldable t, Monoid m) =&gt;
+(a -&gt; m) -&gt; t a -&gt; m
+</span><span class="hs-identifier hs-var">foldMap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; String) -&gt; (TimeFormat -&gt; Text) -&gt; TimeFormat -&gt; String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;\n - &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; (TimeFormat -&gt; Text) -&gt; TimeFormat -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="hs-operator">.</span><span class="hs-identifier">unTimeFormat</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">NonEmpty TimeFormat
+</span><a href="#local-6989586621679096364"><span class="hs-identifier hs-var">fmts</span></a></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Exception parsing tz input names.</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-51"></span><span class="hs-keyword">newtype</span><span> </span><span id="ParseTZInputException"><span class="annot"><a href="Kairos.Types.Exception.html#ParseTZInputException"><span class="hs-identifier hs-var">ParseTZInputException</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkParseTZInputException"><span class="annot"><a href="Kairos.Types.Exception.html#MkParseTZInputException"><span class="hs-identifier hs-var">MkParseTZInputException</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-54"></span><span>      </span><span id="local-6989586621679096372"><span id="local-6989586621679096374"><span class="annot"><span class="annottext">(forall x. ParseTZInputException -&gt; Rep ParseTZInputException x)
+-&gt; (forall x. Rep ParseTZInputException x -&gt; ParseTZInputException)
+-&gt; Generic ParseTZInputException
+forall x. Rep ParseTZInputException x -&gt; ParseTZInputException
+forall x. ParseTZInputException -&gt; Rep ParseTZInputException x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cfrom :: forall x. ParseTZInputException -&gt; Rep ParseTZInputException x
+from :: forall x. ParseTZInputException -&gt; Rep ParseTZInputException x
+$cto :: forall x. Rep ParseTZInputException x -&gt; ParseTZInputException
+to :: forall x. Rep ParseTZInputException x -&gt; ParseTZInputException
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Generic</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-56"></span><span>      </span><span id="local-6989586621679096377"><span id="local-6989586621679096381"><span id="local-6989586621679096385"><span class="annot"><span class="annottext">Int -&gt; ParseTZInputException -&gt; ShowS
+[ParseTZInputException] -&gt; ShowS
+ParseTZInputException -&gt; String
+(Int -&gt; ParseTZInputException -&gt; ShowS)
+-&gt; (ParseTZInputException -&gt; String)
+-&gt; ([ParseTZInputException] -&gt; ShowS)
+-&gt; Show ParseTZInputException
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ParseTZInputException -&gt; ShowS
+showsPrec :: Int -&gt; ParseTZInputException -&gt; ShowS
+$cshow :: ParseTZInputException -&gt; String
+show :: ParseTZInputException -&gt; String
+$cshowList :: [ParseTZInputException] -&gt; ShowS
+showList :: [ParseTZInputException] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-57"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-60"></span><span>      </span><span id="local-6989586621679096388"><span class="annot"><span class="annottext">ParseTZInputException -&gt; ()
+(ParseTZInputException -&gt; ()) -&gt; NFData ParseTZInputException
+forall a. (a -&gt; ()) -&gt; NFData a
+$crnf :: ParseTZInputException -&gt; ()
+rnf :: ParseTZInputException -&gt; ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">NFData</span></span></span><span>
+</span><span id="line-61"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-64"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679096403"><span id="local-6989586621679096407"><span id="local-6989586621679096411"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#ParseTZInputException"><span class="hs-identifier hs-type">ParseTZInputException</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-65"></span><span>  </span><span id="local-6989586621679096419"><span class="annot"><span class="annottext">displayException :: ParseTZInputException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkParseTZInputException"><span class="hs-identifier hs-type">MkParseTZInputException</span></a></span><span> </span><span id="local-6989586621679096420"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679096420"><span class="hs-identifier hs-var">tzdb</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Could not parse timezone from '&quot;</span></span><span>
+</span><span id="line-67"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679096420"><span class="hs-identifier hs-var">tzdb</span></a></span><span>
+</span><span id="line-68"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;'. Wanted a name or offset e.g. 'America/New_York', '+0800'.&quot;</span></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- | Exception reading local system timezone.</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--</span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-73"></span><span class="hs-keyword">data</span><span> </span><span id="LocalTimeZoneException"><span class="annot"><a href="Kairos.Types.Exception.html#LocalTimeZoneException"><span class="hs-identifier hs-var">LocalTimeZoneException</span></a></span></span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679096421"><span class="annot"><a href="#local-6989586621679096421"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679096421"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MkLocalTimeZoneException"><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalTimeZoneException"><span class="hs-identifier hs-var">MkLocalTimeZoneException</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679096421"><span class="hs-identifier hs-type">e</span></a></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-77"></span><span id="local-6989586621679096424"><span id="local-6989586621679096426"><span id="local-6989586621679096430"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTimeZoneException"><span class="hs-identifier hs-type">LocalTimeZoneException</span></a></span></span></span></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-80"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679096437"><span id="local-6989586621679096441"><span id="local-6989586621679096445"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTimeZoneException"><span class="hs-identifier hs-type">LocalTimeZoneException</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-81"></span><span>  </span><span id="local-6989586621679096447"><span class="annot"><span class="annottext">displayException :: LocalTimeZoneException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalTimeZoneException"><span class="hs-identifier hs-type">MkLocalTimeZoneException</span></a></span><span> </span><span id="local-6989586621679096453"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679096453"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Local timezone exception: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679096453"><span class="hs-identifier hs-var">e</span></a></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- | Exception reading local system tz. In contrast to</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- 'LocalTimeZoneException', this is for when we try and fail to find</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- the local tz_database name e.g. America/New_York.</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-89"></span><span class="hs-keyword">data</span><span> </span><span id="LocalTZException"><span class="annot"><a href="Kairos.Types.Exception.html#LocalTZException"><span class="hs-identifier hs-var">LocalTZException</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679096454"><span class="annot"><a href="#local-6989586621679096454"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679096454"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MkLocalTZException"><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalTZException"><span class="hs-identifier hs-var">MkLocalTZException</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679096454"><span class="hs-identifier hs-type">e</span></a></span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-92"></span><span id="local-6989586621679096457"><span id="local-6989586621679096459"><span id="local-6989586621679096463"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTZException"><span class="hs-identifier hs-type">LocalTZException</span></a></span></span></span></span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-95"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679096470"><span id="local-6989586621679096474"><span id="local-6989586621679096478"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalTZException"><span class="hs-identifier hs-type">LocalTZException</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-96"></span><span>  </span><span id="local-6989586621679096480"><span class="annot"><span class="annottext">displayException :: LocalTZException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalTZException"><span class="hs-identifier hs-type">MkLocalTZException</span></a></span><span> </span><span id="local-6989586621679096488"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679096488"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-97"></span><span>    </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-98"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Could not find local tz_database name: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>        </span><span class="annot"><span class="annottext">e -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679096488"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-100"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\nTry again, explictly setting your location e.g. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-101"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;'-s america/new_york'.&quot;</span></span><span>
+</span><span id="line-102"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- | Exception reading local system time.</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-107"></span><span class="hs-keyword">data</span><span> </span><span id="LocalSystemTimeException"><span class="annot"><a href="Kairos.Types.Exception.html#LocalSystemTimeException"><span class="hs-identifier hs-var">LocalSystemTimeException</span></a></span></span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679096489"><span class="annot"><a href="#local-6989586621679096489"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679096489"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MkLocalSystemTimeException"><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalSystemTimeException"><span class="hs-identifier hs-var">MkLocalSystemTimeException</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679096489"><span class="hs-identifier hs-type">e</span></a></span><span>
+</span><span id="line-109"></span><span>
+</span><span id="line-110"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-111"></span><span id="local-6989586621679096492"><span id="local-6989586621679096494"><span id="local-6989586621679096498"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalSystemTimeException"><span class="hs-identifier hs-type">LocalSystemTimeException</span></a></span></span></span></span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-114"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679096505"><span id="local-6989586621679096509"><span id="local-6989586621679096513"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#LocalSystemTimeException"><span class="hs-identifier hs-type">LocalSystemTimeException</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-115"></span><span>  </span><span id="local-6989586621679096515"><span class="annot"><span class="annottext">displayException :: LocalSystemTimeException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Kairos.Types.Exception.html#MkLocalSystemTimeException"><span class="hs-identifier hs-type">MkLocalSystemTimeException</span></a></span><span> </span><span id="local-6989586621679096521"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679096521"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-116"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Local system time exception: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679096521"><span class="hs-identifier hs-var">e</span></a></span><span>
+</span><span id="line-117"></span><span>
+</span><span id="line-118"></span><span class="hs-comment">-- | Exception for when --src-tz is specified but time string is not.</span><span>
+</span><span id="line-119"></span><span class="hs-comment">--</span><span>
+</span><span id="line-120"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-121"></span><span class="hs-keyword">data</span><span> </span><span id="SrcTZNoTimeStringException"><span class="annot"><a href="Kairos.Types.Exception.html#SrcTZNoTimeStringException"><span class="hs-identifier hs-var">SrcTZNoTimeStringException</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkSrcTZNoTimeStringException"><span class="annot"><a href="Kairos.Types.Exception.html#MkSrcTZNoTimeStringException"><span class="hs-identifier hs-var">MkSrcTZNoTimeStringException</span></a></span></span><span>
+</span><span id="line-122"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-123"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-124"></span><span>      </span><span id="local-6989586621679096524"><span id="local-6989586621679096526"><span id="local-6989586621679096530"><span class="annot"><span class="annottext">Int -&gt; SrcTZNoTimeStringException -&gt; ShowS
+[SrcTZNoTimeStringException] -&gt; ShowS
+SrcTZNoTimeStringException -&gt; String
+(Int -&gt; SrcTZNoTimeStringException -&gt; ShowS)
+-&gt; (SrcTZNoTimeStringException -&gt; String)
+-&gt; ([SrcTZNoTimeStringException] -&gt; ShowS)
+-&gt; Show SrcTZNoTimeStringException
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; SrcTZNoTimeStringException -&gt; ShowS
+showsPrec :: Int -&gt; SrcTZNoTimeStringException -&gt; ShowS
+$cshow :: SrcTZNoTimeStringException -&gt; String
+show :: SrcTZNoTimeStringException -&gt; String
+$cshowList :: [SrcTZNoTimeStringException] -&gt; ShowS
+showList :: [SrcTZNoTimeStringException] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-125"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-128"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679096537"><span id="local-6989586621679096541"><span id="local-6989586621679096545"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#SrcTZNoTimeStringException"><span class="hs-identifier hs-type">SrcTZNoTimeStringException</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-129"></span><span>  </span><span id="local-6989586621679096547"><span class="annot"><span class="annottext">displayException :: SrcTZNoTimeStringException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="annot"><span class="annottext">SrcTZNoTimeStringException
+</span><a href="Kairos.Types.Exception.html#MkSrcTZNoTimeStringException"><span class="hs-identifier hs-var">MkSrcTZNoTimeStringException</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-130"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;The --src-tz option was specified without required time string&quot;</span></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span class="hs-comment">-- | Exception for when --date specified but time string is not.</span><span>
+</span><span id="line-133"></span><span class="hs-comment">--</span><span>
+</span><span id="line-134"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-135"></span><span class="hs-keyword">data</span><span> </span><span id="DateNoTimeStringException"><span class="annot"><a href="Kairos.Types.Exception.html#DateNoTimeStringException"><span class="hs-identifier hs-var">DateNoTimeStringException</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkDateNoTimeStringException"><span class="annot"><a href="Kairos.Types.Exception.html#MkDateNoTimeStringException"><span class="hs-identifier hs-var">MkDateNoTimeStringException</span></a></span></span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-137"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-138"></span><span>      </span><span id="local-6989586621679096550"><span id="local-6989586621679096552"><span id="local-6989586621679096556"><span class="annot"><span class="annottext">Int -&gt; DateNoTimeStringException -&gt; ShowS
+[DateNoTimeStringException] -&gt; ShowS
+DateNoTimeStringException -&gt; String
+(Int -&gt; DateNoTimeStringException -&gt; ShowS)
+-&gt; (DateNoTimeStringException -&gt; String)
+-&gt; ([DateNoTimeStringException] -&gt; ShowS)
+-&gt; Show DateNoTimeStringException
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; DateNoTimeStringException -&gt; ShowS
+showsPrec :: Int -&gt; DateNoTimeStringException -&gt; ShowS
+$cshow :: DateNoTimeStringException -&gt; String
+show :: DateNoTimeStringException -&gt; String
+$cshowList :: [DateNoTimeStringException] -&gt; ShowS
+showList :: [DateNoTimeStringException] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-139"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-142"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679096563"><span id="local-6989586621679096567"><span id="local-6989586621679096571"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Kairos.Types.Exception.html#DateNoTimeStringException"><span class="hs-identifier hs-type">DateNoTimeStringException</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-143"></span><span>  </span><span id="local-6989586621679096573"><span class="annot"><span class="annottext">displayException :: DateNoTimeStringException -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="annot"><span class="annottext">DateNoTimeStringException
+</span><a href="Kairos.Types.Exception.html#MkDateNoTimeStringException"><span class="hs-identifier hs-var">MkDateNoTimeStringException</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-144"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;The --date option was specified without required time string&quot;</span></span><span>
+</span><span id="line-145"></span></pre></body></html>

@@ -1,0 +1,51 @@
+[2025-03-20 17:01:49][Command][haddock_push] Starting...
+[2025-03-20 17:01:49][Command][haddock_push] Your branch is up to date with 'origin/main'.
+[2025-03-20 17:01:49][Command][haddock_push] Already on 'main'
+[2025-03-20 17:01:49][Command][haddock_push] Deleted branch gh-pages (was cd4e32d).
+[2025-03-20 17:01:49][Command][haddock_push] Switched to a new branch 'gh-pages'
+[2025-03-20 17:01:53][Command][haddock_push] Build profile: -w ghc-9.10.1 -O2
+[2025-03-20 17:01:53][Command][haddock_push] In order, the following will be built (use -v for more details):
+[2025-03-20 17:01:53][Command][haddock_push]  - kairos-core-0.1 (lib) (configuration changed)
+[2025-03-20 17:01:53][Command][haddock_push] Configuring library for kairos-core-0.1...
+[2025-03-20 17:03:05][Command][haddock_push] Preprocessing library for kairos-core-0.1...
+[2025-03-20 17:03:05][Command][haddock_push] Running Haddock on library for kairos-core-0.1...
+[2025-03-20 17:03:10][Command][haddock_push] [1 of 8] Compiling Kairos.Internal  ( src/Kairos/Internal.hs, nothing )
+[2025-03-20 17:03:10][Command][haddock_push] [2 of 8] Compiling Kairos.Types.Date.Internal ( src/Kairos/Types/Date/Internal.hs, nothing )
+[2025-03-20 17:03:11][Command][haddock_push] [3 of 8] Compiling Kairos.Types.Date ( src/Kairos/Types/Date.hs, nothing )
+[2025-03-20 17:03:11][Command][haddock_push] [4 of 8] Compiling Kairos.Types.TZInput ( src/Kairos/Types/TZInput.hs, nothing )
+[2025-03-20 17:03:12][Command][haddock_push] [5 of 8] Compiling Kairos.Types.TimeFormat ( src/Kairos/Types/TimeFormat.hs, nothing )
+[2025-03-20 17:03:12][Command][haddock_push] [6 of 8] Compiling Kairos.Types.Exception ( src/Kairos/Types/Exception.hs, nothing )
+[2025-03-20 17:03:12][Command][haddock_push] [7 of 8] Compiling Kairos.Types.TimeReader ( src/Kairos/Types/TimeReader.hs, nothing )
+[2025-03-20 17:03:12][Command][haddock_push] [8 of 8] Compiling Kairos           ( src/Kairos.hs, nothing )
+[2025-03-20 17:03:32][Command][haddock_push] Haddock coverage:
+[2025-03-20 17:03:32][Command][haddock_push]  100% (  5 /  5) in 'Kairos.Internal'
+[2025-03-20 17:03:32][Command][haddock_push]  100% ( 11 / 11) in 'Kairos.Types.Date.Internal'
+[2025-03-20 17:03:32][Command][haddock_push]  100% ( 13 / 13) in 'Kairos.Types.Date'
+[2025-03-20 17:03:32][Command][haddock_push]  100% (  6 /  6) in 'Kairos.Types.TZInput'
+[2025-03-20 17:03:32][Command][haddock_push]  100% (  8 /  8) in 'Kairos.Types.TimeFormat'
+[2025-03-20 17:03:32][Command][haddock_push]  100% (  8 /  8) in 'Kairos.Types.Exception'
+[2025-03-20 17:03:32][Command][haddock_push]  100% (  3 /  3) in 'Kairos.Types.TimeReader'
+[2025-03-20 17:03:32][Command][haddock_push]  100% ( 26 / 26) in 'Kairos'
+[2025-03-20 17:03:32][Command][haddock_push] Warning: Kairos.Types.Date.Internal: could not find link destinations for: 
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.Date.Internal.Rep_Date
+[2025-03-20 17:03:32][Command][haddock_push] Warning: Kairos.Types.Date: could not find link destinations for: 
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.Date.Internal.Rep_Date
+[2025-03-20 17:03:32][Command][haddock_push] Warning: Kairos.Types.TZInput: could not find link destinations for: 
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.TZInput.Rep_TZInput
+[2025-03-20 17:03:32][Command][haddock_push] Warning: Kairos.Types.TimeFormat: could not find link destinations for: 
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.TimeFormat.Rep_TimeFormat
+[2025-03-20 17:03:32][Command][haddock_push] Warning: Kairos.Types.Exception: could not find link destinations for: 
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTZInputException
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTimeException
+[2025-03-20 17:03:32][Command][haddock_push] Warning: Kairos.Types.TimeReader: could not find link destinations for: 
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.TimeReader.Rep_TimeReader
+[2025-03-20 17:03:32][Command][haddock_push] Warning: Kairos: could not find link destinations for: 
+[2025-03-20 17:03:32][Command][haddock_push] - Data.Time.Zones.DB.Rep_TZLabel
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.Date.Internal.Rep_Date
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.TZInput.Rep_TZInput
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.TimeFormat.Rep_TimeFormat
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTZInputException
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.Exception.Rep_ParseTimeException
+[2025-03-20 17:03:32][Command][haddock_push] - Kairos.Types.TimeReader.Rep_TimeReader
+[2025-03-20 17:03:33][Command][haddock_push] Documentation created:
+[2025-03-20 17:03:33][Command][haddock_push] /home/tommy/Dev/tommy/github/kairos/dist-newstyle/build/x86_64-linux/ghc-9.10.1/kairos-core-0.1/opt/doc/html/kairos-core/
