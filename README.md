@@ -25,6 +25,7 @@
   * [Format Out](#format-out)
   * [Source Timezone](#source-timezone)
   * [Time String](#time-string)
+* [Installation](#installation)
 * [Building](#building)
   * [Cabal](#cabal)
   * [Stack](#stack)
@@ -204,6 +205,10 @@ Tue, 18 Mar 2025 15:33:30 NZDT
 $ kairos -d europe/paris
 Tue, 18 Mar 2025 03:33:30 CET
 ```
+
+# Installation
+
+The [releases](https://github.com/tbidne/kairos/releases) page has binaries built for several platforms. If there are no binaries for your platform, it is possible to [build kairos](#building) yourself.
 
 # Building
 
