@@ -72,13 +72,7 @@ import Kairos.Types.TimeReader
         timeString
       ),
   )
-import Optics.Core
-  ( Prism',
-    preview,
-    prism,
-    (%),
-    _Just,
-  )
+import Optics.Core (preview, (%), _Just)
 import TOML qualified
 
 -- | 'IO'-specialized version of 'runKairos' that hides Kairos exception
@@ -237,12 +231,3 @@ mGetToml mconfigPath = do
       case TOML.decode @Toml contents of
         Left ex -> throwM ex
         Right toml -> pure toml
-
-_True :: Prism' Bool ()
-_True =
-  prism
-    (const True)
-    ( \case
-        True -> Right ()
-        other -> Left other
-    )
