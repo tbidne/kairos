@@ -25,3 +25,6 @@ echo "*** Testing exe ***"
 ./bin/kairos$suffix --help
 
 ./bin/kairos$suffix
+
+echo "*** Computing sha256 ***"
+sha256sum ./bin/kairos$suffix > ./bin/kairos$suffix.sha256
