@@ -12,10 +12,12 @@ arch=$(uname -m)
 
 # x86_64-osx on macos-12/13, aarch64-osx on macos-14
 if [[ $arch == 'arm64' ]]; then
-  cabal_build_dir="aarch64-osx"
-else
-  cabal_build_dir="$arch-osx"
+  # standardize name
+  arch="aarch64"
 fi
+
+# x86_64-osx on macos-12/13, aarch64-osx on macos-14/15
+cabal_build_dir="$arch-osx"
 
 mkdir -p bin
 
@@ -27,3 +29,6 @@ echo "*** Testing exe ***"
 ./bin/kairos$suffix --help
 
 ./bin/kairos$suffix
+
+echo "*** Computing sha256 ***"
+sha256sum ./bin/kairos$suffix > ./bin/kairos$suffix.sha256
