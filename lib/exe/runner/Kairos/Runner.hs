@@ -29,6 +29,7 @@ import Effects.FileSystem.PathReader
     getXdgConfig,
   )
 import Effects.Optparse (MonadOptparse (execParser))
+import Effects.System.Environment (MonadEnv)
 import Effects.System.Terminal (MonadTerminal)
 import Effects.System.Terminal qualified as T
 import Effects.Time (MonadTime)
@@ -103,6 +104,7 @@ runKairosIO = do
 runKairos ::
   ( HasCallStack,
     MonadCatch m,
+    MonadEnv m,
     MonadFileReader m,
     MonadOptparse m,
     MonadPathReader m,
@@ -121,6 +123,7 @@ runWithArgs ::
   forall m.
   ( HasCallStack,
     MonadCatch m,
+    MonadEnv m,
     MonadFileReader m,
     MonadPathReader m,
     MonadTerminal m,

@@ -41,7 +41,7 @@ module Kairos
 where
 
 import Control.Applicative (asum)
-import Control.Exception.Utils (catchSync)
+import Control.Exception.Utils (catchSync, trySync)
 import Control.Monad.Catch
   ( MonadCatch,
     MonadThrow,
@@ -71,8 +71,11 @@ import Data.Time.Zones (TZ)
 import Data.Time.Zones qualified as Zones
 import Data.Time.Zones.All (TZLabel (..))
 import Data.Time.Zones.All qualified as All
+import Effects.System.Environment (MonadEnv)
+import Effects.System.Environment qualified as Env
 import Effects.Time (MonadTime (getSystemZonedTime, getTimeZone, loadLocalTZ))
 import GHC.Stack (HasCallStack)
+import Kairos.Internal qualified as Internal
 import Kairos.Types.Date (Date (MkDateString))
 import Kairos.Types.Exception
   ( LocalSystemTimeException (MkLocalSystemTimeException),
@@ -81,7 +84,8 @@ import Kairos.Types.Exception
     ParseTZInputException (MkParseTZInputException),
     ParseTimeException (MkParseTimeException),
   )
-import Kairos.Types.TZInput (TZInput (TZActual, TZDatabase), locale)
+import Kairos.Types.TZInput (TZInput (TZActual, TZDatabase))
+import Kairos.Types.TZInput qualified as TZInput
 import Kairos.Types.TimeFormat
   ( TimeFormat (MkTimeFormat, unTimeFormat),
   )
@@ -112,6 +116,7 @@ import Kairos.Types.TimeReader
 readConvertTime ::
   ( HasCallStack,
     MonadCatch m,
+    MonadEnv m,
     MonadTime m
   ) =>
   -- | Source time.
@@ -137,6 +142,7 @@ readConvertTime mtimeReader destTZ =
 readTime ::
   ( HasCallStack,
     MonadCatch m,
+    MonadEnv m,
     MonadTime m
   ) =>
   -- | Optional time reader.
@@ -176,6 +182,7 @@ readTimeString ::
   forall m.
   ( HasCallStack,
     MonadCatch m,
+    MonadEnv m,
     MonadTime m
   ) =>
   TimeReader ->
@@ -265,7 +272,7 @@ readTimeFormat :: (ParseTime t) => NonEmpty TimeFormat -> Text -> Maybe t
 readTimeFormat formats timeStr =
   asum (parseFn . toFmtStr <$> formats)
   where
-    parseFn f = Format.parseTimeM True locale f timeStr'
+    parseFn f = Format.parseTimeM True TZInput.locale f timeStr'
 
     toFmtStr :: TimeFormat -> String
     toFmtStr = T.unpack . (.unTimeFormat)
@@ -381,6 +388,27 @@ getTimeZoneKairos utc =
 -- This is not always reliable e.g. windows, so it pays to have a good error
 -- message. But note that the error message might need to change if this
 -- function was used more widely.
-loadLocalTZKairos :: (HasCallStack, MonadCatch m, MonadTime m) => m TZ
-loadLocalTZKairos =
-  loadLocalTZ `catchSync` (throwM . MkLocalTZException)
+loadLocalTZKairos ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadEnv m,
+    MonadTime m
+  ) =>
+  m TZ
+loadLocalTZKairos = do
+  trySync loadLocalTZ >>= \case
+    Right tz -> pure tz
+    Left ex -> do
+      -- FIXME: This is wrong :-(. See
+      --
+      -- https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/tzset?view=msvc-170
+      --
+      -- In particular, it does not appear that windows provides a way to get
+      -- the tz_database label? Its TZ labels is totally different, sadly.
+      --
+      -- Hmm, maybe see https://learn.microsoft.com/en-us/cpp/standard-library/tzdb-struct?view=msvc-170
+      Env.lookupEnv "TZ" >>= \case
+        Nothing -> throwM $ MkLocalTZException ex
+        Just tzStr -> case Internal.tzNameToTZLabel (T.pack tzStr) of
+          Nothing -> throwM $ MkLocalTZException ex
+          Just tzLabel -> pure $ All.tzByLabel tzLabel

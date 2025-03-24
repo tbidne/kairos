@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - release
+      - tz-help
 
   pull_request:
     branches:

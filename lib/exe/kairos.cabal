@@ -82,6 +82,7 @@ library kairos-runner
   build-depends:
     , base                  >=4.14.0.0 && <4.22
     , containers            >=0.6.3.1  && <0.9
+    , effects-env           ^>=0.1
     , effects-fs            ^>=0.1
     , effects-optparse      ^>=0.1
     , effects-terminal      ^>=0.1

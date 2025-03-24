@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
@@ -63,7 +64,7 @@ main = do
       "FUNC_EXTRA"
       (ExpectEnvEquals "1")
       (pure extraTests)
-      (pure $ testGroup "Empty" [])
+      (pure extraTests)
 
   Tasty.defaultMain $
     testGroup
@@ -447,8 +448,8 @@ testCurrTZFromSrcTime1 = testCase desc $ do
   -- and the dest is EST (-0500), hence the total offset is -0500.
   --
   -- The second date -- 2022-06-10 -- the source timezone is BST (+0100)
-  -- and the dest is EDT (-0400), hence hte total offset is -0500.
-  withTZ "America/New_York" $ do
+  -- and the dest is EDT (-0400), hence the total offset is -0500.
+  withTZ nyTZ $ do
     result1 <- captureKairosIO args1
     expected1 @=? result1
 
@@ -471,8 +472,8 @@ testCurrTZToDestTime1 = testCase desc $ do
   -- and the dest is GMT (+0000), hence the total offset is +0500.
   --
   -- The second date -- 2022-06-10 -- the source timezone is EDT (-0400)
-  -- and the dest is BST (+0100), hence hte total offset is +0500.
-  withTZ "America/New_York" $ do
+  -- and the dest is BST (+0100), hence the total offset is +0500.
+  withTZ nyTZ $ do
     result1 <- captureKairosIO args1
     expected1 @=? result1
 
@@ -503,7 +504,7 @@ testCurrTZFromSrcTime2 = testCase desc $ do
   -- and the dest is NZDT (+1300), hence the total offset is +1800.
   --
   -- The second date -- 2022-05-10 -- the source timezone is EDT (-0400)
-  -- and the dest is NZST (+1200), hence hte total offset is +1600.
+  -- and the dest is NZST (+1200), hence the total offset is +1600.
   --
   -- These conversions should _NOT_ depend on the current system timezone i.e.
   -- the system timezone at the current time. Previously they did, which
@@ -511,7 +512,7 @@ testCurrTZFromSrcTime2 = testCase desc $ do
   --
   -- For instance, if we were to run this when it is currently NZST, the
   -- first test would fail. If instead it was NZDT, the second test would fail.
-  withTZ "Pacific/Auckland" $ do
+  withTZ nzTZ $ do
     result1 <- captureKairosIO args1
     expected1 @=? result1
 
@@ -537,8 +538,8 @@ testCurrTZToDestTime2 = testCase desc $ do
   -- and the dest is EST (-0500), hence the total offset is +1800.
   --
   -- The second date -- 2022-05-10 -- the source timezone is NZST (+1200)
-  -- and the dest is EDT (-0400), hence hte total offset is +1600.
-  withTZ "Pacific/Auckland" $ do
+  -- and the dest is EDT (-0400), hence the total offset is +1600.
+  withTZ nzTZ $ do
     -- Date 1
     result1 <- captureKairosIO args1
     expected1 @=? result1
@@ -798,3 +799,19 @@ withTZ tz m = bracket setTZ resetTZ (const m)
   where
     setTZ = Env.lookupEnv "TZ" <* Env.setEnv "TZ" tz
     resetTZ = Env.setEnv "TZ" . fromMaybe ""
+
+-- See https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/tzset
+
+nyTZ :: String
+#if WINDOWS
+nyTZ = "EST-0500EDT"
+#else
+nyTZ = "America/New_York"
+#endif
+
+nzTZ :: String
+#if WINDOWS
+nzTZ = "NZST+1300NZDT"
+#else
+nzTZ = "Pacific/Auckland"
+#endif
