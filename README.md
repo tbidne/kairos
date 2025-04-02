@@ -202,8 +202,8 @@ Tue, 18 Mar 2025 10:30:00 NZDT
 $ kairos
 Tue, 18 Mar 2025 15:33:30 NZDT
 
-$ kairos -d europe/paris
-Tue, 18 Mar 2025 03:33:30 CET
+$ kairos -s america/new_york 08:30
+Tue, 18 Mar 2025 01:30:00 NZDT
 ```
 
 # Installation
@@ -218,14 +218,8 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 ### Prerequisites
 
-* [`cabal 2.4+`](https://www.haskell.org/cabal/download.html)
-* One of:
-  * [`ghc 9.2`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
-  * [`ghc 9.4`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
-  * [`ghc 9.6`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
-  * [`ghc 9.8`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
-  * [`ghc 9.10`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
-  * [`ghc 9.12`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
+* [`cabal-install 2.4+`](https://www.haskell.org/cabal/download.html)
+* [`ghc 9.2+`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
 
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
