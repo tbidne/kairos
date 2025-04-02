@@ -219,23 +219,21 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 ### Prerequisites
 
 * [`cabal-install 2.4+`](https://www.haskell.org/cabal/download.html)
-* [`ghc 9.2+`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
+* [`ghc 9.2 - 9.12`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
 
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
+
+The current "blessed" version is `ghc-9.10.1`.
 
 ### Build Kairos
 
 Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build kairos` or installed globally (i.e. `~/.local/bin/kairos`) with `cabal install kairos`.
 
-For further reproducibility, optional freeze files can be used e.g.
+For further reproducibility, an optional freeze files can be used for the "blessed" compiler.
 
 ```sh
-cabal build kairos --project-file cabal.ghc9101.project
+cabal build --project-file cabal.ghc<XYZ>.project
 ```
-
-> [!NOTE]
->
-> Freeze files are provided for only select compilers.
 
 ## Stack
 

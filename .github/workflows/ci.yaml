@@ -24,7 +24,7 @@ jobs:
             proj-file: ""
           - vers: "9.6.6"
             proj-file: ""
-          - vers: "9.8.2"
+          - vers: "9.8.4"
             proj-file: ""
           - vers: "9.10.1"
             proj-file: "--project-file cabal.ghc9101.project"
