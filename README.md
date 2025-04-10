@@ -18,11 +18,13 @@
 
 * [Introduction](#introduction)
 * [Options](#options)
+  * [Color](#color)
   * [Config](#config)
   * [Date](#date)
   * [Destination Timezone](#destination-timezone)
   * [Format In](#format-in)
   * [Format Out](#format-out)
+  * [Print aliases](#print-aliases)
   * [Source Timezone](#source-timezone)
   * [Time String](#time-string)
 * [Installation](#installation)
@@ -70,9 +72,27 @@ The timezone names are based on the tz_database. See https://en.wikipedia.org/wi
 
 # Options
 
+## Color
+
+**Arg:** `--color (true | false)`
+
+**Description:** Determines if we color the [`--print-aliases`](#print-aliases) output. Defaults to `true`.
+
+**Examples:**
+
+```
+$ kairos -c ./lib/exe/examples/config.toml --print-aliases --color true
+ - la:          america/los_angeles
+ - ny:          america/new_york
+ - paris:       europe/paris
+ - some_offset: +0700
+ - uk:          europe/london
+ - zagreb:      europe/zagreb
+```
+
 ## Config
 
-**Arg:** `-c,--config PATH `
+**Arg:** `-c,--config PATH`
 
 **Description:** Path to `toml` config file. Can be used to define aliases for tz_database labels. See the [examples](./lib/exe/examples/) directory for examples.
 
@@ -166,6 +186,24 @@ Tue, 18 Mar 2025 08:30:00 NZDT
 # overriding output format
 $ kairos -o %H:%M:%S 08:30
 08:30:00
+```
+
+## Print Aliases
+
+**Arg:** `--print-aliases`
+
+**Description:** Prints aliases from toml config.
+
+**Examples:**
+
+```
+$ kairos -c ./lib/exe/examples/config.toml --print-aliases
+ - la:          america/los_angeles
+ - ny:          america/new_york
+ - paris:       europe/paris
+ - some_offset: +0700
+ - uk:          europe/london
+ - zagreb:      europe/zagreb
 ```
 
 ## Source Timezone

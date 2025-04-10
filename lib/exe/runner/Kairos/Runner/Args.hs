@@ -21,7 +21,9 @@ import Kairos.Types.Date qualified as Date
 import Kairos.Types.TimeFormat (TimeFormat)
 import Kairos.Types.TimeFormat qualified as TimeFmt
 import Options.Applicative
-  ( Parser,
+  ( FlagFields,
+    Mod,
+    Parser,
     ParserInfo
       ( ParserInfo,
         infoFailureCode,
@@ -45,12 +47,14 @@ import Paths_kairos qualified as Paths
 --
 -- @since 0.1
 data Args = MkArgs
-  { config :: Maybe OsPath,
+  { color :: Maybe Bool,
+    config :: Maybe OsPath,
     noConfig :: Bool,
     date :: Maybe Date,
     destTZ :: Maybe Text,
     formatIn :: Maybe TimeFormat,
     formatOut :: Maybe TimeFormat,
+    printAliases :: Bool,
     srcTZ :: Maybe Text,
     stacktrace :: Bool,
     timeString :: Maybe Text
@@ -107,26 +111,40 @@ parserInfo =
 
 parseArgs :: Parser Args
 parseArgs =
-  MkArgs
-    <$> parseConfig
-    <*> parseNoConfig
-    <*> parseDate
-    <*> parseDestTZ
-    <*> parseFormatIn
-    <*> parseFormatOut
-    <*> parseSrcTZ
-    <*> parseStacktrace
-    <*> parseTimeStr
-      <**> OA.helper
-      <**> version
+  parseArgs'
+    <**> OA.helper
+    <**> version
+  where
+    parseArgs' = do
+      color <- parseColor
+      config <- parseConfig
+      noConfig <- parseNoConfig
+      date <- parseDate
+      destTZ <- parseDestTZ
+      formatIn <- parseFormatIn
+      formatOut <- parseFormatOut
+      printAliases <- parsePrintAliases
+      srcTZ <- parseSrcTZ
+      stacktrace <- parseStacktrace
+      timeString <- parseTimeStr
+
+      pure $
+        MkArgs
+          { color,
+            config,
+            noConfig,
+            date,
+            destTZ,
+            formatIn,
+            formatOut,
+            printAliases,
+            srcTZ,
+            stacktrace,
+            timeString
+          }
 
 parseStacktrace :: Parser Bool
-parseStacktrace =
-  OA.switch $
-    mconcat
-      [ OA.long "stacktrace",
-        OA.internal
-      ]
+parseStacktrace = parseSwitch "stacktrace" [OA.internal]
 
 parseConfig :: Parser (Maybe OsPath)
 parseConfig =
@@ -147,14 +165,7 @@ parseConfig =
         ]
 
 parseNoConfig :: Parser Bool
-parseNoConfig =
-  OA.switch
-    ( mconcat
-        [ OA.long "no-config",
-          OA.hidden,
-          mkHelp helpTxt
-        ]
-    )
+parseNoConfig = parseSwitch "no-config" [OA.hidden, mkHelp helpTxt]
   where
     helpTxt = "Disables --config."
 
@@ -220,6 +231,34 @@ readFormat =
   OA.str <&> \case
     "rfc822" -> TimeFmt.rfc822
     other -> fromString other
+
+parsePrintAliases :: Parser Bool
+parsePrintAliases =
+  parseSwitch
+    "print-aliases"
+    [mkHelp "Prints aliases from toml config."]
+
+parseColor :: Parser (Maybe Bool)
+parseColor =
+  OA.optional
+    $ OA.option
+      readColor
+    $ mconcat
+      [ OA.long "color",
+        OA.metavar "(true | false)",
+        mkHelp helpTxt
+      ]
+  where
+    helpTxt =
+      "Determines if we color the --print-aliases output. Defaults to 'true'."
+    readColor =
+      OA.str >>= \case
+        "true" -> pure True
+        "false" -> pure False
+        other -> fail $ "Unexpected color: " ++ other
+
+parseSwitch :: String -> [Mod FlagFields Bool] -> Parser Bool
+parseSwitch name mods = OA.switch (mconcat $ OA.long name : mods)
 
 parseSrcTZ :: Parser (Maybe Text)
 parseSrcTZ =

@@ -1,3 +1,6 @@
+# By default, --print-aliases will color the output.
+color = false
+
 # Aliases for convenience e.g. kairos -s ny 08:30
 [aliases]
 la = "america/los_angeles"

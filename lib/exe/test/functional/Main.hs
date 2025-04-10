@@ -11,13 +11,25 @@ module Main (main) where
 import Control.Exception (Exception (displayException), bracket)
 import Control.Monad.Catch (MonadCatch, MonadThrow, try)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Reader (MonadReader, ReaderT (runReaderT), ask)
+import Control.Monad.Reader
+  ( MonadReader,
+    MonadTrans,
+    ReaderT (runReaderT),
+    ask,
+    asks,
+  )
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Format qualified as Format
 import Effects.FileSystem.FileReader (MonadFileReader)
-import Effects.FileSystem.PathReader (MonadPathReader)
+import Effects.FileSystem.PathReader
+  ( MonadPathReader
+      ( doesFileExist,
+        getXdgDirectory
+      ),
+    XdgDirectory (XdgConfig),
+  )
 import Effects.IORef (IORef, MonadIORef, modifyIORef', newIORef, readIORef)
 import Effects.Optparse (MonadOptparse)
 import Effects.System.Environment (MonadEnv)
@@ -31,9 +43,9 @@ import Effects.Time
       ),
     ZonedTime (ZonedTime),
   )
-import FileSystem.OsPath (ospPathSep, unsafeDecode)
+import FileSystem.OsPath (OsPath, ospPathSep, unsafeDecode, (</>))
 import GHC.Exts (IsList (toList))
-import Kairos.Runner (runKairos)
+import Kairos.Runner (PrintAliasesE, runKairos)
 import Kairos.Types.Exception
   ( DateNoTimeStringException,
     ParseTZInputException,
@@ -134,21 +146,29 @@ formatOutputTests =
   testGroup
     "Output Format"
     [ testFormatOutputCustom,
-      testFormatOutputCustomTZOffset,
+      testFormatOutputTimeZone,
+      testFormatOutputTimeZoneOffset,
       testFormatOutputRfc822
     ]
 
 testFormatOutputCustom :: TestTree
-testFormatOutputCustom = testCase "Overrides input formatting" $ do
+testFormatOutputCustom = testCase "Overrides output formatting" $ do
   result <- captureKairosIO $ pureTZ ["-o", "%H:%M %Z", "08:30"]
   "08:30 UTC" @=? result
 
-testFormatOutputCustomTZOffset :: TestTree
-testFormatOutputCustomTZOffset = testCase desc $ do
-  result <- captureKairosIO $ pureTZ ["-o", "%H:%M %Z", "08:30"]
-  "08:30 UTC" @=? result
+testFormatOutputTimeZone :: TestTree
+testFormatOutputTimeZone = testCase desc $ do
+  result <- captureKairosIO $ pureTZ ["-o", "%Z", "08:30"]
+  "UTC" @=? result
   where
-    desc = "Overrides input formatting tz offset"
+    desc = "Overrides output formatting timezone"
+
+testFormatOutputTimeZoneOffset :: TestTree
+testFormatOutputTimeZoneOffset = testCase desc $ do
+  result <- captureKairosIO $ pureTZ ["-o", "%z", "08:30"]
+  "+0000" @=? result
+  where
+    desc = "Overrides input formatting timezone offset"
 
 testFormatOutputRfc822 :: TestTree
 testFormatOutputRfc822 = testCase "Uses rfc822 output" $ do
@@ -237,7 +257,8 @@ testSrcTzNoDate = testCase "Correctly converts src w/o --date" $ do
       MkTestParams
         { cliArgs = set' #srcTZ "America/New_York" "19:30",
           configEnabled = False,
-          mCurrentTime = Just currTime
+          mCurrentTime = Just currTime,
+          mXdg = Nothing
         }
 
     currTimeSrcDst = "2023-04-18 19:30 -0400"
@@ -561,7 +582,13 @@ tomlTests :: TestTree
 tomlTests =
   testGroup
     "Toml"
-    [ testTomlAliases
+    [ testTomlAliases,
+      testTomlPrintAliases,
+      testTomlPrintAliasesNoColor,
+      testTomlPrintAliasesNoAliases,
+      testTomlPrintAliasesEmptyAliases,
+      testTomlPrintAliasesNoConfig,
+      testTomlPrintAliasesMissingConfig
     ]
 
 testTomlAliases :: TestTree
@@ -586,8 +613,120 @@ testTomlAliases = testCase "Config aliases succeed" $ do
                   "08:30"
                 ],
           configEnabled = True,
-          mCurrentTime = Nothing
+          mCurrentTime = Nothing,
+          mXdg = Nothing
         }
+
+testTomlPrintAliases :: TestTree
+testTomlPrintAliases = testCase desc $ do
+  results <- captureKairosParamsIO params
+  expected @=? results
+  where
+    desc = "Prints example alises"
+
+    params =
+      set' #configEnabled True
+        . Params.fromArgs
+        $ ["-c", configFp, "--color", "true", "--print-aliases"]
+
+    expected =
+      unlinesNoTrailingNL
+        [ c1 <> "- la:          america/los_angeles" <> endColor,
+          c2 <> "- ny:          america/new_york" <> endColor,
+          c1 <> "- paris:       europe/paris" <> endColor,
+          c2 <> "- some_offset: +0700" <> endColor,
+          c1 <> "- uk:          europe/london" <> endColor,
+          c2 <> "- zagreb:      europe/zagreb" <> endColor
+        ]
+
+    c1 = "\ESC[34m"
+    c2 = "\ESC[32m"
+    endColor = "\ESC[0m"
+
+testTomlPrintAliasesNoColor :: TestTree
+testTomlPrintAliasesNoColor = testCase desc $ do
+  results <- captureKairosParamsIO params
+  expected @=? results
+  where
+    desc = "Prints example aliases without coloring"
+    params =
+      -- color = false is set in the toml file, so no need here.
+      set' #configEnabled True
+        . Params.fromArgs
+        $ ["-c", configFp, "--print-aliases"]
+
+    expected =
+      unlinesNoTrailingNL
+        [ "- la:          america/los_angeles",
+          "- ny:          america/new_york",
+          "- paris:       europe/paris",
+          "- some_offset: +0700",
+          "- uk:          europe/london",
+          "- zagreb:      europe/zagreb"
+        ]
+
+-- avoid T.unlines to skip trailing newline.
+unlinesNoTrailingNL :: [Text] -> Text
+unlinesNoTrailingNL = T.intercalate "\n"
+
+testTomlPrintAliasesNoAliases :: TestTree
+testTomlPrintAliasesNoAliases = testCase desc $ do
+  results <- captureKairosParamsIO params
+  expected @=? results
+  where
+    desc = "--print-aliases with no aliases"
+    params =
+      set' #configEnabled True
+        . Params.fromArgs
+        $ ["-c", cfg, "--print-aliases"]
+
+    cfg = unsafeDecode [ospPathSep|test/functional/toml/empty.toml|]
+    expected =
+      mconcat
+        [ "No aliases found in toml: ",
+          T.pack cfg
+        ]
+
+testTomlPrintAliasesEmptyAliases :: TestTree
+testTomlPrintAliasesEmptyAliases = testCase desc $ do
+  results <- captureKairosParamsIO params
+  expected @=? results
+  where
+    desc = "--print-aliases with empty aliases"
+    params =
+      set' #configEnabled True
+        . Params.fromArgs
+        $ ["-c", cfg, "--print-aliases"]
+
+    cfg = unsafeDecode [ospPathSep|test/functional/toml/empty2.toml|]
+    expected =
+      mconcat
+        [ "No aliases found in toml: ",
+          T.pack cfg
+        ]
+
+testTomlPrintAliasesNoConfig :: TestTree
+testTomlPrintAliasesNoConfig = testCase desc $ do
+  assertException @PrintAliasesE expected $ captureKairosIO args
+  where
+    desc = "--print-aliases fails with --no-config"
+    -- noConfig defaults to true in our tests via default configEnabled = False
+    args = ["-c", configFp, "--print-aliases"]
+    expected = "--print-aliases was specified with --no-config."
+
+testTomlPrintAliasesMissingConfig :: TestTree
+testTomlPrintAliasesMissingConfig = testCase desc $ do
+  assertException @PrintAliasesE expected $ captureKairosParamsIO params
+  where
+    desc = "--print-aliases fails with missing config"
+    params =
+      set' #configEnabled True
+        -- Setting the xdg dir to an extant dir w/ no kairos/config.toml, so
+        -- that lookup succeeds but with none found.
+        . set' #mXdg (Just [ospPathSep|test/functional|])
+        . Params.fromArgs
+        $ "--print-aliases"
+    expected = "--print-aliases was specified, but no config file was found."
 
 miscTests :: TestTree
 miscTests =
@@ -682,16 +821,37 @@ captureKairosParamsIO params = case params.mCurrentTime of
       ( MonadEnv m,
         MonadCatch m,
         MonadFileReader m,
+        MonadIO m,
         MonadIORef m,
         MonadOptparse m,
-        MonadPathReader m,
         MonadTime m
       ) =>
       -- Args.
       [String] ->
       m Text
-    captureKairosConfigM argList = SysEnv.withArgs argList $ runTermT runKairos
+    captureKairosConfigM argList =
+      SysEnv.withArgs argList $
+        runTermT params.mXdg runKairos
 
+-- | The purpose of 'MockTimeIO' is to mock the current time / timezone.
+-- So why do we derive a bunch of IO instances, when TermT is ultimately what
+-- runs? To make deriving easier.
+--
+-- Most of the IO instances are "real", so it is easier to derive them here
+-- via IO, and then derive them on TermT via the underlying IO/MockTimeIO.
+-- This is fine when we do not care about mocking the instance.
+--
+-- But consider e.g. MonadPathReader, which we _do_ want to potentially mock.
+-- We want to provide the custom impl in TermT. When we mock the xgg dir,
+-- impl is easy; just return the mocked value. When we do _not_ mock xdg i.e.
+-- implement the real function, we have two choices: write the TermT instance
+-- in terms of MonadIO or MonadPathReader.
+--
+-- We choose the former, as it means we do not have to provide an instance
+-- for MonadPathReader MockTimeIO, which is arguably clearer about what is
+-- happening. We could actually go farther here, and eliminate all of these
+-- MockTimeIO file IO instances, and just explicitly implement the ones on
+-- TermT in terms of MonadIO. But for now, this is easier.
 newtype MockTimeIO a = MkMockTimeM (ReaderT String IO a)
   deriving
     ( Applicative,
@@ -703,7 +863,6 @@ newtype MockTimeIO a = MkMockTimeM (ReaderT String IO a)
       MonadIO,
       MonadIORef,
       MonadOptparse,
-      MonadPathReader,
       MonadThrow
     )
     via (ReaderT String IO)
@@ -761,10 +920,18 @@ startsWith (x : xs) (y : ys)
   | x == y = startsWith xs ys
   | otherwise = False
 
+data TermEnv
+  = MkTermEnv
+  { output :: IORef Text,
+    xdg :: Maybe OsPath
+  }
+
 -- Adds a MonadTerminal instance that reads putStrLn into an IORef. Intended
 -- to be added "on top" of some Monad that implements the rest of Kairos's
 -- dependencies e.g. IO or MockTimeIO.
-newtype TermT m a = MkTermT (ReaderT (IORef Text) m a)
+--
+-- This also potentially mocks xdg.
+newtype TermT m a = MkTermT (ReaderT TermEnv m a)
   deriving
     ( Applicative,
       Functor,
@@ -772,22 +939,33 @@ newtype TermT m a = MkTermT (ReaderT (IORef Text) m a)
       MonadCatch,
       MonadEnv,
       MonadFileReader,
+      MonadIO,
       MonadIORef,
       MonadOptparse,
-      MonadPathReader,
       MonadThrow,
       MonadTime
     )
-    via (ReaderT (IORef Text) m)
-  deriving (MonadReader (IORef Text)) via (ReaderT (IORef Text) m)
+    via (ReaderT TermEnv m)
+  deriving (MonadReader TermEnv) via (ReaderT TermEnv m)
+  deriving (MonadTrans) via (ReaderT TermEnv)
 
 instance (MonadIORef m) => MonadTerminal (TermT m) where
-  putStrLn s = ask >>= \ref -> modifyIORef' ref (T.pack s <>)
+  putStrLn s = asks (.output) >>= \ref -> modifyIORef' ref (T.pack s <>)
 
-runTermT :: (MonadIORef m) => TermT m a -> m Text
-runTermT (MkTermT m) = do
+instance (MonadIO m) => MonadPathReader (TermT m) where
+  doesFileExist = liftIO . doesFileExist
+
+  getXdgDirectory t p = case t of
+    XdgConfig ->
+      asks (.xdg) >>= \case
+        Just xdg -> pure $ xdg </> p
+        Nothing -> liftIO $ getXdgDirectory XdgConfig p
+    other -> error $ "Unexpected xdg type: " ++ show other
+
+runTermT :: (MonadIORef m) => Maybe OsPath -> TermT m a -> m Text
+runTermT mXg (MkTermT m) = do
   outputRef <- newIORef ""
-  _ <- runReaderT m outputRef
+  _ <- runReaderT m (MkTermEnv outputRef mXg)
   readIORef outputRef
 
 configFp :: FilePath

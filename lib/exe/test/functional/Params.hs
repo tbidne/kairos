@@ -11,6 +11,7 @@ module Params
 where
 
 import Data.String (IsString (fromString))
+import FileSystem.OsPath (OsPath)
 import GHC.Exts (IsList (Item, fromList, toList))
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL, set')
 
@@ -118,31 +119,41 @@ data TestParams = MkTestParams
     -- | If false, prepends --no-config to 'args'.
     configEnabled :: Bool,
     -- | If given, represents the (mock) current time.
-    mCurrentTime :: Maybe String
+    mCurrentTime :: Maybe String,
+    -- | Optional overridden xdg dir.
+    mXdg :: Maybe OsPath
   }
 
 instance
   (k ~ A_Lens, a ~ CliArgs, b ~ CliArgs) =>
   LabelOptic "cliArgs" k TestParams TestParams a b
   where
-  labelOptic = lensVL $ \f (MkTestParams a1 a2 a3) ->
-    fmap (\b -> MkTestParams b a2 a3) (f a1)
+  labelOptic = lensVL $ \f (MkTestParams a1 a2 a3 a4) ->
+    fmap (\b -> MkTestParams b a2 a3 a4) (f a1)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
   LabelOptic "configEnabled" k TestParams TestParams a b
   where
-  labelOptic = lensVL $ \f (MkTestParams a1 a2 a3) ->
-    fmap (\b -> MkTestParams a1 b a3) (f a2)
+  labelOptic = lensVL $ \f (MkTestParams a1 a2 a3 a4) ->
+    fmap (\b -> MkTestParams a1 b a3 a4) (f a2)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ Maybe String, b ~ Maybe String) =>
   LabelOptic "mCurrentTime" k TestParams TestParams a b
   where
-  labelOptic = lensVL $ \f (MkTestParams a1 a2 a3) ->
-    fmap (\b -> MkTestParams a1 a2 b) (f a3)
+  labelOptic = lensVL $ \f (MkTestParams a1 a2 a3 a4) ->
+    fmap (\b -> MkTestParams a1 a2 b a4) (f a3)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ Maybe OsPath, b ~ Maybe OsPath) =>
+  LabelOptic "mXdg" k TestParams TestParams a b
+  where
+  labelOptic = lensVL $ \f (MkTestParams a1 a2 a3 a4) ->
+    fmap (\b -> MkTestParams a1 a2 a3 b) (f a4)
   {-# INLINE labelOptic #-}
 
 -- | Default params.
@@ -151,7 +162,8 @@ defParams =
   MkTestParams
     { cliArgs = [],
       configEnabled = False,
-      mCurrentTime = Nothing
+      mCurrentTime = Nothing,
+      mXdg = Nothing
     }
 
 -- | Params given CLI args.
