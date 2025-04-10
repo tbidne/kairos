@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - release
+      - release2
 
   pull_request:
     branches:
@@ -120,7 +120,7 @@ jobs:
 
   release:
     needs: [cabal, stack, nix, lint]
-    if: github.ref == 'refs/heads/release'
+    if: github.ref == 'refs/heads/release2'
     strategy:
       fail-fast: false
       matrix:
