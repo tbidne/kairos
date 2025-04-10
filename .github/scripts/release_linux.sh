@@ -2,20 +2,21 @@
 
 set -e
 
-kairos_vers="0.1"
-
 arch=$(uname -m)
 
 dir=$1
 
 mkdir -p bin
 
-suffix="_$kairos_vers-$arch-linux-static"
+suffix="_$KAIROS_VERS-$arch-linux"
 
 docker build \
   -t kairos_build:latest \
   -f "docker/$dir/Dockerfile" \
   -o docker_out \
+  --build-arg CABAL_VERS=$CABAL_VERS \
+  --build-arg CABAL_PROJ=$CABAL_PROJ \
+  --build-arg GHC_VERS=$GHC_VERS \
   --build-arg suffix=$suffix \
   .
 

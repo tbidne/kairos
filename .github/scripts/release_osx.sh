@@ -2,8 +2,6 @@
 
 set -e
 
-kairos_vers="0.1"
-
 # strip tab and/or spaces from output
 apple_vers=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' \t')
 
@@ -21,9 +19,9 @@ cabal_build_dir="$arch-osx"
 
 mkdir -p bin
 
-suffix="_$kairos_vers-$arch-macos_$apple_vers-darwin"
+suffix="_$KAIROS_VERS-$arch-macos_$apple_vers-darwin"
 
-cabal install kairos --installdir bin/ --program-suffix $suffix --project-file cabal.ghc9101.project --ghc-options -Werror
+cabal install kairos --installdir bin/ --program-suffix $suffix --project-file $CABAL_PROJ --ghc-options -Werror
 
 echo "*** Testing exe ***"
 ./bin/kairos$suffix --help
