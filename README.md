@@ -267,7 +267,7 @@ The current "blessed" version is `ghc-9.10.1`.
 
 Once you have `cabal` and `ghc`, `kairos` can be built with `cabal build kairos` or installed globally (i.e. `~/.local/bin/kairos`) with `cabal install kairos`.
 
-For further reproducibility, an optional freeze files can be used for the "blessed" compiler.
+For further reproducibility, an optional freeze file can be used for the "blessed" compiler.
 
 ```sh
 cabal build --project-file cabal.ghc<XYZ>.project
