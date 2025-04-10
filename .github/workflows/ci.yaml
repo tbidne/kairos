@@ -136,12 +136,12 @@ jobs:
 
           - name: "alpine_amd64"
             os: "ubuntu-24.04"
-            script: ".github/scripts/release_linux_static.sh"
+            script: ".github/scripts/release_linux.sh"
             script_args: "alpine_amd64"
 
           - name: "alpine_arm64v8"
             os: "ubuntu-24.04-arm"
-            script: ".github/scripts/release_linux_static.sh"
+            script: ".github/scripts/release_linux.sh"
             script_args: "alpine_arm64v8"
 
           - name: "windows-2025"
