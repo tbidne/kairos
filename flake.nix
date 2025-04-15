@@ -70,6 +70,8 @@
               final: prev:
               {
                 path = hlib.dontCheck prev.path_0_9_6;
+                # FIXME: Might be necessary
+                #stan = hlib.doJailbreak prev.stan;
               }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
@@ -107,6 +109,12 @@
                 (hlib.dontCheck compiler.haskell-language-server)
                 pkgs.nixfmt-rfc-style
               ];
+
+              modifier =
+                drv:
+                drv.overrideAttrs (oldAttrs: {
+                  KAIROS_HASH = "${self.shortRev or self.dirtyShortRev}";
+                });
             };
           stack-wrapped = pkgs.symlinkJoin {
             name = "stack";

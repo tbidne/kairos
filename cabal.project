@@ -1,8 +1,9 @@
-index-state: 2025-03-13T16:59:36Z
+index-state: 2025-04-27T21:45:04Z
 
 packages:
   ./lib/core/kairos-core.cabal
   ./lib/exe/kairos.cabal
+  https://hackage.haskell.org/package/gitrev-typed-0.1/candidate/gitrev-typed-0.1.tar.gz
 
 program-options
   ghc-options:

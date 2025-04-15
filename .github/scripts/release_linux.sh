@@ -30,3 +30,7 @@ echo "*** Testing exe ***"
 echo "*** Computing sha256 ***"
 sha256sum ./bin/kairos$suffix > ./bin/kairos$suffix.sha256
 cat ./bin/kairos$suffix.sha256
+
+echo "*** Printing version ***"
+./bin/kairos$suffix --version > ./bin/kairos$suffix.version
+cat ./bin/kairos$suffix.version
