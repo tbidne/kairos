@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | CLI args for Kairos.
@@ -16,6 +17,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Version (Version (versionBranch))
 import Effects.Optparse (OsPath, osPath)
+import Kairos.Runner.Args.TH qualified as TH
 import Kairos.Types.Date (Date)
 import Kairos.Types.Date qualified as Date
 import Kairos.Types.TimeFormat (TimeFormat)
@@ -312,7 +314,14 @@ version :: Parser (a -> a)
 version = OA.infoOption versNum (OA.long "version" <> OA.short 'v' <> OA.hidden)
 
 versNum :: String
-versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
+versNum =
+  mconcat
+    [ "Version: ",
+      L.intercalate "." (show <$> versionBranch Paths.version),
+      " (",
+      $$TH.gitHash,
+      ")"
+    ]
 
 mkHelp :: String -> OA.Mod f a
 mkHelp =

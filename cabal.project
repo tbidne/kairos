@@ -45,6 +45,11 @@ source-repository-package
 
 source-repository-package
     type: git
+    location: https://github.com/tbidne/gitrev-typed.git
+    tag: fbf335129aa7d90b2ff80048e061f09874144148
+
+source-repository-package
+    type: git
     location: https://github.com/tbidne/monad-effects.git
     tag: 3099ce03d0126f83aa84284d40f98d57fe01d9e0
     subdir:

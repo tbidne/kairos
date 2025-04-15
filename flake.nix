@@ -31,6 +31,12 @@
     inputs.nix-hs-utils.follows = "nix-hs-utils";
     inputs.nixpkgs.follows = "nixpkgs";
   };
+  inputs.gitrev-typed = {
+    url = "github:tbidne/gitrev-typed";
+    inputs.flake-parts.follows = "flake-parts";
+    inputs.nix-hs-utils.follows = "nix-hs-utils";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
   inputs.monad-effects = {
     url = "github:tbidne/monad-effects";
     inputs.flake-parts.follows = "flake-parts";
@@ -70,12 +76,14 @@
               final: prev:
               {
                 path = hlib.dontCheck prev.path_0_9_6;
+                stan = hlib.doJailbreak prev.stan;
               }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
                 "bounds"
                 "exception-utils"
                 "fs-utils"
+                "gitrev-typed"
               ]
               // nix-hs-utils.mkRelLibs "${monad-effects}/lib" final [
                 "effects-env"
@@ -107,6 +115,12 @@
                 (hlib.dontCheck compiler.haskell-language-server)
                 pkgs.nixfmt-rfc-style
               ];
+
+              modifier =
+                drv:
+                drv.overrideAttrs (oldAttrs: {
+                  KAIROS_HASH = "${self.shortRev or self.dirtyShortRev}";
+                });
             };
           stack-wrapped = pkgs.symlinkJoin {
             name = "stack";

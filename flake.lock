@@ -122,6 +122,32 @@
         "type": "github"
       }
     },
+    "gitrev-typed": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nix-hs-utils": [
+          "nix-hs-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1745448975,
+        "narHash": "sha256-miV98HKCr0KHrcKz9k4qK3sKrOL5ZbAMjvFRuJUf2Yo=",
+        "owner": "tbidne",
+        "repo": "gitrev-typed",
+        "rev": "fbf335129aa7d90b2ff80048e061f09874144148",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "gitrev-typed",
+        "type": "github"
+      }
+    },
     "monad-effects": {
       "inputs": {
         "algebra-simple": [
@@ -213,6 +239,7 @@
         "exception-utils": "exception-utils",
         "flake-parts": "flake-parts",
         "fs-utils": "fs-utils",
+        "gitrev-typed": "gitrev-typed",
         "monad-effects": "monad-effects",
         "nix-hs-utils": "nix-hs-utils",
         "nixpkgs": "nixpkgs",
