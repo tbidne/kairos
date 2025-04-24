@@ -31,6 +31,8 @@ extra-deps:
     commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
   - git: https://github.com/tbidne/fs-utils.git
     commit: 83472bc22a938db0d3b4c02a24a52bfca0484637
+  - git: https://github.com/tbidne/gitrev-typed.git
+    commit: 0b64b22b97c8571315146b59c47fe5557e7d5ba9
   - git: https://github.com/tbidne/monad-effects.git
     commit: 3099ce03d0126f83aa84284d40f98d57fe01d9e0
     subdirs:

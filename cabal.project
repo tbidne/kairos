@@ -46,7 +46,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/gitrev-typed.git
-    tag: fbf335129aa7d90b2ff80048e061f09874144148
+    tag: 0b64b22b97c8571315146b59c47fe5557e7d5ba9
 
 source-repository-package
     type: git
