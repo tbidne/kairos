@@ -72,6 +72,27 @@
               {
                 path = hlib.dontCheck prev.path_0_9_6;
 
+                # optparse jailbreaks
+                ormolu = hlib.doJailbreak prev.ormolu;
+
+                # Hopefully this is in the next nixpkgs merge (not at the time
+                # of this comment):
+                #
+                #  https://github.com/NixOS/nixpkgs/pull/413046
+                optparse-applicative = (
+                  final.callHackageDirect {
+                    pkg = "optparse-applicative";
+                    ver = "0.19.0.0";
+                    sha256 = "sha256-dhqvRILfdbpYPMxC+WpAyO0KUfq2nLopGk1NdSN2SDM=";
+                  } { }
+                );
+
+                # FIXME: This is probably broken for the dev shell ugh.
+                # Probably have to wait until optparse is in stackage lts.
+
+                # TODO: Remove once next nixpkgs removed:
+                #
+                #   https://github.com/NixOS/nixpkgs/pull/413046
                 gitrev-typed = (
                   final.callHackageDirect {
                     pkg = "gitrev-typed";

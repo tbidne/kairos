@@ -1,4 +1,4 @@
-index-state: 2025-05-07T00:06:40Z
+index-state: 2025-06-03T21:29:34Z
 
 packages:
   ./lib/core/kairos-core.cabal
@@ -46,7 +46,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 159e47e7707e9469d689ab6f9aa5dbd90a573a2a
+    tag: 750049e9d9afc1b7acf3b19e4adcd3cd37033b0a
     subdir:
       lib/effects-env
       lib/effects-fs
@@ -61,6 +61,7 @@ source-repository-package
     tag: a39c02ec6a5a9c4b551baffafd75f26be74dd457
 
 allow-newer: path:hashable
+allow-newer: tasty:optparse-applicative
 allow-newer: time-compat:base
 
 optimization: 2

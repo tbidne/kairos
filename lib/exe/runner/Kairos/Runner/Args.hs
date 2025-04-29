@@ -121,17 +121,13 @@ parseArgs =
     <**> version
   where
     parseArgs' = do
-      color <- parseColor
-      config <- parseConfig
-      noConfig <- parseNoConfig
-      date <- parseDate
-      destTZ <- parseDestTZ
-      formatIn <- parseFormatIn
-      formatOut <- parseFormatOut
-      printAliases <- parsePrintAliases
-      srcTZ <- parseSrcTZ
+      ~(config, noConfig) <- parseConfigGroup
+      ~(color, formatIn, formatOut) <- parseFormattingGroup
+      printAliases <- parseMiscGroup
+      ~(date, timeString) <- parseTimeGroup
+      ~(destTZ, srcTZ) <- parseTimezonesGroup
+
       stacktrace <- parseStacktrace
-      timeString <- parseTimeStr
 
       pure $
         MkArgs
@@ -147,6 +143,24 @@ parseArgs =
             stacktrace,
             timeString
           }
+      where
+        parseConfigGroup =
+          OA.parserOptionGroup "Config options:" $
+            (,) <$> parseConfig <*> parseNoConfig
+
+        parseFormattingGroup =
+          OA.parserOptionGroup "Formatting options:" $
+            (,,) <$> parseColor <*> parseFormatIn <*> parseFormatOut
+
+        parseMiscGroup = OA.parserOptionGroup "Misc options:" $ parsePrintAliases
+
+        parseTimezonesGroup =
+          OA.parserOptionGroup "Timezones options:" $
+            (,) <$> parseDestTZ <*> parseSrcTZ
+
+        parseTimeGroup =
+          OA.parserOptionGroup "Time options:" $
+            (,) <$> parseDate <*> parseTimeStr
 
 parseStacktrace :: Parser Bool
 parseStacktrace = parseSwitch "stacktrace" [OA.internal]
@@ -170,7 +184,7 @@ parseConfig =
         ]
 
 parseNoConfig :: Parser Bool
-parseNoConfig = parseSwitch "no-config" [OA.hidden, mkHelp helpTxt]
+parseNoConfig = parseSwitch "no-config" [OA.hidden, mkHelpNoLine helpTxt]
   where
     helpTxt = "Disables --config."
 
@@ -222,7 +236,7 @@ parseFormatOut =
       [ OA.long "format-out",
         OA.short 'o',
         OA.metavar "(rfc822 | FMT_STR)",
-        mkHelp helpTxt
+        mkHelpNoLine helpTxt
       ]
   where
     helpTxt =
@@ -241,7 +255,7 @@ parsePrintAliases :: Parser Bool
 parsePrintAliases =
   parseSwitch
     "print-aliases"
-    [mkHelp "Prints aliases from toml config."]
+    [mkHelpNoLine "Prints aliases from toml config."]
 
 parseColor :: Parser (Maybe Bool)
 parseColor =
@@ -274,7 +288,7 @@ parseSrcTZ =
       [ OA.long "src-tz",
         OA.short 's',
         OA.metavar "TZ",
-        mkHelp helpTxt
+        mkHelpNoLine helpTxt
       ]
   where
     helpTxt =
@@ -307,7 +321,7 @@ parseTimeStr =
     T.pack
       <$> OA.argument
         OA.str
-        (OA.metavar "TIME_STR" <> mkHelp helpTxt)
+        (OA.metavar "TIME_STR" <> mkHelpNoLine helpTxt)
   where
     helpTxt =
       "Time string to parse. If none is given then we parse the"
@@ -358,5 +372,11 @@ mkHelp :: String -> OA.Mod f a
 mkHelp =
   OA.helpDoc
     . fmap (<> Pretty.hardline)
+    . Chunk.unChunk
+    . Chunk.paragraph
+
+mkHelpNoLine :: String -> OA.Mod f a
+mkHelpNoLine =
+  OA.helpDoc
     . Chunk.unChunk
     . Chunk.paragraph
