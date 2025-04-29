@@ -18,15 +18,20 @@
 
 * [Introduction](#introduction)
 * [Options](#options)
-  * [Color](#color)
-  * [Config](#config)
-  * [Date](#date)
-  * [Destination Timezone](#destination-timezone)
-  * [Format In](#format-in)
-  * [Format Out](#format-out)
-  * [Print aliases](#print-aliases)
-  * [Source Timezone](#source-timezone)
-  * [Time String](#time-string)
+  * [Config options](#config-options)
+    * [Config](#config)
+  * [Formatting options](#formatting-options)
+    * [Color](#color)
+    * [Format In](#format-in)
+    * [Format Out](#format-out)
+  * [Misc options](#misc-options)
+    * [Print aliases](#print-aliases)
+  * [Time options](#time-options)
+    * [Date](#date)
+    * [Time String](#time-string)
+  * [Timezone options](#timezone-options)
+    * [Destination Timezone](#destination-timezone)
+    * [Source Timezone](#source-timezone)
 * [Installation](#installation)
 * [Building](#building)
   * [Cabal](#cabal)
@@ -72,7 +77,24 @@ The timezone names are based on the tz_database. See https://en.wikipedia.org/wi
 
 # Options
 
-## Color
+## Config Options
+
+### Config
+
+**Arg:** `-c,--config PATH`
+
+**Description:** Path to `toml` config file. Can be used to define aliases for tz_database labels. See the [examples](./lib/exe/examples/) directory for examples.
+
+**Examples:**
+
+```
+$ kairos -c ./lib/exe/examples/config.toml -d la
+Thu, 20 Apr 2023 22:25:37 PDT
+```
+
+## Formatting Options
+
+### Color
 
 **Arg:** `--color (true | false)`
 
@@ -90,60 +112,7 @@ $ kairos -c ./lib/exe/examples/config.toml --print-aliases --color true
  - zagreb:      europe/zagreb
 ```
 
-## Config
-
-**Arg:** `-c,--config PATH`
-
-**Description:** Path to `toml` config file. Can be used to define aliases for tz_database labels. See the [examples](./lib/exe/examples/) directory for examples.
-
-**Examples:**
-
-```
-$ kairos -c ./lib/exe/examples/config.toml -d la
-Thu, 20 Apr 2023 22:25:37 PDT
-```
-
-## Date
-
-**Arg:** `--date YYYY-mm-dd`
-
-**Description:** Date in which to read the string. This option requires [Time String](#time-string). No date uses the current date, as determined by the source.
-
-**Examples:**
-
-```
-$ kairos 08:30
-Tue, 18 Mar 2025 08:30:00 NZDT
-
-$ kairos --date 2022-04-10 -s america/new_york 08:30
-Mon, 11 Apr 2022 00:30:00 NZST
-```
-
-## Destination Timezone
-
-**Arg:** `-d,--dest-tz TZ`
-
-**Description:** This option allows one to convert the read timezone. Must be a tz database label or offset e.g. `America/New_York`, `+1300`. If none is given then we use the local system timezone.
-
-**Examples:**
-
-```
-# use the local system timezone
-$ kairos 08:30
-Tue, 18 Mar 2025 08:30:00 NZDT
-
-# using tz database name
-$ kairos -d america/new_york 08:30
-Mon, 17 Mar 2025 15:30:00 EDT
-
-$ kairos -s america/new_york -d utc 08:30
-Mon, 17 Mar 2025 12:30:00 UTC
-
-$ kairos -d +0200 08:30
-Mon, 17 Mar 2025 21:30:00 +0200
-```
-
-## Format In
+### Format In
 
 **Arg:** `-f,--format-in FMT_STR`
 
@@ -170,7 +139,7 @@ $ kairos -f "%I:%M %p" "08:00 pm"
 Tue, 18 Mar 2025 20:00:00 NZDT
 ```
 
-## Format Out
+### Format Out
 
 **Arg:** `-o,--format-out (rfc822 | FMT_STR)`
 
@@ -188,7 +157,9 @@ $ kairos -o %H:%M:%S 08:30
 08:30:00
 ```
 
-## Print Aliases
+## Misc Options
+
+### Print Aliases
 
 **Arg:** `--print-aliases`
 
@@ -206,7 +177,67 @@ $ kairos -c ./lib/exe/examples/config.toml --print-aliases
  - zagreb:      europe/zagreb
 ```
 
-## Source Timezone
+## Time Options
+
+### Date
+
+**Arg:** `--date YYYY-mm-dd`
+
+**Description:** Date in which to read the string. This option requires [Time String](#time-string). No date uses the current date, as determined by the source.
+
+**Examples:**
+
+```
+$ kairos 08:30
+Tue, 18 Mar 2025 08:30:00 NZDT
+
+$ kairos --date 2022-04-10 -s america/new_york 08:30
+Mon, 11 Apr 2022 00:30:00 NZST
+```
+
+### Time String
+
+**Arg:** `TIME_STR`
+
+**Description:** This is the time string to parse. If none is given then we parse the local system time. To format the output, use [`--format-out`](format-out).
+
+**Examples:**
+
+```
+$ kairos
+Tue, 18 Mar 2025 15:33:30 NZDT
+
+$ kairos -s america/new_york 08:30
+Tue, 18 Mar 2025 01:30:00 NZDT
+```
+
+## Timezone Options
+
+### Destination Timezone
+
+**Arg:** `-d,--dest-tz TZ`
+
+**Description:** This option allows one to convert the read timezone. Must be a tz database label or offset e.g. `America/New_York`, `+1300`. If none is given then we use the local system timezone.
+
+**Examples:**
+
+```
+# use the local system timezone
+$ kairos 08:30
+Tue, 18 Mar 2025 08:30:00 NZDT
+
+# using tz database name
+$ kairos -d america/new_york 08:30
+Mon, 17 Mar 2025 15:30:00 EDT
+
+$ kairos -s america/new_york -d utc 08:30
+Mon, 17 Mar 2025 12:30:00 UTC
+
+$ kairos -d +0200 08:30
+Mon, 17 Mar 2025 21:30:00 +0200
+```
+
+### Source Timezone
 
 **Arg:** `-s,--src-tz TZ`
 
@@ -226,22 +257,6 @@ Tue, 18 Mar 2025 01:30:00 NZDT
 # use tz offset
 $ kairos -s -13 08:30
 Tue, 18 Mar 2025 10:30:00 NZDT
-```
-
-## Time String
-
-**Arg:** `TIME_STR`
-
-**Description:** This is the time string to parse. If none is given then we parse the local system time. To format the output, use [`--format-out`](format-out).
-
-**Examples:**
-
-```
-$ kairos
-Tue, 18 Mar 2025 15:33:30 NZDT
-
-$ kairos -s america/new_york 08:30
-Tue, 18 Mar 2025 01:30:00 NZDT
 ```
 
 # Installation
