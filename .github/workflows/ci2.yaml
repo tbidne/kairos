@@ -1,0 +1,61 @@
+name: ci2
+
+on:
+  push:
+    branches:
+      - ci2
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ["1", "2", "3"] # Different versions for the matrix
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - id: build
+        run: |
+          #mkdir -p bin
+          echo ${{ matrix.version }} > ${{ matrix.version }}.version
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.version }}
+          path: ${{ matrix.version }}.version
+          compression: 0
+
+        # Simulate the creation of an artifact and save the path to output.
+
+  deploy:
+    needs: build # Waits for the 'build' job to complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: artifacts
+          pattern: artifacts-*
+          delete-merged: true
+          compression: 0
+
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+
+      - name: Test artifacts
+        run: |
+          pwd
+          ls -l
+
+          tree
+
+          for f in $(ls); do
+            cat "$f"
+          done
