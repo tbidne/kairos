@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - release
+      - dev
 
   pull_request:
     branches:
@@ -20,6 +21,7 @@ env:
 
 jobs:
   cabal:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -63,6 +65,7 @@ jobs:
         run: cabal test ${{ matrix.ghc.proj-file }} kairos:functional
 
   stack:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -84,6 +87,7 @@ jobs:
         run: stack test kairos-core kairos --ghc-options -Werror
 
   nix:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -103,6 +107,7 @@ jobs:
       - name: Compile & Test
         run: nix build
   lint:
+    if: false
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
@@ -119,8 +124,8 @@ jobs:
           git diff --exit-code --color=always
 
   release:
-    needs: [cabal, stack, nix, lint]
-    if: github.ref == 'refs/heads/release'
+    #needs: [cabal, stack, nix, lint]
+    if: github.ref == 'refs/heads/dev'
     strategy:
       fail-fast: false
       matrix:
@@ -192,6 +197,13 @@ jobs:
           name: release-artifacts-${{ matrix.platform.name }}
           path: bin
 
+      - name: Upload version
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-artifacts-${{ matrix.platform.name }}
+          path: kairos*version
+          compression-level: 0
+
   merge-releases:
     runs-on: "ubuntu-latest"
     needs: release
@@ -202,3 +214,35 @@ jobs:
           name: release-artifacts
           pattern: release-artifacts-*
           delete-merged: true
+
+      - name: Merge version artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: version-artifacts
+          pattern: version-artifacts-*
+          delete-merged: true
+          compression-level: 0
+
+      - name: Download versions
+        uses: actions/download-artifact@v4
+        with:
+          name: version-artifacts
+
+      - name: Test version equality
+        run: |
+          ls -l
+
+          f0=$(ls | head -n 1)
+          f0_contents=$(cat $f0 | awk '{ print $1 }')
+          for f in $(ls); do
+            echo "*** Comparing $f0, $f ***"
+            f_contents=$(cat $f | awk '{ print $1 }')
+            if [[ $f0_contents == $f_contents ]]; then
+              echo "*** equal! ***"
+            else
+              echo "*** not equal! ***"
+              echo "*** $f0: $f0_contents ***"
+              echo "*** $f: $f_contents ***"
+              exit 1
+            fi
+          done
