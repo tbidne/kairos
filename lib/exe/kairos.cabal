@@ -92,7 +92,7 @@ library kairos-runner
     , gitrev-typed          ^>=0.1
     , kairos-core           ^>=0.1
     , optics-core           ^>=0.4
-    , optparse-applicative  >=0.16.1.0 && <0.19
+    , optparse-applicative  >=0.16.1.0 && <0.20
     , template-haskell      >=2.17.0.0 && <2.24
     , text                  >=1.2.3.2  && <2.2
     , time                  >=1.9.3    && <1.15
