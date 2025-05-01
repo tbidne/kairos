@@ -30,9 +30,9 @@ extra-deps:
   - git: https://github.com/tbidne/exception-utils.git
     commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
   - git: https://github.com/tbidne/fs-utils.git
-    commit: 83472bc22a938db0d3b4c02a24a52bfca0484637
+    commit: ebe9822c78be2c6b983dfd849168508604db0c51
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 3099ce03d0126f83aa84284d40f98d57fe01d9e0
+    commit: 989e2b5aab2555eaa78148374f665ef404d96cf1
     subdirs:
       - lib/effects-env
       - lib/effects-fs
