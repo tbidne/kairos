@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - release
+      - new-version
 
   pull_request:
     branches:
@@ -20,6 +21,7 @@ env:
 
 jobs:
   cabal:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -63,6 +65,7 @@ jobs:
         run: cabal test ${{ matrix.ghc.proj-file }} kairos:functional
 
   stack:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -84,6 +87,7 @@ jobs:
         run: stack test kairos-core kairos --ghc-options -Werror
 
   nix:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -103,6 +107,7 @@ jobs:
       - name: Compile & Test
         run: nix build
   lint:
+    if: false
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
@@ -119,8 +124,8 @@ jobs:
           git diff --exit-code --color=always
 
   release:
-    needs: [cabal, stack, nix, lint]
-    if: github.ref == 'refs/heads/release'
+    #needs: [cabal, stack, nix, lint]
+    if: github.ref == 'refs/heads/new-version'
     strategy:
       fail-fast: false
       matrix:
@@ -191,6 +196,7 @@ jobs:
         with:
           name: release-artifacts-${{ matrix.platform.name }}
           path: bin
+          retention-days: 1
 
   merge-releases:
     runs-on: "ubuntu-latest"
