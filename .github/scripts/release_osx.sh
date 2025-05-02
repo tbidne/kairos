@@ -21,12 +21,15 @@ mkdir -p bin
 
 suffix="_$KAIROS_VERS-$arch-macos_$apple_vers-darwin"
 
-cabal install kairos --installdir bin/ --program-suffix $suffix --project-file $CABAL_PROJ --ghc-options -Werror
+export KAIROS_HOME=$(pwd); cabal install kairos --installdir bin/ --program-suffix $suffix --project-file $CABAL_PROJ --ghc-options -Werror
 
 echo "*** Testing exe ***"
 ./bin/kairos$suffix --help
 
 ./bin/kairos$suffix
+
+echo "*** Printing version ***"
+./bin/kairos$suffix --version
 
 echo "*** Computing sha256 ***"
 sha256sum ./bin/kairos$suffix > ./bin/kairos$suffix.sha256

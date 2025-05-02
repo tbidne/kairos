@@ -15,6 +15,10 @@ For those unfamiliar with PVP, it is essentially
 the first _two_ components (e.g. `0.9` in `0.9.1`), and PVP has no exception
 for versions < 1.
 
+## [Unreleased]
+### Added
+* Added git revision info in `--help` and `--version`.
+
 ## [0.1.1] -- 2025-04-10
 ### Added
 * Add `--print-aliases` option for printing toml aliases.
@@ -24,5 +28,6 @@ for versions < 1.
 
 * First version. Released on an unsuspecting world.
 
+[Unreleased]: https://github.com/tbidne/kairos/compare/0.1.1...main
 [0.1.1]: https://github.com/tbidne/kairos/compare/0.1...0.1.1
 [0.1]: https://github.com/tbidne/kairos/releases/tag/0.1

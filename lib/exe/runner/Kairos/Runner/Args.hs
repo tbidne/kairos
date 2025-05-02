@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | CLI args for Kairos.
@@ -14,8 +15,11 @@ import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Version (Version (versionBranch))
+import Data.Version (showVersion)
 import Effects.Optparse (OsPath, osPath)
+import FileSystem.OsString (OsString)
+import FileSystem.OsString qualified as OsString
+import Kairos.Runner.Args.TH qualified as TH
 import Kairos.Types.Date (Date)
 import Kairos.Types.Date qualified as Date
 import Kairos.Types.TimeFormat (TimeFormat)
@@ -42,6 +46,7 @@ import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse), ReadM)
 import Paths_kairos qualified as Paths
+import System.Info qualified as Info
 
 -- | CLI args.
 --
@@ -77,7 +82,7 @@ parserInfo =
     }
   where
     header = Just "kairos: A tool for timezone conversions."
-    footer = Just $ fromString versNum
+    footer = Just $ fromString versShort
     desc =
       Chunk.vsepChunks
         [ Chunk.paragraph $
@@ -309,10 +314,45 @@ parseTimeStr =
         <> " local system time. To format the output, use --format-out."
 
 version :: Parser (a -> a)
-version = OA.infoOption versNum (OA.long "version" <> OA.short 'v' <> OA.hidden)
+version = OA.infoOption versLong (OA.long "version" <> OA.short 'v' <> OA.hidden)
 
-versNum :: String
-versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
+versShort :: String
+versShort =
+  mconcat
+    [ "Version: ",
+      showVersion Paths.version,
+      " (",
+      OsString.decodeLenient versionInfo.gitShortHash,
+      ")"
+    ]
+
+versLong :: String
+versLong =
+  L.intercalate
+    "\n"
+    [ "Kairos: " <> showVersion Paths.version,
+      " - Git revision: " <> OsString.decodeLenient versionInfo.gitHash,
+      " - Commit date:  " <> OsString.decodeLenient versionInfo.gitCommitDate,
+      " - GHC version:  " <> versionInfo.ghc
+    ]
+
+data VersionInfo = MkVersionInfo
+  { ghc :: String,
+    gitCommitDate :: OsString,
+    gitHash :: OsString,
+    gitShortHash :: OsString
+  }
+
+versionInfo :: VersionInfo
+versionInfo =
+  MkVersionInfo
+    { ghc = showVersion Info.compilerVersion,
+      gitCommitDate = d,
+      gitHash = h,
+      gitShortHash = sh
+    }
+  where
+    (d, h, sh) = $$(TH.gitData)
 
 mkHelp :: String -> OA.Mod f a
 mkHelp =
