@@ -18,6 +18,7 @@ for versions < 1.
 ## [Unreleased]
 ### Added
 * Added git revision info in `--help` and `--version`.
+* Group `--help` options.
 
 ## [0.1.1] -- 2025-04-10
 ### Added

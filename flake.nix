@@ -72,6 +72,30 @@
               {
                 path = hlib.dontCheck prev.path_0_9_6;
 
+                # optparse jailbreaks
+                extensions = hlib.doJailbreak prev.extensions;
+                fourmolu = hlib.doJailbreak prev.fourmolu;
+                hspec-golden = hlib.doJailbreak prev.hspec-golden;
+                ormolu = hlib.doJailbreak prev.ormolu;
+                stan = hlib.doJailbreak prev.stan;
+                tasty-rerun = hlib.doJailbreak prev.tasty-rerun;
+                trial-optparse-applicative = hlib.doJailbreak prev.trial-optparse-applicative;
+
+                # Hopefully this is in the next nixpkgs merge (not at the time
+                # of this comment):
+                #
+                #  https://github.com/NixOS/nixpkgs/pull/413046
+                optparse-applicative = (
+                  final.callHackageDirect {
+                    pkg = "optparse-applicative";
+                    ver = "0.19.0.0";
+                    sha256 = "sha256-dhqvRILfdbpYPMxC+WpAyO0KUfq2nLopGk1NdSN2SDM=";
+                  } { }
+                );
+
+                # TODO: Remove once next nixpkgs removed:
+                #
+                #   https://github.com/NixOS/nixpkgs/pull/413046
                 gitrev-typed = (
                   final.callHackageDirect {
                     pkg = "gitrev-typed";
