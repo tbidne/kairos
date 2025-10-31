@@ -152,7 +152,7 @@ parseArgs =
           OA.parserOptionGroup "Formatting options:" $
             (,,) <$> parseColor <*> parseFormatIn <*> parseFormatOut
 
-        parseMiscGroup = OA.parserOptionGroup "Misc options:" $ parsePrintAliases
+        parseMiscGroup = OA.parserOptionGroup "Misc options:" parsePrintAliases
 
         parseTimezonesGroup =
           OA.parserOptionGroup "Timezone options:" $
@@ -366,7 +366,7 @@ versionInfo =
       gitShortHash = sh
     }
   where
-    (d, h, sh) = $$(TH.gitData)
+    (d, h, sh) = $$TH.gitData
 
 mkHelp :: String -> OA.Mod f a
 mkHelp =

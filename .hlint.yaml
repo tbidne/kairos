@@ -15,4 +15,21 @@
 - ignore:
     name: "Avoid lambda"
     within:
+      - "Kairos.Runner.Toml"
       - "Params"
+
+- ignore:
+    name: "Avoid lambda using `infix`"
+    within:
+      - "Kairos.Runner.Toml"
+
+- ignore:
+    name: "Replace case with fromMaybe"
+
+- ignore:
+    name: "Replace case with maybe"
+
+- ignore:
+    name: "Use <$>"
+    within:
+      - "Kairos.Runner.Args.TH"

@@ -14,8 +14,8 @@ on:
 
 env:
   CABAL_VERS: "3.12"
-  GHC_VERS: "9.10.1"
-  CABAL_PROJ: "cabal.ghc9101.project"
+  GHC_VERS: "9.12.2"
+  CABAL_PROJ: "cabal.ghc9122.project"
   KAIROS_VERS: "0.1.1"
 
 jobs:
@@ -28,14 +28,14 @@ jobs:
             proj-file: ""
           - vers: "9.4.8"
             proj-file: ""
-          - vers: "9.6.6"
+          - vers: "9.6.7"
             proj-file: ""
           - vers: "9.8.4"
             proj-file: ""
-          - vers: "9.10.1"
-            proj-file: "--project-file cabal.ghc9101.project"
-          - vers: "9.12.1"
+          - vers: "9.10.2"
             proj-file: ""
+          - vers: "9.12.2"
+            proj-file: "--project-file cabal.ghc9122.project"
         os:
           - "macos-latest"
           - "ubuntu-latest"

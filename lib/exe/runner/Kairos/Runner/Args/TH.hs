@@ -83,7 +83,7 @@ gitDataFromEnvQ = do
   pure $ liftA3 (,,) d h sh
   where
     validateHash :: Int -> Either EnvError OsString -> Either GitRevError OsString
-    validateHash n = joinErrors . (fmap (validateHash' n))
+    validateHash n = joinErrors . fmap (validateHash' n)
 
     joinErrors = GRT.joinFirst GitRevErrorEnv GitRevErrorText
 
