@@ -220,7 +220,7 @@ parseConfig =
     $ mconcat
       [ OA.long "config",
         OA.short 'c',
-        OA.metavar "PATH",
+        OA.metavar "(PATH | off)",
         OA.completer EOC.compgenCwdPathsCompleter,
         mkHelp helpTxt
       ]
