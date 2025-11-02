@@ -13,18 +13,19 @@ import Control.Monad.Catch (MonadCatch, MonadThrow, try)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader
   ( MonadReader,
-    MonadTrans,
+    MonadTrans (lift),
     ReaderT (runReaderT),
     ask,
     asks,
   )
+import Data.List qualified as L
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Format qualified as Format
 import Effects.FileSystem.FileReader (MonadFileReader)
 import Effects.FileSystem.FileReader qualified as FR
-import Effects.FileSystem.FileWriter (MonadFileWriter)
+import Effects.FileSystem.FileWriter (MonadFileWriter (writeBinaryFile))
 import Effects.FileSystem.PathReader
   ( MonadPathReader
       ( doesFileExist,
@@ -67,6 +68,7 @@ import Params qualified
 import System.Environment qualified as Env
 import System.Environment.Guard (ExpectEnv (ExpectEnvEquals, ExpectEnvSet))
 import System.Environment.Guard qualified as Guard
+import System.OsString qualified as OsStr
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit (Assertion, assertBool, assertFailure, testCase, (@=?))
@@ -655,7 +657,7 @@ testTomlPrintAliases = testCase desc $ do
   results <- captureKairosParamsIO params
   expected @=? results
   where
-    desc = "Prints example alises"
+    desc = "Prints example aliases"
 
     params =
       set' #configEnabled True
@@ -977,17 +979,62 @@ newtype TermT m a = MkTermT (ReaderT TermEnv m a)
       MonadCatch,
       MonadEnv,
       MonadFileReader,
-      MonadFileWriter,
       MonadIO,
       MonadIORef,
       MonadOptparse,
-      MonadPathWriter,
       MonadThrow,
       MonadTime
     )
     via (ReaderT TermEnv m)
   deriving (MonadReader TermEnv) via (ReaderT TermEnv m)
   deriving (MonadTrans) via (ReaderT TermEnv)
+
+-- Only want to write expected test files
+instance (MonadFileWriter m) => MonadFileWriter (TermT m) where
+  writeBinaryFile p bs
+    | expectedWrite = lift (writeBinaryFile p bs)
+    | expectedOther = pure ()
+    | otherwise = error $ "Unexpected writeBinaryFile: " ++ show p
+    where
+      -- Files we actually want to write.
+      expectedWrite =
+        L.any @[] (`OsStr.isSuffixOf` p) expectedWrites
+
+      expectedOther =
+        L.any @[] (`OsStr.isSuffixOf` p) expectedOthers
+
+      -- Files we do not want to write but we expect to receive
+      -- (e.g. real xdg dir).
+      expectedWrites =
+        [ [ospPathSep|kairos/functional/testTomlAliases/state/kairos/aliases.txt|]
+        ]
+
+      expectedOthers =
+        [ [ospPathSep|kairos/aliases.txt|]
+        ]
+
+instance (MonadPathWriter m) => MonadPathWriter (TermT m) where
+  createDirectoryIfMissing b p
+    | expectedDir = lift (PW.createDirectoryIfMissing b p)
+    | expectedOther = pure ()
+    | otherwise = error $ "Unexpected createDirectoryIfMissing: " ++ show p
+    where
+      -- Dirs we actually want to create.
+      expectedDir =
+        L.any @[] (`OsStr.isSuffixOf` p) expectedDirs
+
+      expectedOther =
+        L.any @[] (`OsStr.isSuffixOf` p) expectedOthers
+
+      -- Dirs we do not want to create but we expect to receive
+      -- (e.g. real xdg dir).
+      expectedDirs =
+        [ [ospPathSep|kairos/functional/testTomlAliases/state/kairos|]
+        ]
+
+      expectedOthers =
+        [ [ospPathSep|kairos|]
+        ]
 
 instance (MonadIORef m) => MonadTerminal (TermT m) where
   putStrLn s = asks (.output) >>= \ref -> modifyIORef' ref (T.pack s <>)

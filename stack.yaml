@@ -1,5 +1,5 @@
 ---
-resolver: nightly-2025-03-11
+resolver: nightly-2025-11-01
 packages:
   - ./lib/core/
   - ./lib/exe/
@@ -30,11 +30,11 @@ extra-deps:
   - git: https://github.com/tbidne/bounds.git
     commit: b7ca541cfdd8564bcebe5d38456fe7abf77885b8
   - git: https://github.com/tbidne/exception-utils.git
-    commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
+    commit: 61a9e06a26adcca70d565105a1508a16022435a2
   - git: https://github.com/tbidne/fs-utils.git
-    commit: ebe9822c78be2c6b983dfd849168508604db0c51
+    commit: 26136275027fd827574c5004ebd11b659d7abdab
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 750049e9d9afc1b7acf3b19e4adcd3cd37033b0a
+    commit: bc18a934ac4a665024e0f47fcbf10c841fecbb13
     subdirs:
       - lib/effects-env
       - lib/effects-fs
@@ -43,7 +43,5 @@ extra-deps:
       - lib/effects-terminal
       - lib/effects-time
   - git: https://github.com/tbidne/smart-math.git
-    commit: a39c02ec6a5a9c4b551baffafd75f26be74dd457
+    commit: 4e10a4134f825ba825113955bb97be7f7e28ad6e
 allow-newer: true
-allow-newer-deps:
-  - tasty

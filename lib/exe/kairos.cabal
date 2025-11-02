@@ -130,6 +130,7 @@ test-suite functional
     , kairos-runner
     , mtl               >=2.2.2 && <2.4
     , optics-core
+    , os-string
     , tasty
     , tasty-hunit
     , text
