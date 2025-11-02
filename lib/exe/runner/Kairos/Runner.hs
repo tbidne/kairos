@@ -28,11 +28,16 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Format qualified as Format
 import Effects.FileSystem.FileReader (MonadFileReader, readFileUtf8ThrowM)
+import Effects.FileSystem.FileWriter (MonadFileWriter)
+import Effects.FileSystem.FileWriter qualified as FW
 import Effects.FileSystem.PathReader
   ( MonadPathReader (doesFileExist),
     OsPath,
     getXdgConfig,
+    getXdgState,
   )
+import Effects.FileSystem.PathWriter (MonadPathWriter)
+import Effects.FileSystem.PathWriter qualified as PW
 import Effects.Optparse (MonadOptparse (execParser))
 import Effects.System.Terminal (MonadTerminal)
 import Effects.System.Terminal qualified as T
@@ -48,12 +53,12 @@ import Kairos.Runner.Args
         destTZ,
         formatIn,
         formatOut,
-        noConfig,
         printAliases,
         srcTZ,
         stacktrace,
         timeString
       ),
+    WithDisabled (Disabled, With),
     parserInfo,
   )
 import Kairos.Runner.Toml (Toml (aliases, color))
@@ -88,11 +93,11 @@ import TOML qualified
 -- @since 0.1
 runKairosIO :: (HasCallStack) => IO ()
 runKairosIO = do
-  args <- execParser parserInfo
+  (xdgKairosState, args) <- getArgs
 
   unless args.stacktrace $ AnnUtils.setIgnoreKnownCallStackHandler proxies
 
-  runWithArgs args
+  runWithArgs xdgKairosState args
   where
     proxies =
       [ MkExceptionProxy @DateNoTimeStringException,
@@ -105,6 +110,19 @@ runKairosIO = do
         MkExceptionProxy @SrcTZNoTimeStringException
       ]
 
+getArgs ::
+  ( MonadFileReader m,
+    MonadOptparse m,
+    MonadPathReader m,
+    MonadThrow m
+  ) =>
+  m (OsPath, Args)
+getArgs = do
+  xdgKairosState <- getXdgState [osp|kairos|]
+  aliasCompletions <- readAliasCompletions xdgKairosState
+  args <- execParser (parserInfo aliasCompletions)
+  pure (xdgKairosState, args)
+
 -- | Runs kairos with CLI args.
 --
 -- @since 0.1
@@ -112,19 +130,21 @@ runKairos ::
   ( HasCallStack,
     MonadCatch m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadOptparse m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadTerminal m,
     MonadTime m
   ) =>
   m ()
 runKairos = do
-  args <- execParser parserInfo
-  runWithArgs args
+  (xdgKairosState, args) <- getArgs
+  runWithArgs xdgKairosState args
 
 -- | Exception for printing aliases.
 data PrintAliasesE
-  = -- | --print-aliases and --no-config specified, nonsensical.
+  = -- | --print-aliases and --config off specified, nonsensical.
     PrintAliasesNoConfig
   | -- | No toml was found.
     PrintAliasesNoToml
@@ -132,7 +152,7 @@ data PrintAliasesE
 
 instance Exception PrintAliasesE where
   displayException PrintAliasesNoConfig =
-    "--print-aliases was specified with --no-config."
+    "--print-aliases was specified with --config off."
   displayException PrintAliasesNoToml =
     "--print-aliases was specified, but no config file was found."
 
@@ -144,30 +164,36 @@ runWithArgs ::
   ( HasCallStack,
     MonadCatch m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadTerminal m,
     MonadTime m
   ) =>
+  OsPath ->
   Args ->
   m ()
-runWithArgs args =
+runWithArgs xdgStateKairos args =
   if args.printAliases
-    then handlePrintAliases args
-    else handleMain args
+    then handlePrintAliases xdgStateKairos args
+    else handleMain xdgStateKairos args
 
 handlePrintAliases ::
   forall m.
   ( HasCallStack,
     MonadCatch m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadTerminal m,
     MonadTime m
   ) =>
+  OsPath ->
   Args ->
   m ()
-handlePrintAliases args = do
-  when args.noConfig (throwM PrintAliasesNoConfig)
+handlePrintAliases xdgStateKairos args = do
+  when (args.config == Just Disabled) (throwM PrintAliasesNoConfig)
 
   mGetTomlAndPath args.config >>= \case
     Nothing -> throwM PrintAliasesNoToml
@@ -189,6 +215,7 @@ handlePrintAliases args = do
                   then emptyMsg
                   else fmtAliases shouldColor aliases
           T.putTextLn txt
+          saveAliasCompletions xdgStateKairos (Just aliases)
   where
     fmtAliases :: Bool -> Map Text Text -> Text
     fmtAliases shouldColor aliases =
@@ -234,13 +261,16 @@ handleMain ::
   ( HasCallStack,
     MonadCatch m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadTerminal m,
     MonadTime m
   ) =>
+  OsPath ->
   Args ->
   m ()
-handleMain args = do
+handleMain xdgStateKairos args = do
   case args.timeString of
     Just _ -> pure ()
     Nothing -> do
@@ -254,10 +284,7 @@ handleMain args = do
   let formatOut = fromMaybe TimeFmt.rfc822 args.formatOut
       formatOutStr = T.unpack $ formatOut.unTimeFormat
 
-  mToml <-
-    if args.noConfig
-      then pure Nothing
-      else mGetToml args.config
+  mToml <- mGetToml args.config
 
   let aliases :: Maybe (Map Text Text)
       aliases = preview (_Just % #aliases % _Just) mToml
@@ -284,6 +311,8 @@ handleMain args = do
   destTZ <- parseTZ aliases args.destTZ
 
   readAndHandle mTimeReader destTZ formatOutStr
+
+  saveAliasCompletions xdgStateKairos aliases
   where
     readAndHandle ::
       (HasCallStack) =>
@@ -324,7 +353,7 @@ mGetToml ::
     MonadThrow m
   ) =>
   -- | Path to toml config file.
-  Maybe OsPath ->
+  Maybe (WithDisabled OsPath) ->
   -- | Reads toml, if we are given a path or we find it via XDG.
   m (Maybe Toml)
 mGetToml = (fmap . fmap) snd . mGetTomlAndPath
@@ -336,7 +365,7 @@ mGetTomlAndPath ::
     MonadThrow m
   ) =>
   -- | Path to toml config file.
-  Maybe OsPath ->
+  Maybe (WithDisabled OsPath) ->
   -- | Reads toml, if we are given a path or we find it via XDG.
   m (Maybe (OsPath, Toml))
 mGetTomlAndPath mconfigPath = do
@@ -348,10 +377,49 @@ mGetTomlAndPath mconfigPath = do
       if exists
         then Just . (configPath,) <$> readToml configPath
         else pure Nothing
-    Just configPath -> Just . (configPath,) <$> readToml configPath
+    Just Disabled -> pure Nothing
+    Just (With configPath) -> Just . (configPath,) <$> readToml configPath
   where
     readToml configPath = do
       contents <- readFileUtf8ThrowM configPath
       case TOML.decode @Toml contents of
         Left ex -> throwM ex
         Right toml -> pure toml
+
+readAliasCompletions ::
+  ( HasCallStack,
+    MonadFileReader m,
+    MonadPathReader m,
+    MonadThrow m
+  ) =>
+  OsPath ->
+  m [Text]
+readAliasCompletions xdgState = do
+  exists <- doesFileExist compsPath
+  if exists
+    then do
+      contents <- readFileUtf8ThrowM compsPath
+      pure $ T.lines $ T.strip contents
+    else pure []
+  where
+    compsPath = mkAliasCompletionsPath xdgState
+
+saveAliasCompletions ::
+  ( HasCallStack,
+    MonadFileWriter m,
+    MonadPathWriter m
+  ) =>
+  OsPath ->
+  Maybe (Map Text Text) ->
+  m ()
+saveAliasCompletions _ Nothing = pure ()
+saveAliasCompletions xdgState (Just aliases) = do
+  PW.createDirectoryIfMissing True xdgState
+  FW.writeFileUtf8 compsPath (formatAliases aliases)
+  where
+    formatAliases = T.intercalate "\n" . Map.keys
+
+    compsPath = mkAliasCompletionsPath xdgState
+
+mkAliasCompletionsPath :: OsPath -> OsPath
+mkAliasCompletionsPath xdgState = xdgState </> [osp|aliases.txt|]

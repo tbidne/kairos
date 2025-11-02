@@ -56,7 +56,7 @@ parseTZInput txt = asum parsers
             ]
 
 parseTZLabel :: Text -> Maybe TZInput
-parseTZLabel = fmap TZDatabase . Internal.tzNameToTZLabel
+parseTZLabel = fmap TZDatabase . Internal.tzNameToLabel
 
 parseTZOffset :: String -> Text -> Maybe TZInput
 parseTZOffset fmt = fmap TZActual . parseTimeM False locale fmt . T.unpack

@@ -23,18 +23,24 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time.Format qualified as Format
 import Effects.FileSystem.FileReader (MonadFileReader)
+import Effects.FileSystem.FileReader qualified as FR
+import Effects.FileSystem.FileWriter (MonadFileWriter)
 import Effects.FileSystem.PathReader
   ( MonadPathReader
       ( doesFileExist,
         getXdgDirectory
       ),
-    XdgDirectory (XdgConfig),
+    XdgDirectory (XdgConfig, XdgState),
   )
+import Effects.FileSystem.PathReader qualified as PR
+import Effects.FileSystem.PathWriter (MonadPathWriter)
+import Effects.FileSystem.PathWriter qualified as PW
 import Effects.IORef (IORef, MonadIORef, modifyIORef', newIORef, readIORef)
 import Effects.Optparse (MonadOptparse)
 import Effects.System.Environment (MonadEnv)
 import Effects.System.Environment qualified as SysEnv
 import Effects.System.Terminal (MonadTerminal (putStrLn))
+import Effects.System.Terminal qualified as Term
 import Effects.Time
   ( MonadTime
       ( getMonotonicTime,
@@ -59,7 +65,7 @@ import Params
   )
 import Params qualified
 import System.Environment qualified as Env
-import System.Environment.Guard (ExpectEnv (ExpectEnvEquals))
+import System.Environment.Guard (ExpectEnv (ExpectEnvEquals, ExpectEnvSet))
 import System.Environment.Guard qualified as Guard
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty qualified as Tasty
@@ -78,18 +84,19 @@ main = do
       (pure $ testGroup "Empty" [])
 
   Tasty.defaultMain $
-    testGroup
-      "Functional tests"
-      [ formatTests,
-        formatOutputTests,
-        srcTzTests,
-        destTzTests,
-        tzOffsetTests,
-        dateTests,
-        tomlTests,
-        miscTests,
-        extra
-      ]
+    Tasty.withResource setup teardown $ \getTestDir ->
+      testGroup
+        "Functional tests"
+        [ formatTests,
+          formatOutputTests,
+          srcTzTests,
+          destTzTests,
+          tzOffsetTests,
+          dateTests,
+          tomlTests getTestDir,
+          miscTests,
+          extra
+        ]
 
 formatTests :: TestTree
 formatTests =
@@ -578,11 +585,11 @@ testCurrTZToDestTime2 = testCase desc $ do
 
     args = set' #destTZ "america/new_york" "08:30"
 
-tomlTests :: TestTree
-tomlTests =
+tomlTests :: IO OsPath -> TestTree
+tomlTests getTestDir =
   testGroup
     "Toml"
-    [ testTomlAliases,
+    [ testTomlAliases getTestDir,
       testTomlPrintAliases,
       testTomlPrintAliasesNoColor,
       testTomlPrintAliasesNoAliases,
@@ -591,18 +598,28 @@ tomlTests =
       testTomlPrintAliasesMissingConfig
     ]
 
-testTomlAliases :: TestTree
-testTomlAliases = testCase "Config aliases succeed" $ do
+testTomlAliases :: IO OsPath -> TestTree
+testTomlAliases getTestDir = testCase "Config aliases succeed" $ do
+  testDir <- (</> [ospPathSep|testTomlAliases|]) <$> getTestDir
+
+  let withDest = withDest' testDir
+      readSavedAliases = readSavedAliases' testDir
+
+  Nothing <@=?> readSavedAliases
+
   resultsLA <- captureKairosParamsIO (withDest "la")
   "Tue, 12 Jul 2022 01:30:00 PDT" @=? resultsLA
+  Just expectedAliases <@=?> readSavedAliases
 
   resultZagreb <- captureKairosParamsIO (withDest "zagreb")
   "Tue, 12 Jul 2022 10:30:00 CEST" @=? resultZagreb
+  Just expectedAliases <@=?> readSavedAliases
 
   resultOffset <- captureKairosParamsIO (withDest "some_offset")
   "Tue, 12 Jul 2022 15:30:00 +0700" @=? resultOffset
+  Just expectedAliases <@=?> readSavedAliases
   where
-    withDest d =
+    withDest' xdg d =
       MkTestParams
         { cliArgs =
             set' #date "2022-07-12"
@@ -614,8 +631,24 @@ testTomlAliases = testCase "Config aliases succeed" $ do
                 ],
           configEnabled = True,
           mCurrentTime = Nothing,
-          mXdg = Nothing
+          mXdg = Just xdg
         }
+
+    expectedAliases =
+      [ "la",
+        "ny",
+        "paris",
+        "some_offset",
+        "uk",
+        "zagreb"
+      ]
+
+    readSavedAliases' xdg = do
+      let path = xdg </> [ospPathSep|state/kairos/aliases.txt|]
+      exists <- PR.doesFileExist path
+      if exists
+        then Just . T.lines <$> FR.readFileUtf8ThrowM path
+        else pure Nothing
 
 testTomlPrintAliases :: TestTree
 testTomlPrintAliases = testCase desc $ do
@@ -627,7 +660,7 @@ testTomlPrintAliases = testCase desc $ do
     params =
       set' #configEnabled True
         . Params.fromArgs
-        $ ["-c", configFp, "--color", "true", "--print-aliases"]
+        $ ["-c", configFp, "--color", "on", "--print-aliases"]
 
     expected =
       unlinesNoTrailingNL
@@ -709,10 +742,11 @@ testTomlPrintAliasesNoConfig :: TestTree
 testTomlPrintAliasesNoConfig = testCase desc $ do
   assertException @PrintAliasesE expected $ captureKairosIO args
   where
-    desc = "--print-aliases fails with --no-config"
-    -- noConfig defaults to true in our tests via default configEnabled = False
-    args = ["-c", configFp, "--print-aliases"]
-    expected = "--print-aliases was specified with --no-config."
+    desc = "--print-aliases fails with --config off"
+    -- --config off defaults to true in our tests via default
+    -- configEnabled = False
+    args = ["--print-aliases"]
+    expected = "--print-aliases was specified with --config off."
 
 testTomlPrintAliasesMissingConfig :: TestTree
 testTomlPrintAliasesMissingConfig = testCase desc $ do
@@ -799,14 +833,14 @@ captureKairosParamsIO params = case params.mCurrentTime of
     args' =
       if params.configEnabled
         then toList $ params.cliArgs
-        else "--no-config" : toList params.cliArgs
+        else "--config" : "off" : toList params.cliArgs
 
     -- Runs kairos with the args, capturing terminal output.
     -- Toml configuration is not disabled, so take care that one of the following
     -- situations applies:
     --
     -- 1. Args includes @--config <path>@.
-    -- 2. Args includes @--no-config@.
+    -- 2. Args includes @--config off@.
     -- 3. The XDG config dir is overridden to an expected path.
     --
     -- Otherwise, we may end up picking up a toml configuration at the real,
@@ -821,9 +855,11 @@ captureKairosParamsIO params = case params.mCurrentTime of
       ( MonadEnv m,
         MonadCatch m,
         MonadFileReader m,
+        MonadFileWriter m,
         MonadIO m,
         MonadIORef m,
         MonadOptparse m,
+        MonadPathWriter m,
         MonadTime m
       ) =>
       -- Args.
@@ -860,9 +896,11 @@ newtype MockTimeIO a = MkMockTimeM (ReaderT String IO a)
       MonadCatch,
       MonadEnv,
       MonadFileReader,
+      MonadFileWriter,
       MonadIO,
       MonadIORef,
       MonadOptparse,
+      MonadPathWriter,
       MonadThrow
     )
     via (ReaderT String IO)
@@ -939,9 +977,11 @@ newtype TermT m a = MkTermT (ReaderT TermEnv m a)
       MonadCatch,
       MonadEnv,
       MonadFileReader,
+      MonadFileWriter,
       MonadIO,
       MonadIORef,
       MonadOptparse,
+      MonadPathWriter,
       MonadThrow,
       MonadTime
     )
@@ -958,8 +998,12 @@ instance (MonadIO m) => MonadPathReader (TermT m) where
   getXdgDirectory t p = case t of
     XdgConfig ->
       asks (.xdg) >>= \case
-        Just xdg -> pure $ xdg </> p
+        Just xdg -> pure $ xdg </> [ospPathSep|config|] </> p
         Nothing -> liftIO $ getXdgDirectory XdgConfig p
+    XdgState ->
+      asks (.xdg) >>= \case
+        Just xdg -> pure $ xdg </> [ospPathSep|state|] </> p
+        Nothing -> liftIO $ getXdgDirectory XdgState p
     other -> error $ "Unexpected xdg type: " ++ show other
 
 runTermT :: (MonadIORef m) => Maybe OsPath -> TermT m a -> m Text
@@ -976,3 +1020,23 @@ withTZ tz m = bracket setTZ resetTZ (const m)
   where
     setTZ = Env.lookupEnv "TZ" <* Env.setEnv "TZ" tz
     resetTZ = Env.setEnv "TZ" . fromMaybe ""
+
+setup :: IO OsPath
+setup = do
+  tmpDir <- PR.getTemporaryDirectory
+  let testDir = tmpDir </> [ospPathSep|kairos/functional|]
+  PW.createDirectoryIfMissing True testDir
+  pure testDir
+
+teardown :: OsPath -> IO ()
+teardown p = Guard.guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
+  where
+    cleanup = PW.removeDirectoryRecursiveIfExists_ p
+    doNothing = Term.putStrLn $ "*** Not cleaning up tmp dir: " <> show p
+
+(<@=?>) :: (Eq a, Show a) => a -> IO a -> Assertion
+(<@=?>) expected m = do
+  result <- m
+  expected @=? result
+
+infix 1 <@=?>

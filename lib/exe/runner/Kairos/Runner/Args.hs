@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -6,19 +7,24 @@
 -- @since 0.1
 module Kairos.Runner.Args
   ( Args (..),
+    WithDisabled (..),
     parserInfo,
   )
 where
 
 import Data.Functor ((<&>))
 import Data.List qualified as L
+import Data.List.NonEmpty (NonEmpty ((:|)))
+import Data.Set qualified as Set
 import Data.String (IsString (fromString))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Version (showVersion)
 import Effects.Optparse (OsPath, osPath)
+import Effects.Optparse.Completer qualified as EOC
 import FileSystem.OsString (OsString)
 import FileSystem.OsString qualified as OsString
+import Kairos (TZLabel)
 import Kairos.Runner.Args.TH qualified as TH
 import Kairos.Types.Date (Date)
 import Kairos.Types.Date qualified as Date
@@ -48,13 +54,17 @@ import Options.Applicative.Types (ArgPolicy (Intersperse), ReadM)
 import Paths_kairos qualified as Paths
 import System.Info qualified as Info
 
+data WithDisabled a
+  = With a
+  | Disabled
+  deriving stock (Eq, Show)
+
 -- | CLI args.
 --
 -- @since 0.1
 data Args = MkArgs
   { color :: Maybe Bool,
-    config :: Maybe OsPath,
-    noConfig :: Bool,
+    config :: Maybe (WithDisabled OsPath),
     date :: Maybe Date,
     destTZ :: Maybe Text,
     formatIn :: Maybe TimeFormat,
@@ -69,10 +79,10 @@ data Args = MkArgs
 -- | Optparse-Applicative info.
 --
 -- @since 0.1
-parserInfo :: ParserInfo Args
-parserInfo =
+parserInfo :: [Text] -> ParserInfo Args
+parserInfo aliasCompletions =
   ParserInfo
-    { infoParser = parseArgs,
+    { infoParser = parseArgs aliasCompletions,
       infoFullDesc = True,
       infoProgDesc = desc,
       infoHeader = Chunk header,
@@ -84,44 +94,83 @@ parserInfo =
     header = Just "kairos: A tool for timezone conversions."
     footer = Just $ fromString versShort
     desc =
+      mconcat
+        [ intro,
+          completions,
+          examples,
+          outro
+        ]
+
+    intro =
+      Chunk.paragraph $
+        mconcat
+          [ "Kairos reads time strings and converts between timezones. ",
+            "For the src and dest options, TZ refers to labels like ",
+            "'America/New_York' or offsets like '+1300'. See ",
+            "https://en.wikipedia.org/wiki/Tz_database."
+          ]
+
+    completions =
       Chunk.vsepChunks
-        [ Chunk.paragraph $
-            mconcat
-              [ "Kairos reads time strings and converts between timezones. ",
-                "For the src and dest options, TZ refers to labels like ",
-                "'America/New_York' or offsets like '+1300'. See ",
-                "https://en.wikipedia.org/wiki/Tz_database."
-              ],
-          Chunk.paragraph
-            "See https://github.com/tbidne/kairos#README for full documentation.",
+        [ line,
+          Chunk.paragraph "Shell completions are available e.g.",
+          Pretty.indent 2 <$> Chunk.stringChunk "$ source <(kairos --bash-completion-script `which kairos`)"
+        ]
+
+    examples =
+      Chunk.vsepChunks
+        [ line,
           Chunk.paragraph "Examples:",
           mkExample
-            [ "$ kairos",
+            [ "1. Getting the local time:",
+              "",
+              "$ kairos",
               "Mon, 17 Mar 2025 10:12:10 NZDT"
             ],
           mkExample
-            [ "$ kairos -d europe/paris",
+            [ "2. Convering local time to another tz:",
+              "",
+              "$ kairos -d europe/paris",
               "Sun, 16 Mar 2025 22:12:10 CET"
             ],
           mkExample
-            [ "$ kairos --date 2025-04-17 -s america/new_york 18:30",
+            [ "3. Converting a time string from some tz to local tz:",
+              "",
+              "$ kairos --date 2025-04-17 -s america/new_york 18:30",
               "Fri, 18 Apr 2025 10:30:00 NZST"
             ]
         ]
 
-    mkExample :: [String] -> Chunk Doc
-    mkExample =
+    outro =
       Chunk.vcatChunks
-        . fmap (fmap (Pretty.indent 2) . Chunk.stringChunk)
+        [ line,
+          line,
+          Chunk.paragraph "See https://github.com/tbidne/kairos#README for full documentation."
+        ]
 
-parseArgs :: Parser Args
-parseArgs =
+    mkExample :: NonEmpty String -> Chunk Doc
+    mkExample = identPara 2 5
+
+    identPara :: Int -> Int -> NonEmpty String -> Chunk Doc
+    identPara hIndent lIndent (h :| xs) =
+      Chunk.vcatChunks
+        . (\ys -> toChunk hIndent h : ys)
+        . fmap (toChunk lIndent)
+        $ xs
+
+    toChunk _ "" = line
+    toChunk i other = fmap (Pretty.indent i) . Chunk.stringChunk $ other
+
+    line = Chunk (Just Pretty.softline)
+
+parseArgs :: [Text] -> Parser Args
+parseArgs aliasCompletions =
   parseArgs'
     <**> OA.helper
     <**> version
   where
     parseArgs' = do
-      ~(config, noConfig) <- parseConfigGroup
+      config <- parseConfigGroup
       ~(color, formatIn, formatOut) <- parseFormattingGroup
       printAliases <- parseMiscGroup
       ~(date, timeString) <- parseTimeGroup
@@ -133,7 +182,6 @@ parseArgs =
         MkArgs
           { color,
             config,
-            noConfig,
             date,
             destTZ,
             formatIn,
@@ -145,8 +193,7 @@ parseArgs =
           }
       where
         parseConfigGroup =
-          OA.parserOptionGroup "Config options:" $
-            (,) <$> parseConfig <*> parseNoConfig
+          OA.parserOptionGroup "Config options:" parseConfig
 
         parseFormattingGroup =
           OA.parserOptionGroup "Formatting options:" $
@@ -156,7 +203,7 @@ parseArgs =
 
         parseTimezonesGroup =
           OA.parserOptionGroup "Timezone options:" $
-            (,) <$> parseDestTZ <*> parseSrcTZ
+            (,) <$> parseDestTZ aliasCompletions <*> parseSrcTZ aliasCompletions
 
         parseTimeGroup =
           OA.parserOptionGroup "Time options:" $
@@ -165,15 +212,16 @@ parseArgs =
 parseStacktrace :: Parser Bool
 parseStacktrace = parseSwitch "stacktrace" [OA.internal]
 
-parseConfig :: Parser (Maybe OsPath)
+parseConfig :: Parser (Maybe (WithDisabled OsPath))
 parseConfig =
   OA.optional
     $ OA.option
-      osPath
+      reader
     $ mconcat
       [ OA.long "config",
         OA.short 'c',
         OA.metavar "PATH",
+        OA.completer EOC.compgenCwdPathsCompleter,
         mkHelp helpTxt
       ]
   where
@@ -183,13 +231,14 @@ parseConfig =
           "the XDG config e.g. ~/.config/kairos/config.toml."
         ]
 
-parseNoConfig :: Parser Bool
-parseNoConfig = parseSwitch "no-config" [OA.hidden, mkHelpNoLine helpTxt]
-  where
-    helpTxt = "Disables --config."
+    reader = do
+      txt <- OA.str @Text
+      case txt of
+        "off" -> pure Disabled
+        _ -> With <$> osPath
 
-parseDestTZ :: Parser (Maybe Text)
-parseDestTZ =
+parseDestTZ :: [Text] -> Parser (Maybe Text)
+parseDestTZ aliasCompletions =
   OA.optional
     $ OA.option
       OA.str
@@ -197,6 +246,7 @@ parseDestTZ =
       [ OA.long "dest-tz",
         OA.short 'd',
         OA.metavar "TZ",
+        OA.completeWith (mkTZCompletions aliasCompletions),
         mkHelp helpTxt
       ]
   where
@@ -236,6 +286,7 @@ parseFormatOut =
       [ OA.long "format-out",
         OA.short 'o',
         OA.metavar "(rfc822 | FMT_STR)",
+        OA.completeWith ["rfc822"],
         mkHelpNoLine helpTxt
       ]
   where
@@ -264,23 +315,24 @@ parseColor =
       readColor
     $ mconcat
       [ OA.long "color",
-        OA.metavar "(true | false)",
+        OA.metavar "(on | off)",
+        OA.completeWith ["off", "on"],
         mkHelp helpTxt
       ]
   where
     helpTxt =
-      "Determines if we color the --print-aliases output. Defaults to 'true'."
+      "Determines if we color the --print-aliases output. Defaults to 'on'."
     readColor =
       OA.str >>= \case
-        "true" -> pure True
-        "false" -> pure False
+        "on" -> pure True
+        "off" -> pure False
         other -> fail $ "Unexpected color: " ++ other
 
 parseSwitch :: String -> [Mod FlagFields Bool] -> Parser Bool
 parseSwitch name mods = OA.switch (mconcat $ OA.long name : mods)
 
-parseSrcTZ :: Parser (Maybe Text)
-parseSrcTZ =
+parseSrcTZ :: [Text] -> Parser (Maybe Text)
+parseSrcTZ aliasCompletions =
   OA.optional
     $ OA.option
       OA.str
@@ -288,6 +340,7 @@ parseSrcTZ =
       [ OA.long "src-tz",
         OA.short 's',
         OA.metavar "TZ",
+        OA.completeWith (mkTZCompletions aliasCompletions),
         mkHelpNoLine helpTxt
       ]
   where
@@ -380,3 +433,19 @@ mkHelpNoLine =
   OA.helpDoc
     . Chunk.unChunk
     . Chunk.paragraph
+
+mkTZCompletions :: [Text] -> [String]
+mkTZCompletions aliasCompletions =
+  Set.toList . Set.fromList $
+    (T.unpack <$> aliasCompletions)
+      ++ tzLabelCompletions
+
+tzLabelCompletions :: [String]
+tzLabelCompletions = toStr <$> [minBound .. maxBound]
+  where
+    toStr :: TZLabel -> String
+    toStr =
+      T.unpack
+        . T.replace "__" "/"
+        . T.pack
+        . show

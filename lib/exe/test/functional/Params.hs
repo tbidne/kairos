@@ -116,7 +116,7 @@ instance
 data TestParams = MkTestParams
   { -- | CLI args.
     cliArgs :: CliArgs,
-    -- | If false, prepends --no-config to 'args'.
+    -- | If false, prepends --config off to 'args'.
     configEnabled :: Bool,
     -- | If given, represents the (mock) current time.
     mCurrentTime :: Maybe String,

@@ -16,9 +16,20 @@ the first _two_ components (e.g. `0.9` in `0.9.1`), and PVP has no exception
 for versions < 1.
 
 ## [Unreleased]
+### Changed
+* Improved `--help` page.
+* Git env var failure is now non-fatal.
+* Update GHC minors, blessed to GHC 9.12.2.
+* `--config/--no-config` changed to `--config (on | off)`.
+
 ### Added
 * Added git revision info in `--help` and `--version`.
 * Group `--help` options.
+* Tab completions:
+  * All TZ database names.
+  * User defined TZ aliases.
+  * Config path.
+  * Option values.
 
 ## [0.1.1] -- 2025-04-10
 ### Added
