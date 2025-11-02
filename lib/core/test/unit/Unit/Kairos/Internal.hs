@@ -7,6 +7,9 @@ import Control.Exception
   ( evaluate,
   )
 import Control.Monad (void)
+#if !MIN_VERSION_base(4, 20, 0)
+import Data.Foldable (Foldable (foldl'))
+#endif
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding.Error qualified as TError
