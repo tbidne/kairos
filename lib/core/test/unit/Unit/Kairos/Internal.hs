@@ -62,6 +62,16 @@ data ParseResult
   | ParseNotEqual Text TZLabel
   | ParseSuccess
 
+instance Semigroup ParseResult where
+  ParseFailure lt <> _ = ParseFailure lt
+  ParseNotEqual lt ll <> _ = ParseNotEqual lt ll
+  _ <> ParseFailure rt = ParseFailure rt
+  _ <> ParseNotEqual rt rl = ParseNotEqual rt rl
+  ParseSuccess <> r = r
+
+instance Monoid ParseResult where
+  mempty = ParseSuccess
+
 tzLabelNameRoundtrip :: TestTree
 tzLabelNameRoundtrip = testCase desc $ do
   -- Tests each label individually. We do this rather than hedgehog because:
@@ -86,12 +96,14 @@ tzLabelNameRoundtrip = testCase desc $ do
 
     tryLabel lbl =
       let txt = Internal.tzLabelToName lbl
-       in case Internal.tzNameToLabel txt of
-            Nothing -> ParseFailure txt
-            Just lbl' ->
-              if lbl == lbl'
-                then ParseSuccess
-                else ParseNotEqual txt lbl'
+       in tryText lbl txt <> tryText lbl (T.toLower txt)
+
+    tryText lbl txt = case Internal.tzNameToLabel txt of
+      Nothing -> ParseFailure txt
+      Just lbl' ->
+        if lbl == lbl'
+          then ParseSuccess
+          else ParseNotEqual txt lbl'
 
     renderFailures =
       renderFailure

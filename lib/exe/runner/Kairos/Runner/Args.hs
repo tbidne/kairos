@@ -24,7 +24,7 @@ import Effects.Optparse (OsPath, osPath)
 import Effects.Optparse.Completer qualified as EOC
 import FileSystem.OsString (OsString)
 import FileSystem.OsString qualified as OsString
-import Kairos (TZLabel)
+import Kairos.Internal qualified
 import Kairos.Runner.Args.TH qualified as TH
 import Kairos.Types.Date (Date)
 import Kairos.Types.Date qualified as Date
@@ -441,11 +441,6 @@ mkTZCompletions aliasCompletions =
       ++ tzLabelCompletions
 
 tzLabelCompletions :: [String]
-tzLabelCompletions = toStr <$> [minBound .. maxBound]
+tzLabelCompletions = T.unpack <$> (T.toLower <$> names) ++ names
   where
-    toStr :: TZLabel -> String
-    toStr =
-      T.unpack
-        . T.replace "__" "/"
-        . T.pack
-        . show
+    names = Kairos.Internal.tzLabelToName <$> [minBound .. maxBound]
